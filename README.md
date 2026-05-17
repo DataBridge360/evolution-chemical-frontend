@@ -85,7 +85,7 @@ git clone <repository-url>
 cd evolution-chemical-frontend
 
 # Instalar dependencias
-npm install
+pnpm install
 
 # Configurar variables de entorno
 cp .env.example .env.local
@@ -107,39 +107,39 @@ NEXT_PUBLIC_API_URL=https://api.evolutionchemical.com/api/v1
 
 ```bash
 # Desarrollo
-npm run dev              # Iniciar servidor de desarrollo (puerto 3000)
+pnpm dev              # Iniciar servidor de desarrollo (puerto 3000)
 
 # Build
-npm run build            # Compilar para producción
-npm start                # Iniciar servidor de producción
+pnpm build            # Compilar para producción
+pnpm start                # Iniciar servidor de producción
 
 # Code Quality
-npm run lint             # Ejecutar ESLint
-npm run lint:fix         # Ejecutar ESLint y auto-fix
-npm run type-check       # Verificar tipos TypeScript
-npm run format           # Formatear código con Prettier
-npm run format:check     # Verificar formato con Prettier
+pnpm lint             # Ejecutar ESLint
+pnpm lint:fix         # Ejecutar ESLint y auto-fix
+pnpm type-check       # Verificar tipos TypeScript
+pnpm format           # Formatear código con Prettier
+pnpm format:check     # Verificar formato con Prettier
 ```
 
 ## 🔄 Flujo de Desarrollo
 
 1. **Desarrollo local**
    ```bash
-   npm run dev
+   pnpm dev
    ```
    El servidor estará disponible en `http://localhost:3000`
 
 2. **Verificar código antes de commit**
    ```bash
-   npm run type-check    # Verificar tipos
-   npm run lint          # Verificar ESLint
-   npm run format:check  # Verificar formato
+   pnpm type-check    # Verificar tipos
+   pnpm lint          # Verificar ESLint
+   pnpm format:check  # Verificar formato
    ```
 
 3. **Build de producción**
    ```bash
-   npm run build         # Compila y optimiza
-   npm start             # Inicia servidor de producción
+   pnpm build         # Compila y optimiza
+   pnpm start             # Inicia servidor de producción
    ```
 
 ## 📁 Estructura de Componentes
@@ -181,13 +181,13 @@ El frontend se comunica con el backend a través de:
 
 ```bash
 # Verificar que el build funciona
-npm run build
+pnpm build
 
 # Verificar tipos
-npm run type-check
+pnpm type-check
 
 # Verificar linting
-npm run lint
+pnpm lint
 ```
 
 ## 📱 Rutas Principales

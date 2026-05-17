@@ -22,12 +22,20 @@ export default function CompanyResultsPage() {
   }, [companyId]);
 
   const loadCompanyResults = async () => {
+    // Validar que companyId sea un UUID válido ANTES de hacer el request
+    if (!companyId || companyId === 'undefined' || companyId === 'null') {
+      console.error('ID de compañía inválido:', companyId);
+      router.push('/resultados');
+      return;
+    }
+
     try {
       setLoading(true);
       const data = await resultsService.getResultsByCompany(companyId);
       setResults(data);
       if (data.length > 0) {
-        setCompanyName(data[0].samples?.companies?.name || 'Empresa');
+        // Usar campos directos del backend Django
+        setCompanyName(data[0].company_name || 'Empresa');
       }
     } catch (error) {
       console.error('Error al cargar resultados de la empresa:', error);
@@ -40,7 +48,8 @@ export default function CompanyResultsPage() {
   // Filtrar resultados por código interno
   const filteredResults = results.filter((result) => {
     if (!searchCode) return true;
-    return result.samples?.internal_code?.toLowerCase().includes(searchCode.toLowerCase());
+    // Usar campos directos del backend Django
+    return result.internal_code?.toLowerCase().includes(searchCode.toLowerCase());
   });
 
   if (loading) {
@@ -134,15 +143,13 @@ export default function CompanyResultsPage() {
                 {filteredResults.map((result) => (
                   <tr key={result.sample_result_id} className="transition-colors hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                      {result.samples?.internal_code || 'N/A'}
+                      {result.internal_code || 'N/A'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      {result.samples?.sample_type || 'N/A'}
+                      {result.sample_type || 'N/A'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      {result.samples?.sample_date
-                        ? formatDateAR(result.samples.sample_date)
-                        : 'N/A'}
+                      {result.sample_date ? formatDateAR(result.sample_date) : 'N/A'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {result.analysis_date ? formatDateAR(result.analysis_date.toString()) : 'N/A'}
@@ -170,7 +177,7 @@ export default function CompanyResultsPage() {
             {/* Header del modal */}
             <div className="sticky top-0 flex items-center justify-between border-b border-border bg-white px-6 py-4">
               <h2 className="text-xl font-semibold text-gray-900">
-                Detalle de Muestra - {selectedResult.samples?.internal_code}
+                Detalle de Muestra - {selectedResult.internal_code}
               </h2>
               <button
                 onClick={() => setSelectedResult(null)}
@@ -203,27 +210,27 @@ export default function CompanyResultsPage() {
                   <div>
                     <p className="text-sm text-gray-500">Código Interno</p>
                     <p className="text-sm font-medium text-gray-900">
-                      {selectedResult.samples?.internal_code}
+                      {selectedResult.internal_code}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Tipo de Muestra</p>
                     <p className="text-sm font-medium text-gray-900">
-                      {selectedResult.samples?.sample_type}
+                      {selectedResult.sample_type}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Fecha de Muestra</p>
                     <p className="text-sm font-medium text-gray-900">
-                      {selectedResult.samples?.sample_date
-                        ? formatDateAR(selectedResult.samples.sample_date)
+                      {selectedResult.sample_date
+                        ? formatDateAR(selectedResult.sample_date)
                         : 'N/A'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Empresa</p>
                     <p className="text-sm font-medium text-gray-900">
-                      {selectedResult.samples?.companies?.name}
+                      {selectedResult.company_name}
                     </p>
                   </div>
                 </div>
