@@ -89,3 +89,46 @@
     text-wrap: balance;
   }
 }
+
+/* Estilos de impresión para informes */
+@media print {
+  /* Ocultar elementos no imprimibles */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Configuración de página */
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  /* Body en impresión */
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Remover bordes de inputs al imprimir */
+  input[type="text"] {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  /* Asegurar que las tablas no se rompan */
+  table {
+    page-break-inside: avoid;
+  }
+
+  /* Evitar que los encabezados queden solos al final de página */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+
+  /* Asegurar calidad de imágenes */
+  img {
+    max-width: 100%;
+    page-break-inside: avoid;
+  }
+}

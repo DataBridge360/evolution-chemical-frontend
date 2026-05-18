@@ -7,6 +7,7 @@ import { authService } from '@/src/modules/auth/services/AuthService';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
+  { name: 'Cromatografía', href: '/cromatografia', role: 'owner' },
   { name: 'Muestras', href: '/muestras' },
   { name: 'Resultados', href: '/resultados' },
   { name: 'Reportes', href: '/reportes' },

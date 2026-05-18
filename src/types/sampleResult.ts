@@ -14,16 +14,17 @@ export interface CreateSampleResultDto {
   analysis_date?: string;
 }
 
+// Tipo actualizado para coincidir con el backend Django
 export interface SampleResultWithDetails extends SampleResult {
-  samples: {
-    sample_id: string;
-    internal_code: string;
-    sample_type: string;
-    sample_date: string;
-    company_id: string;
-    companies: {
-      company_id: string;
-      name: string;
-    };
-  };
+  // Sample fields (directos del backend)
+  internal_code: string;
+  sample_type: string;
+  sample_date: string;
+  contact_email: string;
+  requested_analysis: string;
+  status: string;
+
+  // Company fields (directos del backend)
+  company_id: string;
+  company_name: string;
 }

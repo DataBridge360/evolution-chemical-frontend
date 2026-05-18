@@ -30,8 +30,9 @@ export default function ResultadosPage() {
   // Agrupar resultados por empresa
   const groupedByCompany = results.reduce(
     (acc, result) => {
-      const companyId = result.samples?.company_id || 'sin-empresa';
-      const companyName = result.samples?.companies?.name || 'Sin empresa';
+      // El backend devuelve company_id y company_name directamente en el result
+      const companyId = result.company_id || 'sin-empresa';
+      const companyName = result.company_name || 'Sin empresa';
 
       if (!acc[companyId]) {
         acc[companyId] = {
