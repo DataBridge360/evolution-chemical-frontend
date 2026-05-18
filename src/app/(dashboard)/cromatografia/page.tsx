@@ -294,13 +294,13 @@ export default function ChromatographyPage() {
                   <div className="flex items-center space-x-2 text-xs">
                     <div className={`h-2 w-2 rounded-full ${currentStep === 'calculating' || currentStep === 'generating-report' || currentStep === 'complete' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                     <span className={currentStep === 'calculating' || currentStep === 'generating-report' || currentStep === 'complete' ? 'text-green-700 font-medium' : 'text-gray-500'}>
-                      Análisis de propiedades
+                      Analizando
                     </span>
                   </div>
                   <div className="flex items-center space-x-2 text-xs">
                     <div className={`h-2 w-2 rounded-full ${currentStep === 'generating-report' || currentStep === 'complete' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                     <span className={currentStep === 'generating-report' || currentStep === 'complete' ? 'text-green-700 font-medium' : 'text-gray-500'}>
-                      Informe HTML
+                      Generando informe
                     </span>
                   </div>
                 </div>
