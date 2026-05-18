@@ -263,7 +263,11 @@ class ApiClient {
   /**
    * POST con FormData (sin Content-Type para que el navegador lo añada automáticamente con boundary)
    */
-  async postFormData<T>(endpoint: string, formData: FormData, includeAuth: boolean = false): Promise<T> {
+  async postFormData<T>(
+    endpoint: string,
+    formData: FormData,
+    includeAuth: boolean = false,
+  ): Promise<T> {
     // PASO 1: Asegurar que el token sea válido ANTES del request
     if (includeAuth) {
       await this.ensureValidToken();

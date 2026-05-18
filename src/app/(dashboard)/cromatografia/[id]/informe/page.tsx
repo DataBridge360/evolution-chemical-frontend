@@ -72,7 +72,7 @@ export default function InformePage({ params }: Props) {
   const components = useMemo(() => {
     if (!analysis?.calculated_properties) return [];
     return analysis.calculated_properties.composicion.filter(
-      c => c.name?.toUpperCase() !== 'TOTALES'
+      (c) => c.name?.toUpperCase() !== 'TOTALES',
     );
   }, [analysis]);
 
@@ -109,12 +109,26 @@ export default function InformePage({ params }: Props) {
     <div className="min-h-screen bg-[#e9e9e9] p-6">
       <style jsx global>{`
         @media print {
-          body { background: #fff !important; padding: 0 !important; }
-          .print-hidden { display: none !important; }
-          .print-page { box-shadow: none !important; margin: 0 !important; }
-          input { border: none !important; background: transparent !important; }
+          body {
+            background: #fff !important;
+            padding: 0 !important;
+          }
+          .print-hidden {
+            display: none !important;
+          }
+          .print-page {
+            box-shadow: none !important;
+            margin: 0 !important;
+          }
+          input {
+            border: none !important;
+            background: transparent !important;
+          }
         }
-        input:focus { background: #ffffcc !important; outline: 1px solid #1a5fb4 !important; }
+        input:focus {
+          background: #ffffcc !important;
+          outline: 1px solid #1a5fb4 !important;
+        }
       `}</style>
 
       {/* Toolbar */}
@@ -135,11 +149,16 @@ export default function InformePage({ params }: Props) {
 
       {/* Página del informe */}
       <div className="print-page relative mx-auto min-h-[1100px] w-[850px] bg-white p-[30px_20px] text-[11px] leading-tight shadow-lg">
-
         {/* Header */}
         <div className="flex items-start justify-between border-b border-black pb-1.5">
           <div className="flex-1">
-            <Image src="/croma/image.png" alt="Evolution Chemical" width={192} height={70} className="mb-1" />
+            <Image
+              src="/croma/image.png"
+              alt="Evolution Chemical"
+              width={192}
+              height={70}
+              className="mb-1"
+            />
             <p className="text-[11px] font-bold italic">
               Laboratorio Certificado en Normas de Calidad ISO 9001 / 2015 por Bureau Veritas.
             </p>
@@ -158,7 +177,12 @@ export default function InformePage({ params }: Props) {
         <div className="grid grid-cols-2 gap-x-8 px-8 py-2.5 text-[11px]">
           {/* Columna izquierda */}
           <div className="space-y-0.5">
-            <DataRow label="Informe N°" value={reportNumber} onChange={setReportNumber} color="red" />
+            <DataRow
+              label="Informe N°"
+              value={reportNumber}
+              onChange={setReportNumber}
+              color="red"
+            />
             <DataRow label="PdT" value={pdt} onChange={setPdt} />
             <DataRow label="Operador" value={operator} onChange={setOperator} />
             <DataRow label="Procedencia" value={origin} onChange={setOrigin} color="red" />
@@ -172,19 +196,33 @@ export default function InformePage({ params }: Props) {
           {/* Columna derecha */}
           <div className="space-y-0.5">
             <DataRowWithUnit label="Pres." value={pressure} onChange={setPressure} unit="Kg/cm2" />
-            <DataRowWithUnit label="Temp." value={temperature} onChange={setTemperature} unit="ºC" />
+            <DataRowWithUnit
+              label="Temp."
+              value={temperature}
+              onChange={setTemperature}
+              unit="ºC"
+            />
             <DataRow label="Caudal" value={flowRate} onChange={setFlowRate} />
             <DataRow label="Zona" value={zone} onChange={setZone} />
             <DataRow label="Formacion" value={formation} onChange={setFormation} />
             <DataRow label="Muestra Extraida por" value={sampledBy} onChange={setSampledBy} />
             <DataRow label="Fecha muestreo" value={sampleDate} onChange={setSampleDate} />
-            <DataRow label="Ultima calibracion" value={lastCalibration} onChange={setLastCalibration} />
+            <DataRow
+              label="Ultima calibracion"
+              value={lastCalibration}
+              onChange={setLastCalibration}
+            />
           </div>
         </div>
 
         {/* Nota vertical lateral */}
-        <div className="absolute left-2 top-[340px] max-h-[600px] text-[8.5px] leading-[1.4] text-gray-600" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-          Datos, constantes y formulas tomadas de las normas IRAM-IAPG A 6854 - GPSA Electronic Data Book SI Version - Eleventh Edition GPA Standard 2145-03 - GPA Standard 2286-95. Cálculos efectuados a 1 atm. Y 15ºC - Basado en ASTM D-1945
+        <div
+          className="absolute left-2 top-[340px] max-h-[600px] text-[8.5px] leading-[1.4] text-gray-600"
+          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+        >
+          Datos, constantes y formulas tomadas de las normas IRAM-IAPG A 6854 - GPSA Electronic Data
+          Book SI Version - Eleventh Edition GPA Standard 2145-03 - GPA Standard 2286-95. Cálculos
+          efectuados a 1 atm. Y 15ºC - Basado en ASTM D-1945
         </div>
 
         {/* Tabla de componentes */}
@@ -192,27 +230,61 @@ export default function InformePage({ params }: Props) {
           <table className="w-full border-collapse border border-black text-[11px]">
             <thead>
               <tr className="bg-[#cfe8c8]">
-                <th className="border border-black p-1 text-center font-bold" style={{ width: '42%' }}>Componente</th>
-                <th className="border border-black p-1 text-center font-bold" style={{ width: '19%' }}>% Molar</th>
-                <th className="border border-black p-1 text-center font-bold" style={{ width: '19%' }}>% Volumen</th>
-                <th className="border border-black p-1 text-center font-bold" style={{ width: '20%' }}>% Masa</th>
+                <th
+                  className="border border-black p-1 text-center font-bold"
+                  style={{ width: '42%' }}
+                >
+                  Componente
+                </th>
+                <th
+                  className="border border-black p-1 text-center font-bold"
+                  style={{ width: '19%' }}
+                >
+                  % Molar
+                </th>
+                <th
+                  className="border border-black p-1 text-center font-bold"
+                  style={{ width: '19%' }}
+                >
+                  % Volumen
+                </th>
+                <th
+                  className="border border-black p-1 text-center font-bold"
+                  style={{ width: '20%' }}
+                >
+                  % Masa
+                </th>
               </tr>
             </thead>
             <tbody>
               {components.map((comp, idx) => (
                 <tr key={idx}>
-                  <td className="border-l border-r border-black px-2 py-0.5 text-left">{comp.name} ({comp.formula})</td>
-                  <td className="border-l border-r border-black px-2 py-0.5 text-right">{comp.pct_molar.toFixed(3)}</td>
-                  <td className="border-l border-r border-black px-2 py-0.5 text-right">{comp.pct_volumen.toFixed(3)}</td>
-                  <td className="border-l border-r border-black px-2 py-0.5 text-right">{comp.pct_masa.toFixed(3)}</td>
+                  <td className="border-l border-r border-black px-2 py-0.5 text-left">
+                    {comp.name} ({comp.formula})
+                  </td>
+                  <td className="border-l border-r border-black px-2 py-0.5 text-right">
+                    {comp.pct_molar.toFixed(3)}
+                  </td>
+                  <td className="border-l border-r border-black px-2 py-0.5 text-right">
+                    {comp.pct_volumen.toFixed(3)}
+                  </td>
+                  <td className="border-l border-r border-black px-2 py-0.5 text-right">
+                    {comp.pct_masa.toFixed(3)}
+                  </td>
                 </tr>
               ))}
               {props.totales && (
                 <tr className="bg-gray-100 font-bold">
                   <td className="border border-black px-2 py-0.5 text-center">TOTALES</td>
-                  <td className="border border-black px-2 py-0.5 text-right">{props.totales.pct_molar.toFixed(3)}</td>
-                  <td className="border border-black px-2 py-0.5 text-right">{props.totales.pct_volumen.toFixed(3)}</td>
-                  <td className="border border-black px-2 py-0.5 text-right">{props.totales.pct_masa.toFixed(3)}</td>
+                  <td className="border border-black px-2 py-0.5 text-right">
+                    {props.totales.pct_molar.toFixed(3)}
+                  </td>
+                  <td className="border border-black px-2 py-0.5 text-right">
+                    {props.totales.pct_volumen.toFixed(3)}
+                  </td>
+                  <td className="border border-black px-2 py-0.5 text-right">
+                    {props.totales.pct_masa.toFixed(3)}
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -223,22 +295,48 @@ export default function InformePage({ params }: Props) {
         <div className="mx-[60px] mt-2.5 grid grid-cols-2 gap-0">
           {/* Características Generales - COMPLETAS (9 propiedades) */}
           <div className="border border-t border-black">
-            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">Caracteristicas Generales</div>
+            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
+              Caracteristicas Generales
+            </div>
             <table className="w-full text-[11px]">
               <tbody>
-                <PropRow label="Masa Molecular" value={props.caracteristicas_generales.masa_molecular} />
-                <PropRow label="Volumen Molar" value={props.caracteristicas_generales.volumen_molar} />
-                <PropRow label="Densidad Relativa" value={props.caracteristicas_generales.densidad_relativa} />
-                <PropRow label="Densidad Absoluta" value={props.caracteristicas_generales.densidad_absoluta} />
+                <PropRow
+                  label="Masa Molecular"
+                  value={props.caracteristicas_generales.masa_molecular}
+                />
+                <PropRow
+                  label="Volumen Molar"
+                  value={props.caracteristicas_generales.volumen_molar}
+                />
+                <PropRow
+                  label="Densidad Relativa"
+                  value={props.caracteristicas_generales.densidad_relativa}
+                />
+                <PropRow
+                  label="Densidad Absoluta"
+                  value={props.caracteristicas_generales.densidad_absoluta}
+                />
                 <PropRow label="Poder Cal. Superior" value={props.caracteristicas_generales.pcs} />
                 <PropRow label="Poder Cal. Inferior" value={props.caracteristicas_generales.pci} />
-                <PropRow label="Factor Compresibilidad" value={props.caracteristicas_generales.f_compresibilidad} />
-                <PropRow label="Indice de Wobbe" value={props.caracteristicas_generales.indice_wobbe} />
+                <PropRow
+                  label="Factor Compresibilidad"
+                  value={props.caracteristicas_generales.f_compresibilidad}
+                />
+                <PropRow
+                  label="Indice de Wobbe"
+                  value={props.caracteristicas_generales.indice_wobbe}
+                />
                 {props.caracteristicas_generales.viscosidad_dean_stiel && (
-                  <PropRow label="Viscosidad (Dean-Stiel)" value={props.caracteristicas_generales.viscosidad_dean_stiel} />
+                  <PropRow
+                    label="Viscosidad (Dean-Stiel)"
+                    value={props.caracteristicas_generales.viscosidad_dean_stiel}
+                  />
                 )}
                 {props.caracteristicas_generales.viscosidad_lucas && (
-                  <PropRow label="Viscosidad (Lucas)" value={props.caracteristicas_generales.viscosidad_lucas} />
+                  <PropRow
+                    label="Viscosidad (Lucas)"
+                    value={props.caracteristicas_generales.viscosidad_lucas}
+                  />
                 )}
               </tbody>
             </table>
@@ -246,49 +344,67 @@ export default function InformePage({ params }: Props) {
 
           {/* Propiedades Críticas - COMPLETAS (9 propiedades) */}
           <div className="border border-l-0 border-t border-black">
-            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">Propiedades Criticas</div>
+            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
+              Propiedades Criticas
+            </div>
             <table className="w-full text-[11px]">
               <tbody>
                 <tr>
                   <td className="w-1/2 px-1.5 py-0.5">Temp. Critica</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.propiedades_criticas.tc.value_k.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.propiedades_criticas.tc.value_k.toFixed(3)}
+                  </td>
                   <td className="w-[75px] px-1">°K</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Temp. Critica Corr.</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.propiedades_criticas.tc_corr.value_k.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.propiedades_criticas.tc_corr.value_k.toFixed(3)}
+                  </td>
                   <td className="px-1">°K</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Presion Critica</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.propiedades_criticas.pc.value_kpa.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.propiedades_criticas.pc.value_kpa.toFixed(3)}
+                  </td>
                   <td className="px-1">kPa</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Presion Critica Corr.</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.propiedades_criticas.pc_corr.value_kpa.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.propiedades_criticas.pc_corr.value_kpa.toFixed(3)}
+                  </td>
                   <td className="px-1">kPa</td>
                 </tr>
                 <PropRow label="Volumen Critico" value={props.propiedades_criticas.vc} />
                 <PropRow label="Factor Compres. Critico" value={props.propiedades_criticas.zc} />
                 <tr>
                   <td className="px-1.5 py-0.5">Temp. Congelamiento</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.propiedades_criticas.t_congelamiento.value_c.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.propiedades_criticas.t_congelamiento.value_c.toFixed(3)}
+                  </td>
                   <td className="px-1">°C</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Temp. Ebullicion</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.propiedades_criticas.t_ebullicion.value_c.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.propiedades_criticas.t_ebullicion.value_c.toFixed(3)}
+                  </td>
                   <td className="px-1">°C</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Temp. Reducida (Tr)</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.propiedades_criticas.tr.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.propiedades_criticas.tr.toFixed(3)}
+                  </td>
                   <td className="px-1">-</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Presion Reducida (Pr)</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.propiedades_criticas.pr.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.propiedades_criticas.pr.toFixed(3)}
+                  </td>
                   <td className="px-1">-</td>
                 </tr>
               </tbody>
@@ -300,32 +416,44 @@ export default function InformePage({ params }: Props) {
         <div className="mx-[60px] mt-0 grid grid-cols-2 gap-0">
           {/* Volumen de Líquido Equivalente - COMPLETO (5 propiedades) */}
           <div className="border border-t-0 border-black">
-            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">Volumen de liquido equivalente</div>
+            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
+              Volumen de liquido equivalente
+            </div>
             <table className="w-full text-[11px]">
               <tbody>
                 <tr>
                   <td className="w-1/2 px-1.5 py-0.5">C1+</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.volumen_liquido_eq.c1_plus.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.volumen_liquido_eq.c1_plus.toFixed(3)}
+                  </td>
                   <td className="w-[75px] px-1">{props.volumen_liquido_eq.unit}</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">C2+</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.volumen_liquido_eq.c2_plus.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.volumen_liquido_eq.c2_plus.toFixed(3)}
+                  </td>
                   <td className="px-1">{props.volumen_liquido_eq.unit}</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">C3+</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.volumen_liquido_eq.c3_plus.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.volumen_liquido_eq.c3_plus.toFixed(3)}
+                  </td>
                   <td className="px-1">{props.volumen_liquido_eq.unit}</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">C4+</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.volumen_liquido_eq.c4_plus.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.volumen_liquido_eq.c4_plus.toFixed(3)}
+                  </td>
                   <td className="px-1">{props.volumen_liquido_eq.unit}</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">C5+</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.volumen_liquido_eq.c5_plus.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.volumen_liquido_eq.c5_plus.toFixed(3)}
+                  </td>
                   <td className="px-1">{props.volumen_liquido_eq.unit}</td>
                 </tr>
               </tbody>
@@ -334,32 +462,44 @@ export default function InformePage({ params }: Props) {
 
           {/* Porcentual de Composición - COMPLETO (5 propiedades) */}
           <div className="border border-l-0 border-t-0 border-black">
-            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">Porcentual de composicion</div>
+            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
+              Porcentual de composicion
+            </div>
             <table className="w-full text-[11px]">
               <tbody>
                 <tr>
                   <td className="w-1/2 px-1.5 py-0.5">Oxigeno (O)</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.composicion_porcentual.oxigeno.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.composicion_porcentual.oxigeno.toFixed(3)}
+                  </td>
                   <td className="w-[75px] px-1">%</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Nitrogeno (N)</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.composicion_porcentual.nitrogeno.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.composicion_porcentual.nitrogeno.toFixed(3)}
+                  </td>
                   <td className="px-1">%</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Carbono (C)</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.composicion_porcentual.carbono.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.composicion_porcentual.carbono.toFixed(3)}
+                  </td>
                   <td className="px-1">%</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Hidrogeno (H)</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.composicion_porcentual.hidrogeno.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.composicion_porcentual.hidrogeno.toFixed(3)}
+                  </td>
                   <td className="px-1">%</td>
                 </tr>
                 <tr>
                   <td className="px-1.5 py-0.5">Ratio C/H</td>
-                  <td className="px-1.5 py-0.5 text-right">{props.composicion_porcentual.ratio_c_h.toFixed(3)}</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    {props.composicion_porcentual.ratio_c_h.toFixed(3)}
+                  </td>
                   <td className="px-1">-</td>
                 </tr>
               </tbody>
@@ -369,28 +509,40 @@ export default function InformePage({ params }: Props) {
 
         {/* BLOQUE 3: Otros Datos - COMPLETO */}
         <div className="mx-[60px] mt-0 border border-t-0 border-black">
-          <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">Otros Datos</div>
+          <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
+            Otros Datos
+          </div>
           <table className="w-full text-[11px]">
             <tbody>
               <tr>
                 <td className="w-1/4 px-1.5 py-0.5">Aire de combustion</td>
-                <td className="w-1/4 px-1.5 py-0.5 text-right">{props.otros_datos.aire_combustion.value.toFixed(3)}</td>
+                <td className="w-1/4 px-1.5 py-0.5 text-right">
+                  {props.otros_datos.aire_combustion.value.toFixed(3)}
+                </td>
                 <td className="w-[100px] px-1">{props.otros_datos.aire_combustion.unit}</td>
                 <td className="w-1/4 px-1.5 py-0.5">Cp</td>
-                <td className="w-1/4 px-1.5 py-0.5 text-right">{props.otros_datos.cp_kj_kg_k.toFixed(3)}</td>
+                <td className="w-1/4 px-1.5 py-0.5 text-right">
+                  {props.otros_datos.cp_kj_kg_k.toFixed(3)}
+                </td>
                 <td className="w-[100px] px-1">kJ/kg·K</td>
               </tr>
               <tr>
                 <td className="px-1.5 py-0.5">LFL</td>
-                <td className="px-1.5 py-0.5 text-right">{props.otros_datos.lfl.value.toFixed(3)}</td>
+                <td className="px-1.5 py-0.5 text-right">
+                  {props.otros_datos.lfl.value.toFixed(3)}
+                </td>
                 <td className="px-1">{props.otros_datos.lfl.unit}</td>
                 <td className="px-1.5 py-0.5">Cv</td>
-                <td className="px-1.5 py-0.5 text-right">{props.otros_datos.cv_kj_kg_k.toFixed(3)}</td>
+                <td className="px-1.5 py-0.5 text-right">
+                  {props.otros_datos.cv_kj_kg_k.toFixed(3)}
+                </td>
                 <td className="px-1">kJ/kg·K</td>
               </tr>
               <tr>
                 <td className="px-1.5 py-0.5">UFL</td>
-                <td className="px-1.5 py-0.5 text-right">{props.otros_datos.ufl.value.toFixed(3)}</td>
+                <td className="px-1.5 py-0.5 text-right">
+                  {props.otros_datos.ufl.value.toFixed(3)}
+                </td>
                 <td className="px-1">{props.otros_datos.ufl.unit}</td>
                 <td className="px-1.5 py-0.5">k (Cp/Cv)</td>
                 <td className="px-1.5 py-0.5 text-right">{props.otros_datos.k_cp_cv.toFixed(3)}</td>
@@ -398,18 +550,26 @@ export default function InformePage({ params }: Props) {
               </tr>
               <tr>
                 <td className="px-1.5 py-0.5">LFL (fracc. molar)</td>
-                <td className="px-1.5 py-0.5 text-right">{props.otros_datos.lfl_fracc_molar.toFixed(3)}</td>
+                <td className="px-1.5 py-0.5 text-right">
+                  {props.otros_datos.lfl_fracc_molar.toFixed(3)}
+                </td>
                 <td className="px-1">-</td>
                 <td className="px-1.5 py-0.5">Cp</td>
-                <td className="px-1.5 py-0.5 text-right">{props.otros_datos.cp_kcal_kg_c.toFixed(3)}</td>
+                <td className="px-1.5 py-0.5 text-right">
+                  {props.otros_datos.cp_kcal_kg_c.toFixed(3)}
+                </td>
                 <td className="px-1">kcal/kg·°C</td>
               </tr>
               <tr>
                 <td className="px-1.5 py-0.5">UFL (fracc. molar)</td>
-                <td className="px-1.5 py-0.5 text-right">{props.otros_datos.ufl_fracc_molar.toFixed(3)}</td>
+                <td className="px-1.5 py-0.5 text-right">
+                  {props.otros_datos.ufl_fracc_molar.toFixed(3)}
+                </td>
                 <td className="px-1">-</td>
                 <td className="px-1.5 py-0.5">Cv</td>
-                <td className="px-1.5 py-0.5 text-right">{props.otros_datos.cv_kcal_kg_c.toFixed(3)}</td>
+                <td className="px-1.5 py-0.5 text-right">
+                  {props.otros_datos.cv_kcal_kg_c.toFixed(3)}
+                </td>
                 <td className="px-1">kcal/kg·°C</td>
               </tr>
               <tr>
@@ -417,7 +577,9 @@ export default function InformePage({ params }: Props) {
                 <td className="px-1.5 py-0.5 text-right"></td>
                 <td className="px-1"></td>
                 <td className="px-1.5 py-0.5">Cp</td>
-                <td className="px-1.5 py-0.5 text-right">{props.otros_datos.cp_kcal_m3_c.toFixed(3)}</td>
+                <td className="px-1.5 py-0.5 text-right">
+                  {props.otros_datos.cp_kcal_m3_c.toFixed(3)}
+                </td>
                 <td className="px-1">kcal/m³·°C</td>
               </tr>
               <tr>
@@ -425,7 +587,9 @@ export default function InformePage({ params }: Props) {
                 <td className="px-1.5 py-0.5 text-right"></td>
                 <td className="px-1"></td>
                 <td className="px-1.5 py-0.5">Cv</td>
-                <td className="px-1.5 py-0.5 text-right">{props.otros_datos.cv_kcal_m3_c.toFixed(3)}</td>
+                <td className="px-1.5 py-0.5 text-right">
+                  {props.otros_datos.cv_kcal_m3_c.toFixed(3)}
+                </td>
                 <td className="px-1">kcal/m³·°C</td>
               </tr>
             </tbody>
@@ -433,23 +597,34 @@ export default function InformePage({ params }: Props) {
         </div>
 
         {/* BLOQUE 4: Viscosidad Gas (estimada) */}
-        {(props.caracteristicas_generales.viscosidad_dean_stiel || props.caracteristicas_generales.viscosidad_lucas) && (
+        {(props.caracteristicas_generales.viscosidad_dean_stiel ||
+          props.caracteristicas_generales.viscosidad_lucas) && (
           <div className="mx-[60px] mt-0 border border-t-0 border-black">
-            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">Viscosidad Gas (estimada)</div>
+            <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
+              Viscosidad Gas (estimada)
+            </div>
             <table className="w-full text-[11px]">
               <tbody>
                 {props.caracteristicas_generales.viscosidad_dean_stiel && (
                   <tr>
                     <td className="w-1/2 px-1.5 py-0.5">Dean & Stiel</td>
-                    <td className="px-1.5 py-0.5 text-right">{props.caracteristicas_generales.viscosidad_dean_stiel.value.toFixed(5)}</td>
-                    <td className="w-[75px] px-1">{props.caracteristicas_generales.viscosidad_dean_stiel.unit}</td>
+                    <td className="px-1.5 py-0.5 text-right">
+                      {props.caracteristicas_generales.viscosidad_dean_stiel.value.toFixed(5)}
+                    </td>
+                    <td className="w-[75px] px-1">
+                      {props.caracteristicas_generales.viscosidad_dean_stiel.unit}
+                    </td>
                   </tr>
                 )}
                 {props.caracteristicas_generales.viscosidad_lucas && (
                   <tr>
                     <td className="px-1.5 py-0.5">Correl. Lucas</td>
-                    <td className="px-1.5 py-0.5 text-right">{props.caracteristicas_generales.viscosidad_lucas.value.toFixed(5)}</td>
-                    <td className="px-1">{props.caracteristicas_generales.viscosidad_lucas.unit}</td>
+                    <td className="px-1.5 py-0.5 text-right">
+                      {props.caracteristicas_generales.viscosidad_lucas.value.toFixed(5)}
+                    </td>
+                    <td className="px-1">
+                      {props.caracteristicas_generales.viscosidad_lucas.unit}
+                    </td>
                   </tr>
                 )}
                 <tr>
@@ -468,7 +643,13 @@ export default function InformePage({ params }: Props) {
             (NR) No reportada (NE) No ensayado (ND) No disponible (NS) No solicitado
           </div>
           <div className="w-[280px] text-center">
-            <Image src="/croma/firma.jpeg" alt="Firma" width={200} height={80} className="mx-auto" />
+            <Image
+              src="/croma/firma.jpeg"
+              alt="Firma"
+              width={200}
+              height={80}
+              className="mx-auto"
+            />
           </div>
         </div>
       </div>

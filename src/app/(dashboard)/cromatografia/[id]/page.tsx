@@ -41,7 +41,6 @@ export default function AnalysisDetailPage({ params }: Props) {
       : 'Error cargando análisis'
     : null;
 
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -76,7 +75,7 @@ export default function AnalysisDetailPage({ params }: Props) {
       <div className="mx-auto max-w-7xl px-4">
         {/* Header con botones */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <button
               onClick={() => router.push('/cromatografia')}
               className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
@@ -87,7 +86,7 @@ export default function AnalysisDetailPage({ params }: Props) {
             {analysis.chroma_report_html && (
               <button
                 onClick={() => router.push(`/cromatografia/${analysis.analysis_id}/informe`)}
-                className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 font-semibold"
+                className="rounded-md bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700"
               >
                 📄 Ver Informe
               </button>
@@ -128,7 +127,6 @@ export default function AnalysisDetailPage({ params }: Props) {
             {analysis.status === 'reported' && 'Informado'}
           </span>
         </div>
-
 
         {/* Resultados Completos */}
         {props && (
@@ -305,180 +303,196 @@ export default function AnalysisDetailPage({ params }: Props) {
                       }
 
                       // Detectar si es la fila de totales
-                      const isTotalesRow = comp.name?.toUpperCase() === 'TOTALES' || comp.code?.toUpperCase() === 'TOTALES';
+                      const isTotalesRow =
+                        comp.name?.toUpperCase() === 'TOTALES' ||
+                        comp.code?.toUpperCase() === 'TOTALES';
 
                       return (
-                      <tr key={idx} className={isTotalesRow ? 'border-t-4 border-blue-600 bg-blue-50 font-bold' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}>
-                        <td className="sticky left-0 z-10 whitespace-nowrap border-r-2 border-gray-300 bg-inherit px-3 py-2 font-medium text-gray-900">
-                          {comp.name} ({comp.formula})
-                        </td>
-                        <td className="px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.pct_molar, 2)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.fracc_molar, 7)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.pct_volumen, 3)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.pct_masa, 3)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.fc_suma_k, 4)}
-                        </td>
-                        <td className="bg-blue-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.fc_pct_vol, 4)}
-                        </td>
-                        <td className="bg-blue-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.fc_pct_masa, 4)}
-                        </td>
-                        <td className="bg-blue-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.z_puro, 4)}
-                        </td>
-                        <td className="bg-green-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.masa_molar, 3)}
-                        </td>
-                        <td className="bg-green-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.k, 4)}
-                        </td>
-                        <td className="bg-yellow-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.pcs, 2)}
-                        </td>
-                        <td className="bg-yellow-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.pci, 3)}
-                        </td>
-                        <td className="bg-yellow-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.pcs_mezcla, 2)}
-                        </td>
-                        <td className="bg-yellow-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.pci_mezcla, 3)}
-                        </td>
-                        <td className="bg-purple-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.densidad_relativa, 3)}
-                        </td>
-                        <td className="bg-purple-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.masa_molar_pura, 3)}
-                        </td>
-                        <td className="bg-red-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.tc, 2)}
-                        </td>
-                        <td className="bg-red-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.pc, 1)}
-                        </td>
-                        <td className="bg-red-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.tc_contrib, 3)}
-                        </td>
-                        <td className="bg-red-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.pc_contrib, 3)}
-                        </td>
-                        <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.vc_spec, 5)}
-                        </td>
-                        <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.vc_molar, 5)}
-                        </td>
-                        <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.zc, 4)}
-                        </td>
-                        <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.zc_contrib, 4)}
-                        </td>
-                        <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.vc_contrib, 5)}
-                        </td>
-                        <td className="bg-pink-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.t_solid, 2)}
-                        </td>
-                        <td className="bg-pink-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.t_solid_contrib, 3)}
-                        </td>
-                        <td className="bg-cyan-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.m3_gas_m3_liq, 3)}
-                        </td>
-                        <td className="bg-cyan-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.vol_liq_eq, 3)}
-                        </td>
-                        <td className="bg-pink-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.t_boil, 3)}
-                        </td>
-                        <td className="bg-pink-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.t_boil_contrib, 3)}
-                        </td>
-                        <td className="bg-orange-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.n_carbon, 3)}
-                        </td>
-                        <td className="bg-orange-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.n_hydrogen, 3)}
-                        </td>
-                        <td className="bg-orange-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.n_oxygen, 3)}
-                        </td>
-                        <td className="bg-orange-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.n_nitrogen, 3)}
-                        </td>
-                        <td className="bg-teal-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.aire_req, 3)}
-                        </td>
-                        <td className="bg-teal-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.aire_req_contrib, 3)}
-                        </td>
-                        <td className="bg-amber-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.lfl, 1)}
-                        </td>
-                        <td className="bg-amber-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.ufl, 1)}
-                        </td>
-                        <td className="bg-amber-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.lfl_contrib, 3)}
-                        </td>
-                        <td className="bg-amber-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.ufl_contrib, 3)}
-                        </td>
-                        <td className="bg-lime-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.cp_puro, 5)}
-                        </td>
-                        <td className="bg-lime-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.cv_puro, 5)}
-                        </td>
-                        <td className="bg-lime-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.cp_mezcla, 5)}
-                        </td>
-                        <td className="bg-lime-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.cv_mezcla, 5)}
-                        </td>
-                        <td className="bg-emerald-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.hc_ratio, 2)}
-                        </td>
-                        <td className="bg-emerald-50 px-3 py-2 text-right text-gray-700">
-                          {safeFormat(comp.hc_ratio_contrib, 2)}
-                        </td>
-                      </tr>
-                    );
+                        <tr
+                          key={idx}
+                          className={
+                            isTotalesRow
+                              ? 'border-t-4 border-blue-600 bg-blue-50 font-bold'
+                              : idx % 2 === 0
+                                ? 'bg-white'
+                                : 'bg-gray-50'
+                          }
+                        >
+                          <td className="sticky left-0 z-10 whitespace-nowrap border-r-2 border-gray-300 bg-inherit px-3 py-2 font-medium text-gray-900">
+                            {comp.name} ({comp.formula})
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.pct_molar, 2)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.fracc_molar, 7)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.pct_volumen, 3)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.pct_masa, 3)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.fc_suma_k, 4)}
+                          </td>
+                          <td className="bg-blue-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.fc_pct_vol, 4)}
+                          </td>
+                          <td className="bg-blue-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.fc_pct_masa, 4)}
+                          </td>
+                          <td className="bg-blue-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.z_puro, 4)}
+                          </td>
+                          <td className="bg-green-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.masa_molar, 3)}
+                          </td>
+                          <td className="bg-green-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.k, 4)}
+                          </td>
+                          <td className="bg-yellow-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.pcs, 2)}
+                          </td>
+                          <td className="bg-yellow-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.pci, 3)}
+                          </td>
+                          <td className="bg-yellow-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.pcs_mezcla, 2)}
+                          </td>
+                          <td className="bg-yellow-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.pci_mezcla, 3)}
+                          </td>
+                          <td className="bg-purple-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.densidad_relativa, 3)}
+                          </td>
+                          <td className="bg-purple-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.masa_molar_pura, 3)}
+                          </td>
+                          <td className="bg-red-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.tc, 2)}
+                          </td>
+                          <td className="bg-red-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.pc, 1)}
+                          </td>
+                          <td className="bg-red-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.tc_contrib, 3)}
+                          </td>
+                          <td className="bg-red-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.pc_contrib, 3)}
+                          </td>
+                          <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.vc_spec, 5)}
+                          </td>
+                          <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.vc_molar, 5)}
+                          </td>
+                          <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.zc, 4)}
+                          </td>
+                          <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.zc_contrib, 4)}
+                          </td>
+                          <td className="bg-indigo-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.vc_contrib, 5)}
+                          </td>
+                          <td className="bg-pink-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.t_solid, 2)}
+                          </td>
+                          <td className="bg-pink-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.t_solid_contrib, 3)}
+                          </td>
+                          <td className="bg-cyan-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.m3_gas_m3_liq, 3)}
+                          </td>
+                          <td className="bg-cyan-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.vol_liq_eq, 3)}
+                          </td>
+                          <td className="bg-pink-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.t_boil, 3)}
+                          </td>
+                          <td className="bg-pink-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.t_boil_contrib, 3)}
+                          </td>
+                          <td className="bg-orange-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.n_carbon, 3)}
+                          </td>
+                          <td className="bg-orange-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.n_hydrogen, 3)}
+                          </td>
+                          <td className="bg-orange-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.n_oxygen, 3)}
+                          </td>
+                          <td className="bg-orange-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.n_nitrogen, 3)}
+                          </td>
+                          <td className="bg-teal-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.aire_req, 3)}
+                          </td>
+                          <td className="bg-teal-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.aire_req_contrib, 3)}
+                          </td>
+                          <td className="bg-amber-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.lfl, 1)}
+                          </td>
+                          <td className="bg-amber-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.ufl, 1)}
+                          </td>
+                          <td className="bg-amber-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.lfl_contrib, 3)}
+                          </td>
+                          <td className="bg-amber-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.ufl_contrib, 3)}
+                          </td>
+                          <td className="bg-lime-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.cp_puro, 5)}
+                          </td>
+                          <td className="bg-lime-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.cv_puro, 5)}
+                          </td>
+                          <td className="bg-lime-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.cp_mezcla, 5)}
+                          </td>
+                          <td className="bg-lime-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.cv_mezcla, 5)}
+                          </td>
+                          <td className="bg-emerald-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.hc_ratio, 2)}
+                          </td>
+                          <td className="bg-emerald-50 px-3 py-2 text-right text-gray-700">
+                            {safeFormat(comp.hc_ratio_contrib, 2)}
+                          </td>
+                        </tr>
+                      );
                     })}
 
                     {/* Fila de TOTALES (solo si no viene en el array composicion) */}
-                    {props.totales && !props.composicion.some(c => c.name?.toUpperCase() === 'TOTALES' || c.code?.toUpperCase() === 'TOTALES') && (
-                      <tr className="border-t-4 border-blue-600 bg-blue-50 font-bold">
-                        <td className="sticky left-0 z-10 border-r-2 border-gray-300 bg-blue-50 px-3 py-2 text-gray-900">
-                          TOTALES
-                        </td>
-                        <td className="px-3 py-2 text-right text-gray-900">
-                          {safeFormat(props.totales.pct_molar, 2)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-gray-900">-</td>
-                        <td className="px-3 py-2 text-right text-gray-900">
-                          {safeFormat(props.totales.pct_volumen, 3)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-gray-900">
-                          {safeFormat(props.totales.pct_masa, 3)}
-                        </td>
-                        {/* Agregar más columnas de totales según sea necesario */}
-                        <td colSpan={42} className="px-3 py-2 text-center text-gray-500">
-                          Ver resumen en secciones inferiores
-                        </td>
-                      </tr>
-                    )}
+                    {props.totales &&
+                      !props.composicion.some(
+                        (c) =>
+                          c.name?.toUpperCase() === 'TOTALES' ||
+                          c.code?.toUpperCase() === 'TOTALES',
+                      ) && (
+                        <tr className="border-t-4 border-blue-600 bg-blue-50 font-bold">
+                          <td className="sticky left-0 z-10 border-r-2 border-gray-300 bg-blue-50 px-3 py-2 text-gray-900">
+                            TOTALES
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-900">
+                            {safeFormat(props.totales.pct_molar, 2)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-900">-</td>
+                          <td className="px-3 py-2 text-right text-gray-900">
+                            {safeFormat(props.totales.pct_volumen, 3)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-gray-900">
+                            {safeFormat(props.totales.pct_masa, 3)}
+                          </td>
+                          {/* Agregar más columnas de totales según sea necesario */}
+                          <td colSpan={42} className="px-3 py-2 text-center text-gray-500">
+                            Ver resumen en secciones inferiores
+                          </td>
+                        </tr>
+                      )}
                   </tbody>
                 </table>
               </div>
@@ -574,18 +588,26 @@ export default function AnalysisDetailPage({ params }: Props) {
                     <div>
                       <p className="text-sm font-medium text-gray-700">Temperatura Critica</p>
                       <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.tc.value_k, 3)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.tc.value_k, 3)}
+                        </span>
                         <span className="text-sm text-gray-600">°K</span>
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.tc.value_c, 4)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.tc.value_c, 4)}
+                        </span>
                         <span className="text-sm text-gray-600">°C</span>
                       </div>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">Temperatura Critica Corr.</p>
                       <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.tc_corr.value_k, 3)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.tc_corr.value_k, 3)}
+                        </span>
                         <span className="text-sm text-gray-600">°K</span>
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.tc_corr.value_c, 4)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.tc_corr.value_c, 4)}
+                        </span>
                         <span className="text-sm text-gray-600">°C</span>
                       </div>
                     </div>
@@ -595,18 +617,26 @@ export default function AnalysisDetailPage({ params }: Props) {
                     <div>
                       <p className="text-sm font-medium text-gray-700">Presion Critica</p>
                       <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.pc.value_kpa, 3)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.pc.value_kpa, 3)}
+                        </span>
                         <span className="text-sm text-gray-600">kPa</span>
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.pc.value_kg_cm2, 4)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.pc.value_kg_cm2, 4)}
+                        </span>
                         <span className="text-sm text-gray-600">kg/cm2</span>
                       </div>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">Presion Critica Corr.</p>
                       <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.pc_corr.value_kpa, 3)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.pc_corr.value_kpa, 3)}
+                        </span>
                         <span className="text-sm text-gray-600">kPa</span>
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.pc_corr.value_kg_cm2, 4)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.pc_corr.value_kg_cm2, 4)}
+                        </span>
                         <span className="text-sm text-gray-600">kg/cm2</span>
                       </div>
                     </div>
@@ -624,18 +654,26 @@ export default function AnalysisDetailPage({ params }: Props) {
                     <div>
                       <p className="text-sm font-medium text-gray-700">Punto de Congelamiento</p>
                       <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.t_congelamiento.value_k, 3)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.t_congelamiento.value_k, 3)}
+                        </span>
                         <span className="text-sm text-gray-600">°K</span>
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.t_congelamiento.value_c, 4)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.t_congelamiento.value_c, 4)}
+                        </span>
                         <span className="text-sm text-gray-600">°C</span>
                       </div>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">Punto de Ebullicion</p>
                       <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.t_ebullicion.value_k, 3)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.t_ebullicion.value_k, 3)}
+                        </span>
                         <span className="text-sm text-gray-600">°K</span>
-                        <span className="text-base font-semibold">{safeFormat(props.propiedades_criticas.t_ebullicion.value_c, 4)}</span>
+                        <span className="text-base font-semibold">
+                          {safeFormat(props.propiedades_criticas.t_ebullicion.value_c, 4)}
+                        </span>
                         <span className="text-sm text-gray-600">°C</span>
                       </div>
                     </div>
@@ -644,11 +682,15 @@ export default function AnalysisDetailPage({ params }: Props) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-medium text-gray-700">Temp. Reducida</p>
-                      <p className="text-base font-semibold">{safeFormat(props.propiedades_criticas.tr, 2)}</p>
+                      <p className="text-base font-semibold">
+                        {safeFormat(props.propiedades_criticas.tr, 2)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">Presion Reducida</p>
-                      <p className="text-base font-semibold">{safeFormat(props.propiedades_criticas.pr, 2)}</p>
+                      <p className="text-base font-semibold">
+                        {safeFormat(props.propiedades_criticas.pr, 2)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -669,31 +711,36 @@ export default function AnalysisDetailPage({ params }: Props) {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">C1+</span>
                       <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c1_plus, 4)} <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
+                        {safeFormat(props.volumen_liquido_eq.c1_plus, 4)}{' '}
+                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">C2+</span>
                       <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c2_plus, 4)} <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
+                        {safeFormat(props.volumen_liquido_eq.c2_plus, 4)}{' '}
+                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">C3+</span>
                       <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c3_plus, 4)} <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
+                        {safeFormat(props.volumen_liquido_eq.c3_plus, 4)}{' '}
+                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">C4+</span>
                       <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c4_plus, 4)} <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
+                        {safeFormat(props.volumen_liquido_eq.c4_plus, 4)}{' '}
+                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">C5+</span>
                       <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c5_plus, 4)} <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
+                        {safeFormat(props.volumen_liquido_eq.c5_plus, 4)}{' '}
+                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
                       </span>
                     </div>
                   </div>
@@ -710,25 +757,29 @@ export default function AnalysisDetailPage({ params }: Props) {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Oxigeno</span>
                       <span className="text-sm font-medium">
-                        {safeFormat(props.composicion_porcentual.oxigeno, 1)} <span className="text-gray-500">%</span>
+                        {safeFormat(props.composicion_porcentual.oxigeno, 1)}{' '}
+                        <span className="text-gray-500">%</span>
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Nitrogeno</span>
                       <span className="text-sm font-medium">
-                        {safeFormat(props.composicion_porcentual.nitrogeno, 1)} <span className="text-gray-500">%</span>
+                        {safeFormat(props.composicion_porcentual.nitrogeno, 1)}{' '}
+                        <span className="text-gray-500">%</span>
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Carbono</span>
                       <span className="text-sm font-medium">
-                        {safeFormat(props.composicion_porcentual.carbono, 1)} <span className="text-gray-500">%</span>
+                        {safeFormat(props.composicion_porcentual.carbono, 1)}{' '}
+                        <span className="text-gray-500">%</span>
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Hidrogeno</span>
                       <span className="text-sm font-medium">
-                        {safeFormat(props.composicion_porcentual.hidrogeno, 1)} <span className="text-gray-500">%</span>
+                        {safeFormat(props.composicion_porcentual.hidrogeno, 1)}{' '}
+                        <span className="text-gray-500">%</span>
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -753,28 +804,44 @@ export default function AnalysisDetailPage({ params }: Props) {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Aire Req. p/Combust.</p>
                     <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.aire_combustion.value, 3)}</span>
-                      <span className="text-sm text-gray-600">{props.otros_datos.aire_combustion.unit}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.aire_combustion.value, 3)}
+                      </span>
+                      <span className="text-sm text-gray-600">
+                        {props.otros_datos.aire_combustion.unit}
+                      </span>
                     </div>
                   </div>
 
                   {/* Límites de inflamabilidad */}
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Limite de inflamabilidad Inf.</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      Limite de inflamabilidad Inf.
+                    </p>
                     <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.lfl.value, 3)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.lfl.value, 3)}
+                      </span>
                       <span className="text-sm text-gray-600">% Vol.</span>
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.lfl_fracc_molar, 4)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.lfl_fracc_molar, 4)}
+                      </span>
                       <span className="text-sm text-gray-600">Fracc. Molar</span>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Limite de inflamabilidad Sup.</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      Limite de inflamabilidad Sup.
+                    </p>
                     <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.ufl.value, 3)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.ufl.value, 3)}
+                      </span>
                       <span className="text-sm text-gray-600">% Vol.</span>
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.ufl_fracc_molar, 4)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.ufl_fracc_molar, 4)}
+                      </span>
                       <span className="text-sm text-gray-600">Fracc. Molar</span>
                     </div>
                   </div>
@@ -783,11 +850,17 @@ export default function AnalysisDetailPage({ params }: Props) {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Cp</p>
                     <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.cp_kj_kg_k, 3)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.cp_kj_kg_k, 3)}
+                      </span>
                       <span className="text-sm text-gray-600">kJ/(kg ºK)</span>
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.cp_kcal_kg_c, 4)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.cp_kcal_kg_c, 4)}
+                      </span>
                       <span className="text-sm text-gray-600">kcal/(kg ºC)</span>
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.cp_kcal_m3_c, 4)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.cp_kcal_m3_c, 4)}
+                      </span>
                       <span className="text-sm text-gray-600">kcal/(m3 ºC)</span>
                     </div>
                   </div>
@@ -795,11 +868,17 @@ export default function AnalysisDetailPage({ params }: Props) {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Cv</p>
                     <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.cv_kj_kg_k, 3)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.cv_kj_kg_k, 3)}
+                      </span>
                       <span className="text-sm text-gray-600">kJ/(kg ºK)</span>
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.cv_kcal_kg_c, 4)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.cv_kcal_kg_c, 4)}
+                      </span>
                       <span className="text-sm text-gray-600">kcal/(kg ºC)</span>
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.cv_kcal_m3_c, 4)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.cv_kcal_m3_c, 4)}
+                      </span>
                       <span className="text-sm text-gray-600">kcal/(m3 ºC)</span>
                     </div>
                   </div>
@@ -807,15 +886,20 @@ export default function AnalysisDetailPage({ params }: Props) {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Cp/Cv</p>
                     <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.k_cp_cv, 3)}</span>
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.k_cp_cv, 3)}</span>
-                      <span className="text-base font-semibold">{safeFormat(props.otros_datos.k_cp_cv, 3)}</span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.k_cp_cv, 3)}
+                      </span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.k_cp_cv, 3)}
+                      </span>
+                      <span className="text-base font-semibold">
+                        {safeFormat(props.otros_datos.k_cp_cv, 3)}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-
           </div>
         )}
       </div>

@@ -10,9 +10,9 @@ import * as XLSX from 'xlsx';
 import {
   uploadXLSXFile,
   calculateProperties,
-  generateReport
+  generateReport,
 } from '@/src/modules/chromatography/services/chromatographyService';
-import { UploadXLSXResponse } from '@/src/modules/chromatography/types';
+import AnalysisLoadingModal from '@/src/modules/chromatography/components/AnalysisLoadingModal';
 
 type ProcessStep = 'idle' | 'uploading' | 'calculating' | 'generating-report' | 'complete';
 
@@ -106,25 +106,9 @@ export default function ChromatographyPage() {
       setTimeout(() => {
         router.push(`/cromatografia/${uploadResult.analysis_id}`);
       }, 1000);
-
     } catch (err: any) {
       setError(err.message || 'Error procesando análisis');
       setCurrentStep('idle');
-    }
-  };
-
-  const getStepMessage = () => {
-    switch (currentStep) {
-      case 'uploading':
-        return 'Obteniendo porcentajes molares...';
-      case 'calculating':
-        return 'Generando análisis...';
-      case 'generating-report':
-        return 'Generando informe...';
-      case 'complete':
-        return '¡Proceso completado! Redirigiendo...';
-      default:
-        return '';
     }
   };
 
@@ -214,8 +198,18 @@ export default function ChromatographyPage() {
                   {/* Header con nombre del archivo */}
                   <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
                     <div className="flex items-center space-x-2">
-                      <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <svg
+                        className="h-5 w-5 text-green-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
                       </svg>
                       <span className="font-medium text-gray-900">{file.name}</span>
                     </div>
@@ -236,23 +230,26 @@ export default function ChromatographyPage() {
                       <p className="mb-2 text-sm font-medium text-gray-700">Preview del archivo:</p>
                       <div className="max-h-96 overflow-auto rounded border border-gray-200">
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
-                          <thead className="bg-gray-50 sticky top-0">
+                          <thead className="sticky top-0 bg-gray-50">
                             <tr>
                               {excelPreview.headers.map((header, idx) => (
                                 <th
                                   key={idx}
-                                  className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                  className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                                 >
                                   {header}
                                 </th>
                               ))}
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
+                          <tbody className="divide-y divide-gray-200 bg-white">
                             {excelPreview.rows.map((row, rowIdx) => (
                               <tr key={rowIdx} className="hover:bg-gray-50">
                                 {row.map((cell, cellIdx) => (
-                                  <td key={cellIdx} className="px-3 py-2 whitespace-nowrap text-gray-900">
+                                  <td
+                                    key={cellIdx}
+                                    className="whitespace-nowrap px-3 py-2 text-gray-900"
+                                  >
                                     {cell !== undefined && cell !== null ? String(cell) : '-'}
                                   </td>
                                 ))}
@@ -262,7 +259,9 @@ export default function ChromatographyPage() {
                         </table>
                       </div>
                       {excelPreview.rows.length >= 10 && (
-                        <p className="mt-2 text-xs text-gray-500">Mostrando las primeras 10 filas...</p>
+                        <p className="mt-2 text-xs text-gray-500">
+                          Mostrando las primeras 10 filas...
+                        </p>
                       )}
                     </div>
                   )}
@@ -274,36 +273,6 @@ export default function ChromatographyPage() {
             {error && (
               <div className="rounded-md border border-red-200 bg-red-50 p-4">
                 <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
-
-            {/* Progress message */}
-            {isProcessing && (
-              <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                  <p className="text-sm font-medium text-blue-800">{getStepMessage()}</p>
-                </div>
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center space-x-2 text-xs">
-                    <div className={`h-2 w-2 rounded-full ${currentStep === 'uploading' || currentStep === 'calculating' || currentStep === 'generating-report' || currentStep === 'complete' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    <span className={currentStep === 'uploading' || currentStep === 'calculating' || currentStep === 'generating-report' || currentStep === 'complete' ? 'text-green-700 font-medium' : 'text-gray-500'}>
-                      Porcentajes molares
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-xs">
-                    <div className={`h-2 w-2 rounded-full ${currentStep === 'calculating' || currentStep === 'generating-report' || currentStep === 'complete' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    <span className={currentStep === 'calculating' || currentStep === 'generating-report' || currentStep === 'complete' ? 'text-green-700 font-medium' : 'text-gray-500'}>
-                      Analizando
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-xs">
-                    <div className={`h-2 w-2 rounded-full ${currentStep === 'generating-report' || currentStep === 'complete' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    <span className={currentStep === 'generating-report' || currentStep === 'complete' ? 'text-green-700 font-medium' : 'text-gray-500'}>
-                      Generando informe
-                    </span>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -336,8 +305,9 @@ export default function ChromatographyPage() {
           <h3 className="mb-2 text-sm font-medium text-blue-900">Proceso Automatizado</h3>
           <ul className="list-inside list-disc space-y-1 text-sm text-blue-800">
             <li>Suba el archivo XLSX exportado por el cromatógrafo Agilent</li>
-            <li>El sistema procesará automáticamente:
-              <ul className="ml-6 mt-1 list-inside list-circle space-y-1">
+            <li>
+              El sistema procesará automáticamente:
+              <ul className="list-circle ml-6 mt-1 list-inside space-y-1">
                 <li>Extracción de porcentajes molares</li>
                 <li>Cálculo de propiedades del gas</li>
                 <li>Generación del informe HTML</li>
@@ -348,6 +318,12 @@ export default function ChromatographyPage() {
           </ul>
         </div>
       </div>
+
+      {/* Modal de carga futurista */}
+      <AnalysisLoadingModal
+        isOpen={isProcessing}
+        currentStep={currentStep === 'idle' ? 'uploading' : currentStep}
+      />
     </div>
   );
 }
