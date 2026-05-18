@@ -200,6 +200,7 @@ export interface ChromatographicAnalysis {
   include_viscosities: boolean;
 
   calculated_properties?: CalculatedProperties;
+  chroma_report_html?: string;
   status: AnalysisStatus;
 
   created_at: string;

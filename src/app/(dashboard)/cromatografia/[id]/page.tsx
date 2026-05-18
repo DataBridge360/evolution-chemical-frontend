@@ -38,6 +38,7 @@ export default function AnalysisDetailPage({ params }: Props) {
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [approvingAndGenerating, setApprovingAndGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -104,23 +105,44 @@ export default function AnalysisDetailPage({ params }: Props) {
   const handleGenerateReport = async () => {
     if (!analysis) return;
 
+    // Si ya tiene el HTML generado, solo redirigir
+    if (analysis.chroma_report_html) {
+      router.push(`/cromatografia/${analysis.analysis_id}/informe`);
+      return;
+    }
+
+    // Si no tiene HTML, generarlo primero
     setGenerating(true);
     setError(null);
 
     try {
-      const report = await generateReport(analysis.analysis_id, {
-        report_type: 'extended',
-      });
-
-      if (report.file) {
-        window.open(report.file, '_blank');
-      }
-
-      await loadAnalysis();
+      await generateReport(analysis.analysis_id);
+      router.push(`/cromatografia/${analysis.analysis_id}/informe`);
     } catch (err: any) {
       setError(err.message || 'Error generando informe');
-    } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleApproveAndGenerateReport = async () => {
+    if (!analysis) return;
+
+    setApprovingAndGenerating(true);
+    setError(null);
+
+    try {
+      // Paso 1: Aprobar el análisis
+      const approvedAnalysis = await approveAnalysis(analysis.analysis_id);
+      setAnalysis(approvedAnalysis);
+
+      // Paso 2: Generar el informe HTML
+      await generateReport(approvedAnalysis.analysis_id);
+
+      // Paso 3: Redirigir a la previsualización del informe
+      router.push(`/cromatografia/${approvedAnalysis.analysis_id}/informe`);
+    } catch (err: any) {
+      setError(err.message || 'Error aprobando y generando informe');
+      setApprovingAndGenerating(false);
     }
   };
 
@@ -913,12 +935,21 @@ export default function AnalysisDetailPage({ params }: Props) {
             {/* Acciones */}
             <div className="flex space-x-4">
               {analysis.status === 'calculated' && (
-                <button
-                  onClick={handleApprove}
-                  className="rounded-md bg-green-600 px-6 py-2 text-white hover:bg-green-700"
-                >
-                  Aprobar Análisis
-                </button>
+                <>
+                  <button
+                    onClick={handleApprove}
+                    className="rounded-md border border-green-600 bg-white px-6 py-2 text-green-600 hover:bg-green-50"
+                  >
+                    Solo Aprobar
+                  </button>
+                  <button
+                    onClick={handleApproveAndGenerateReport}
+                    disabled={approvingAndGenerating}
+                    className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                    {approvingAndGenerating ? 'Aprobando y Generando...' : 'Aprobar y Generar Informe'}
+                  </button>
+                </>
               )}
               {(analysis.status === 'approved' || analysis.status === 'reported') && (
                 <button
@@ -926,7 +957,7 @@ export default function AnalysisDetailPage({ params }: Props) {
                   disabled={generating}
                   className="rounded-md bg-purple-600 px-6 py-2 text-white hover:bg-purple-700 disabled:bg-gray-400"
                 >
-                  {generating ? 'Generando...' : 'Generar Informe XLSX'}
+                  {generating ? 'Generando...' : analysis.chroma_report_html ? 'Ver Informe' : 'Generar Informe'}
                 </button>
               )}
             </div>

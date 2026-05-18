@@ -172,16 +172,15 @@ export async function approveAnalysis(analysisId: string): Promise<Chromatograph
 }
 
 /**
- * Genera un informe XLSX del análisis
+ * Genera el informe HTML del análisis y lo guarda en la BD
  */
 export async function generateReport(
   analysisId: string,
-  options?: GenerateReportRequest,
-): Promise<AnalysisReport> {
+): Promise<{ html: string; analysis_id: string; status: string }> {
   const response = await fetch(`${API_BASE}/analyses/${analysisId}/generate-report/`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify(options || { report_type: 'extended' }),
+    body: JSON.stringify({}),
   });
 
   if (!response.ok) {
