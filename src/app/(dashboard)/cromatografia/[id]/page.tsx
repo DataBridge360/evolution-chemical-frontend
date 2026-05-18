@@ -5,14 +5,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  getAnalysis,
-  calculateProperties,
-  approveAnalysis,
-  generateReport,
-} from '@/src/modules/chromatography/services/chromatographyService';
+import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
 import { ChromatographicAnalysis } from '@/src/modules/chromatography/types';
 
 interface Props {
@@ -34,117 +28,19 @@ const safeFormat = (value: number | undefined | null, decimals: number = 2): str
 
 export default function AnalysisDetailPage({ params }: Props) {
   const router = useRouter();
-  const [analysis, setAnalysis] = useState<ChromatographicAnalysis | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [calculating, setCalculating] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [approvingAndGenerating, setApprovingAndGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data: analysis, isLoading: loading, error: queryError } = useAnalysis(params.id);
 
-  useEffect(() => {
-    loadAnalysis();
-  }, [params.id]);
+  // Convertir error de React Query a string
+  const error = queryError
+    ? queryError instanceof Error
+      ? queryError.message?.includes('401')
+        ? 'No está autenticado. Por favor inicie sesión.'
+        : queryError.message?.includes('404')
+          ? `No se encontró el análisis con ID: ${params.id}`
+          : queryError.message || 'Error cargando análisis'
+      : 'Error cargando análisis'
+    : null;
 
-  const loadAnalysis = async () => {
-    try {
-      const data = await getAnalysis(params.id);
-      console.log('🔍 Análisis cargado:', data);
-      console.log('🔍 Propiedades calculadas:', data.calculated_properties);
-      if (data.calculated_properties?.composicion) {
-        console.log('🔍 Primer compuesto:', data.calculated_properties.composicion[0]);
-      }
-      setAnalysis(data);
-    } catch (err: any) {
-      console.error('Error loading analysis:', err);
-
-      // Check if it's an authentication error
-      if (err.message?.includes('autenticación') || err.message?.includes('401')) {
-        setError('No está autenticado. Por favor inicie sesión.');
-      } else if (err.message?.includes('404') || err.message?.includes('no se encontró')) {
-        setError(`No se encontró el análisis con ID: ${params.id}`);
-      } else {
-        setError(err.message || 'Error cargando análisis');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCalculate = async () => {
-    if (!analysis) return;
-
-    setCalculating(true);
-    setError(null);
-
-    try {
-      const result = await calculateProperties(analysis.analysis_id, {
-        apply_o2_n2_discount: analysis.apply_o2_n2_discount,
-        discount_percentage: analysis.discount_percentage,
-        include_viscosities: analysis.include_viscosities,
-      });
-
-      setAnalysis(result);
-    } catch (err: any) {
-      setError(err.message || 'Error calculando propiedades');
-    } finally {
-      setCalculating(false);
-    }
-  };
-
-  const handleApprove = async () => {
-    if (!analysis) return;
-
-    try {
-      const result = await approveAnalysis(analysis.analysis_id);
-      setAnalysis(result);
-    } catch (err: any) {
-      setError(err.message || 'Error aprobando análisis');
-    }
-  };
-
-  const handleGenerateReport = async () => {
-    if (!analysis) return;
-
-    // Si ya tiene el HTML generado, solo redirigir
-    if (analysis.chroma_report_html) {
-      router.push(`/cromatografia/${analysis.analysis_id}/informe`);
-      return;
-    }
-
-    // Si no tiene HTML, generarlo primero
-    setGenerating(true);
-    setError(null);
-
-    try {
-      await generateReport(analysis.analysis_id);
-      router.push(`/cromatografia/${analysis.analysis_id}/informe`);
-    } catch (err: any) {
-      setError(err.message || 'Error generando informe');
-      setGenerating(false);
-    }
-  };
-
-  const handleApproveAndGenerateReport = async () => {
-    if (!analysis) return;
-
-    setApprovingAndGenerating(true);
-    setError(null);
-
-    try {
-      // Paso 1: Aprobar el análisis
-      const approvedAnalysis = await approveAnalysis(analysis.analysis_id);
-      setAnalysis(approvedAnalysis);
-
-      // Paso 2: Generar el informe HTML
-      await generateReport(approvedAnalysis.analysis_id);
-
-      // Paso 3: Redirigir a la previsualización del informe
-      router.push(`/cromatografia/${approvedAnalysis.analysis_id}/informe`);
-    } catch (err: any) {
-      setError(err.message || 'Error aprobando y generando informe');
-      setApprovingAndGenerating(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -178,21 +74,31 @@ export default function AnalysisDetailPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="mx-auto max-w-7xl px-4">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        {/* Header con botones */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => router.push('/cromatografia')}
+              className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+            >
+              ← Volver
+            </button>
+
+            {analysis.chroma_report_html && (
+              <button
+                onClick={() => router.push(`/cromatografia/${analysis.analysis_id}/informe`)}
+                className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 font-semibold"
+              >
+                📄 Ver Informe
+              </button>
+            )}
+          </div>
+
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Análisis Cromatográfico</h1>
             <p className="mt-1 text-gray-600">
               {analysis.company_name} {analysis.field_name && `- ${analysis.field_name}`}
             </p>
-          </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={() => router.push('/cromatografia')}
-              className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
-            >
-              Volver
-            </button>
           </div>
         </div>
 
@@ -223,28 +129,6 @@ export default function AnalysisDetailPage({ params }: Props) {
           </span>
         </div>
 
-        {/* Botón calcular si es borrador */}
-        {analysis.status === 'draft' && (
-          <div className="mb-6 rounded-lg bg-white p-6 shadow">
-            <h2 className="mb-4 text-lg font-semibold">Composición Detectada</h2>
-            <div className="mb-4 grid grid-cols-3 gap-4">
-              {analysis.composition &&
-                Object.entries(analysis.composition).map(([code, pct]) => (
-                  <div key={code} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{code}</span>
-                    <span className="font-medium">{safeFormat(pct as number, 3)}%</span>
-                  </div>
-                ))}
-            </div>
-            <button
-              onClick={handleCalculate}
-              disabled={calculating}
-              className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
-            >
-              {calculating ? 'Calculando...' : 'Calcular Propiedades'}
-            </button>
-          </div>
-        )}
 
         {/* Resultados Completos */}
         {props && (
@@ -932,35 +816,6 @@ export default function AnalysisDetailPage({ params }: Props) {
               </div>
             </div>
 
-            {/* Acciones */}
-            <div className="flex space-x-4">
-              {analysis.status === 'calculated' && (
-                <>
-                  <button
-                    onClick={handleApprove}
-                    className="rounded-md border border-green-600 bg-white px-6 py-2 text-green-600 hover:bg-green-50"
-                  >
-                    Solo Aprobar
-                  </button>
-                  <button
-                    onClick={handleApproveAndGenerateReport}
-                    disabled={approvingAndGenerating}
-                    className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
-                  >
-                    {approvingAndGenerating ? 'Aprobando y Generando...' : 'Aprobar y Generar Informe'}
-                  </button>
-                </>
-              )}
-              {(analysis.status === 'approved' || analysis.status === 'reported') && (
-                <button
-                  onClick={handleGenerateReport}
-                  disabled={generating}
-                  className="rounded-md bg-purple-600 px-6 py-2 text-white hover:bg-purple-700 disabled:bg-gray-400"
-                >
-                  {generating ? 'Generando...' : analysis.chroma_report_html ? 'Ver Informe' : 'Generar Informe'}
-                </button>
-              )}
-            </div>
           </div>
         )}
       </div>

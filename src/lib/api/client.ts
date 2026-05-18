@@ -259,6 +259,79 @@ class ApiClient {
   delete<T>(endpoint: string, includeAuth: boolean = false): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' }, includeAuth);
   }
+
+  /**
+   * POST con FormData (sin Content-Type para que el navegador lo añada automáticamente con boundary)
+   */
+  async postFormData<T>(endpoint: string, formData: FormData, includeAuth: boolean = false): Promise<T> {
+    // PASO 1: Asegurar que el token sea válido ANTES del request
+    if (includeAuth) {
+      await this.ensureValidToken();
+    }
+
+    // PASO 2: Hacer el request con FormData
+    const url = `${API_URL}${endpoint}`;
+    const headers: HeadersInit = {};
+
+    // Solo añadir Authorization, NO Content-Type (el navegador lo maneja automáticamente)
+    if (includeAuth && typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    // PASO 3: Manejo de errores con reintento si recibimos 401
+    if (response.status === 401 && includeAuth) {
+      console.log('[Auth] 401 recibido en FormData, intentando refresh de emergencia...');
+
+      try {
+        await this.refreshAccessToken();
+
+        // Reintentar con nuevo token
+        const newToken = localStorage.getItem('accessToken');
+        const retryHeaders: HeadersInit = {};
+        if (newToken) {
+          retryHeaders['Authorization'] = `Bearer ${newToken}`;
+        }
+
+        const retryResponse = await fetch(url, {
+          method: 'POST',
+          headers: retryHeaders,
+          body: formData,
+        });
+
+        if (!retryResponse.ok) {
+          const error = await retryResponse.json().catch(() => ({ message: 'Error desconocido' }));
+          throw new Error(error.message || `Error ${retryResponse.status}`);
+        }
+
+        return retryResponse.json();
+      } catch (refreshError) {
+        // Refresh falló, redirigir a login
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+        throw refreshError;
+      }
+    }
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      throw new Error(error.message || `Error ${response.status}`);
+    }
+
+    return response.json();
+  }
 }
 
 export const apiClient = new ApiClient();
