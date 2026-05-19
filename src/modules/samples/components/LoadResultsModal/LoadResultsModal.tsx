@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Sample } from '@/src/types/sample';
-import { resultsService } from '@/src/modules/results/services/ResultsService';
+import { analysesService } from '@/src/modules/analyses/services/AnalysesService';
 
 interface LoadResultsModalProps {
   sample: Sample;
@@ -35,7 +35,7 @@ export function LoadResultsModal({
     try {
       setLoading(true);
 
-      await resultsService.createOrUpdateResult(sample.sample_id, {
+      await analysesService.createOrUpdateAnalysis(sample.sample_id, {
         analysis_performed: data.analysis_performed,
         observations: data.observations,
       });

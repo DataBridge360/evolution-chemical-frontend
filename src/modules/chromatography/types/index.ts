@@ -218,7 +218,7 @@ export interface AnalysisReport {
 
 export interface UploadXLSXRequest {
   xlsx_file: File;
-  company_name?: string;
+  company_id: string;
   field_name?: string;
   well_name?: string;
 }
