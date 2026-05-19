@@ -115,91 +115,31 @@ export default function ChromatographyPage() {
   const isProcessing = currentStep !== 'idle';
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-4xl px-4">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900">Análisis Cromatográfico</h1>
-
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold">Subir archivo del cromatógrafo</h2>
-
-          <div className="space-y-4">
-            {/* Campo de empresa */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">Empresa *</label>
-              <input
-                type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nombre de la empresa cliente"
-                required
-              />
-            </div>
-
-            {/* Campo de yacimiento */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Yacimiento (opcional)
-              </label>
-              <input
-                type="text"
-                value={fieldName}
-                onChange={(e) => setFieldName(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nombre del yacimiento"
-              />
-            </div>
-
-            {/* Selector de archivo */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Archivo XLSX del cromatógrafo *
+    <div className="flex min-h-full items-start pt-16">
+      {/* Contenedor Glass */}
+      <div className="w-full overflow-hidden rounded-2xl border border-white/20 bg-white/40 shadow-2xl backdrop-blur-xl">
+        <div className="p-8">
+            {/* Carga de Archivo */}
+            <div className="mb-6">
+              <label className="mb-3 block text-sm font-semibold text-foreground">
+                Archivo XLSX <span className="text-destructive">*</span>
               </label>
 
               {!file ? (
-                <div className="mt-1 flex justify-center rounded-md border-2 border-dashed border-gray-300 px-6 pb-6 pt-5 transition-colors hover:border-blue-400">
-                  <div className="space-y-1 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor="file-upload"
-                        className="relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none hover:text-blue-500"
-                      >
-                        <span>Seleccionar archivo</span>
-                        <input
-                          id="file-upload"
-                          name="file-upload"
-                          type="file"
-                          accept=".xlsx,.xls"
-                          className="sr-only"
-                          onChange={handleFileChange}
-                        />
-                      </label>
-                      <p className="pl-1">o arrastrar y soltar</p>
-                    </div>
-                    <p className="text-xs text-gray-500">XLSX o XLS hasta 10MB</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-md border border-gray-300 bg-white">
-                  {/* Header con nombre del archivo */}
-                  <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
-                    <div className="flex items-center space-x-2">
+                <div className="group relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border/60 bg-white/50 px-6 py-8 backdrop-blur-sm transition-all hover:border-primary hover:bg-white/70">
+                  <input
+                    id="file-upload"
+                    name="file-upload"
+                    type="file"
+                    accept=".xlsx,.xls"
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    onChange={handleFileChange}
+                  />
+
+                  <div className="flex flex-col items-center text-center">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-transform group-hover:scale-110">
                       <svg
-                        className="h-5 w-5 text-green-600"
+                        className="h-8 w-8 text-primary"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -207,60 +147,94 @@ export default function ChromatographyPage() {
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          strokeWidth={1.5}
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                         />
                       </svg>
-                      <span className="font-medium text-gray-900">{file.name}</span>
+                    </div>
+
+                    <p className="mb-1 text-base">
+                      <span className="font-semibold text-primary">Seleccionar archivo</span>
+                      <span className="text-muted-foreground"> o arrastrar aquí</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">XLSX, XLS • Máx. 10MB</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-xl border border-border/60 bg-white/60 backdrop-blur-sm">
+                  <div className="flex items-center justify-between border-b border-border/60 bg-primary/5 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <svg
+                          className="h-6 w-6 text-primary"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(file.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
                     </div>
                     <button
                       onClick={() => {
                         setFile(null);
                         setExcelPreview(null);
                       }}
-                      className="text-sm text-red-600 hover:text-red-700"
+                      className="rounded-lg px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                     >
-                      Cambiar archivo
+                      Eliminar
                     </button>
                   </div>
 
-                  {/* Preview de datos */}
                   {excelPreview && (
                     <div className="p-4">
-                      <p className="mb-2 text-sm font-medium text-gray-700">Preview del archivo:</p>
-                      <div className="max-h-96 overflow-auto rounded border border-gray-200">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                          <thead className="sticky top-0 bg-gray-50">
-                            <tr>
-                              {excelPreview.headers.map((header, idx) => (
-                                <th
-                                  key={idx}
-                                  className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                                >
-                                  {header}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-200 bg-white">
-                            {excelPreview.rows.map((row, rowIdx) => (
-                              <tr key={rowIdx} className="hover:bg-gray-50">
-                                {row.map((cell, cellIdx) => (
-                                  <td
-                                    key={cellIdx}
-                                    className="whitespace-nowrap px-3 py-2 text-gray-900"
+                      <p className="mb-2 text-sm font-semibold text-foreground">Vista previa</p>
+                      <div className="overflow-hidden rounded-lg border border-border/60">
+                        <div className="max-h-60 overflow-auto">
+                          <table className="min-w-full divide-y divide-border text-sm">
+                            <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
+                              <tr>
+                                {excelPreview.headers.map((header, idx) => (
+                                  <th
+                                    key={idx}
+                                    className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                                   >
-                                    {cell !== undefined && cell !== null ? String(cell) : '-'}
-                                  </td>
+                                    {header}
+                                  </th>
                                 ))}
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody className="divide-y divide-border bg-white/50">
+                              {excelPreview.rows.map((row, rowIdx) => (
+                                <tr key={rowIdx} className="transition-colors hover:bg-white/80">
+                                  {row.map((cell, cellIdx) => (
+                                    <td
+                                      key={cellIdx}
+                                      className="whitespace-nowrap px-3 py-2 text-foreground"
+                                    >
+                                      {cell !== undefined && cell !== null ? String(cell) : '-'}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                       {excelPreview.rows.length >= 10 && (
-                        <p className="mt-2 text-xs text-gray-500">
-                          Mostrando las primeras 10 filas...
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Mostrando primeras 10 filas
                         </p>
                       )}
                     </div>
@@ -269,55 +243,104 @@ export default function ChromatographyPage() {
               )}
             </div>
 
-            {/* Error message */}
+            {/* Inputs */}
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-foreground">
+                  Empresa <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="w-full rounded-lg border border-border/60 bg-white/60 px-4 py-2.5 text-foreground backdrop-blur-sm placeholder:text-muted-foreground focus:border-primary focus:bg-white/80 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="Nombre de la empresa cliente"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-foreground">
+                  Yacimiento <span className="text-xs text-muted-foreground">(opcional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={fieldName}
+                  onChange={(e) => setFieldName(e.target.value)}
+                  className="w-full rounded-lg border border-border/60 bg-white/60 px-4 py-2.5 text-foreground backdrop-blur-sm placeholder:text-muted-foreground focus:border-primary focus:bg-white/80 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="Nombre del yacimiento"
+                />
+              </div>
+            </div>
+
+            {/* Error */}
             {error && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-4">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 backdrop-blur-sm">
+                <p className="text-sm font-medium text-destructive">{error}</p>
               </div>
             )}
+          </div>
 
-            {/* Botón de subida */}
-            <div className="flex justify-end space-x-4">
+          {/* Botones */}
+          <div className="border-t border-white/20 bg-white/30 px-8 py-4 backdrop-blur-sm">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => router.push('/dashboard')}
                 disabled={isProcessing}
-                className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-border/60 bg-white/60 px-5 py-2.5 text-sm font-medium text-foreground backdrop-blur-sm transition-all hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleUpload}
                 disabled={isProcessing || !file || !companyName}
-                className={`rounded-md px-6 py-2 text-white transition-colors ${
+                className={`flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold shadow-lg transition-all ${
                   isProcessing || !file || !companyName
-                    ? 'cursor-not-allowed bg-gray-400'
-                    : 'bg-blue-600 hover:bg-blue-700'
+                    ? 'cursor-not-allowed bg-muted-foreground text-white'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-xl'
                 }`}
               >
-                {isProcessing ? 'Procesando...' : 'Subir y analizar'}
+                {isProcessing ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                    Procesar Análisis
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
-
-        {/* Instrucciones */}
-        <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <h3 className="mb-2 text-sm font-medium text-blue-900">Proceso Automatizado</h3>
-          <ul className="list-inside list-disc space-y-1 text-sm text-blue-800">
-            <li>Suba el archivo XLSX exportado por el cromatógrafo Agilent</li>
-            <li>
-              El sistema procesará automáticamente:
-              <ul className="list-circle ml-6 mt-1 list-inside space-y-1">
-                <li>Extracción de porcentajes molares</li>
-                <li>Cálculo de propiedades del gas</li>
-                <li>Generación del informe HTML</li>
-              </ul>
-            </li>
-            <li>Una vez completado, podrá ver el análisis detallado y el informe final</li>
-            <li>El informe es editable antes de imprimir o exportar a PDF</li>
-          </ul>
-        </div>
-      </div>
 
       {/* Modal de carga futurista */}
       <AnalysisLoadingModal

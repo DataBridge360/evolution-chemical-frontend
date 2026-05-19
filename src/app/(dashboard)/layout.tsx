@@ -6,6 +6,107 @@ import { Sidebar } from '@/src/components/layout/Sidebar';
 import { authService } from '@/src/modules/auth/services/AuthService';
 import { UserRole } from '@/src/types/user';
 
+function DashboardHeader() {
+  const router = useRouter();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const user = authService.getCurrentUser();
+
+  const handleLogout = () => {
+    authService.logout();
+    router.push('/auth/login');
+  };
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
+      <div className="flex h-14 items-center justify-end px-6">
+        {/* Profile Menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 transition-colors hover:bg-muted"
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
+              <svg
+                className="h-4 w-4 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </div>
+            <div className="text-left">
+              <p className="text-xs font-medium text-foreground">
+                {user?.role === UserRole.OWNER ? 'Owner' : user?.role}
+              </p>
+              <p className="text-[10px] text-muted-foreground">Sesión Activa</p>
+            </div>
+            <svg
+              className={`h-3 w-3 text-muted-foreground transition-transform ${
+                showProfileMenu ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {/* Dropdown Menu */}
+          {showProfileMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowProfileMenu(false)}
+              />
+              <div className="absolute right-0 z-20 mt-2 w-52 rounded-lg border border-border bg-card shadow-lg">
+                <div className="border-b border-border px-3 py-2.5">
+                  <p className="text-sm font-medium text-foreground">{user?.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {user?.role === UserRole.OWNER ? 'Administrador Principal' : user?.role}
+                  </p>
+                </div>
+                <div className="p-1.5">
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    Cerrar Sesión
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isValidating, setIsValidating] = useState(true);
@@ -53,9 +154,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-screen overflow-hidden bg-muted/30">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto max-w-7xl p-6">{children}</div>
-      </main>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <DashboardHeader />
+        <main className="flex-1 overflow-y-auto">
+          <div className="container mx-auto max-w-7xl p-6">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }
