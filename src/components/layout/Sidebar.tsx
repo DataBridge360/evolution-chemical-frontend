@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/src/lib/utils/cn';
-import { authService } from '@/src/modules/auth/services/AuthService';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
@@ -17,17 +16,6 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      router.push('/auth/login');
-      router.refresh();
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
 
   return (
     <div className="flex h-full w-64 flex-col border-r border-border">
