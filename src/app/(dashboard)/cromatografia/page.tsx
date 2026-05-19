@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import {
@@ -12,6 +12,8 @@ import {
   calculateProperties,
   generateReport,
 } from '@/src/modules/chromatography/services/chromatographyService';
+import { companiesService } from '@/src/modules/companies/services/CompaniesService';
+import { Company } from '@/src/types/company';
 import AnalysisLoadingModal from '@/src/modules/chromatography/components/AnalysisLoadingModal';
 
 type ProcessStep = 'idle' | 'uploading' | 'calculating' | 'generating-report' | 'complete';
@@ -24,11 +26,37 @@ interface ExcelPreviewData {
 export default function ChromatographyPage() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
-  const [companyName, setCompanyName] = useState('');
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [fieldName, setFieldName] = useState('');
   const [currentStep, setCurrentStep] = useState<ProcessStep>('idle');
   const [error, setError] = useState<string | null>(null);
   const [excelPreview, setExcelPreview] = useState<ExcelPreviewData | null>(null);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
+
+  // Cargar empresas al montar
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  const loadCompanies = async () => {
+    try {
+      setLoadingCompanies(true);
+      const data = await companiesService.getAllCompanies();
+      setCompanies(data);
+    } catch (error) {
+      console.error('Error cargando empresas:', error);
+      setError('Error cargando lista de empresas');
+    } finally {
+      setLoadingCompanies(false);
+    }
+  };
+
+  // Filtrar empresas por búsqueda
+  const filteredCompanies = companies.filter((company) =>
+    company.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -72,8 +100,8 @@ export default function ChromatographyPage() {
       return;
     }
 
-    if (!companyName) {
-      setError('Por favor ingrese el nombre de la empresa');
+    if (!selectedCompanyId) {
+      setError('Por favor seleccione una empresa');
       return;
     }
 
@@ -83,7 +111,7 @@ export default function ChromatographyPage() {
       // Paso 1: Obtener porcentajes molares (subir Excel)
       setCurrentStep('uploading');
       const uploadResult = await uploadXLSXFile(file, {
-        company_name: companyName,
+        company_id: selectedCompanyId,
         field_name: fieldName,
       });
 
@@ -249,14 +277,40 @@ export default function ChromatographyPage() {
                 <label className="mb-2 block text-sm font-semibold text-foreground">
                   Empresa <span className="text-destructive">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full rounded-lg border border-border/60 bg-white/60 px-4 py-2.5 text-foreground backdrop-blur-sm placeholder:text-muted-foreground focus:border-primary focus:bg-white/80 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                  placeholder="Nombre de la empresa cliente"
-                  required
-                />
+                {loadingCompanies ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-white/60 px-4 py-2.5">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                    <span className="text-sm text-muted-foreground">Cargando empresas...</span>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="mb-2 w-full rounded-lg border border-border/60 bg-white/60 px-4 py-2.5 text-foreground backdrop-blur-sm placeholder:text-muted-foreground focus:border-primary focus:bg-white/80 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      placeholder="Buscar empresa..."
+                    />
+                    <select
+                      value={selectedCompanyId}
+                      onChange={(e) => setSelectedCompanyId(e.target.value)}
+                      className="w-full rounded-lg border border-border/60 bg-white/60 px-4 py-2.5 text-foreground backdrop-blur-sm focus:border-primary focus:bg-white/80 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      required
+                    >
+                      <option value="">Seleccionar empresa...</option>
+                      {filteredCompanies.map((company) => (
+                        <option key={company.company_id} value={company.company_id}>
+                          {company.name}
+                        </option>
+                      ))}
+                    </select>
+                    {filteredCompanies.length === 0 && searchTerm && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        No se encontraron empresas con "{searchTerm}"
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
 
               <div>
@@ -293,9 +347,9 @@ export default function ChromatographyPage() {
               </button>
               <button
                 onClick={handleUpload}
-                disabled={isProcessing || !file || !companyName}
+                disabled={isProcessing || !file || !selectedCompanyId}
                 className={`flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold shadow-lg transition-all ${
-                  isProcessing || !file || !companyName
+                  isProcessing || !file || !selectedCompanyId
                     ? 'cursor-not-allowed bg-muted-foreground text-white'
                     : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-xl'
                 }`}

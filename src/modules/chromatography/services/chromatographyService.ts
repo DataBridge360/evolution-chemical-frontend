@@ -7,10 +7,8 @@ import { apiClient } from '@/src/lib/api/client';
 import {
   ChromatographicAnalysis,
   AnalysisReport,
-  UploadXLSXRequest,
   UploadXLSXResponse,
   CalculatePropertiesRequest,
-  GenerateReportRequest,
 } from '../types';
 
 /**
@@ -18,18 +16,16 @@ import {
  */
 export async function uploadXLSXFile(
   file: File,
-  metadata?: Partial<UploadXLSXRequest>,
+  metadata: { company_id: string; field_name?: string; well_name?: string },
 ): Promise<UploadXLSXResponse> {
   const formData = new FormData();
   formData.append('xlsx_file', file);
+  formData.append('company_id', metadata.company_id);
 
-  if (metadata?.company_name) {
-    formData.append('company_name', metadata.company_name);
-  }
-  if (metadata?.field_name) {
+  if (metadata.field_name) {
     formData.append('field_name', metadata.field_name);
   }
-  if (metadata?.well_name) {
+  if (metadata.well_name) {
     formData.append('well_name', metadata.well_name);
   }
 
@@ -53,6 +49,22 @@ export async function listAnalyses(): Promise<ChromatographicAnalysis[]> {
     '/chromatography/analyses/',
     true, // includeAuth
   );
+}
+
+/**
+ * Obtiene análisis cromatográficos filtrados por empresa
+ */
+export async function getAnalysesByCompanyId(
+  companyId: string,
+): Promise<ChromatographicAnalysis[]> {
+  try {
+    return await apiClient.get<ChromatographicAnalysis[]>(
+      `/chromatography/analyses/company/${companyId}/`,
+      true, // includeAuth
+    );
+  } catch (error: any) {
+    throw new Error(error.message || 'Error obteniendo análisis de la empresa');
+  }
 }
 
 /**

@@ -1,59 +1,43 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { resultsService } from '@/src/modules/results/services/ResultsService';
-import { SampleResultWithDetails } from '@/src/types/sampleResult';
+import { useRouter, useParams } from 'next/navigation';
+import { companiesService } from '@/src/modules/companies/services/CompaniesService';
+import { Company, Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
 
-export default function ResultadosPage() {
+export default function LocalidadEmpresasPage() {
   const router = useRouter();
-  const [results, setResults] = useState<SampleResultWithDetails[]>([]);
+  const params = useParams();
+  const localidad = params.localidad as Localidad;
+
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadResults();
-  }, []);
+    loadCompanies();
+  }, [localidad]);
 
-  const loadResults = async () => {
+  const loadCompanies = async () => {
     try {
       setLoading(true);
-      const data = await resultsService.getAllResults();
-      setResults(data);
+      const allCompanies = await companiesService.getAllCompanies();
+      // Filtrar por localidad
+      const filtered = allCompanies.filter((company) => company.localidad === localidad);
+      setCompanies(filtered);
     } catch (error) {
-      console.error('Error al cargar resultados:', error);
-      setResults([]);
+      console.error('Error al cargar empresas:', error);
+      setCompanies([]);
     } finally {
       setLoading(false);
     }
   };
-
-  // Agrupar resultados por empresa
-  const groupedByCompany = results.reduce(
-    (acc, result) => {
-      // El backend devuelve company_id y company_name directamente en el result
-      const companyId = result.company_id || 'sin-empresa';
-      const companyName = result.company_name || 'Sin empresa';
-
-      if (!acc[companyId]) {
-        acc[companyId] = {
-          name: companyName,
-          results: [],
-        };
-      }
-      acc[companyId].results.push(result);
-      return acc;
-    },
-    {} as Record<string, { name: string; results: SampleResultWithDetails[] }>,
-  );
-
-  const companies = Object.entries(groupedByCompany);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-          <p className="mt-2 text-sm text-muted-foreground">Cargando resultados...</p>
+          <p className="mt-2 text-sm text-muted-foreground">Cargando empresas...</p>
         </div>
       </div>
     );
@@ -61,11 +45,33 @@ export default function ResultadosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-border pb-4">
+      {/* Header con botón de regreso */}
+      <div className="flex items-center gap-4 border-b border-border pb-4">
+        <button
+          onClick={() => router.push('/analisis')}
+          className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+          title="Volver a localidades"
+        >
+          <svg
+            className="h-6 w-6 text-gray-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Resultados</h1>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {LOCALIDAD_LABELS[localidad]}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Resultados de análisis organizados por empresa
+            {companies.length} empresa{companies.length !== 1 ? 's' : ''} en esta localidad
           </p>
         </div>
       </div>
@@ -74,13 +80,13 @@ export default function ResultadosPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {companies.length === 0 ? (
           <div className="col-span-full border border-border bg-white p-12 text-center text-muted-foreground">
-            No hay resultados registrados.
+            No hay empresas registradas en esta localidad.
           </div>
         ) : (
-          companies.map(([companyId, company]) => (
+          companies.map((company) => (
             <button
-              key={companyId}
-              onClick={() => router.push(`/resultados/${companyId}`)}
+              key={company.company_id}
+              onClick={() => router.push(`/analisis/${localidad}/${company.company_id}`)}
               className="group border-2 border-border bg-white p-6 text-left transition-all hover:border-blue-600 hover:shadow-lg"
             >
               <div className="flex items-start gap-4">
@@ -95,9 +101,7 @@ export default function ResultadosPage() {
                   <h3 className="mb-1 truncate text-lg font-semibold text-foreground">
                     {company.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {company.results.length} resultado{company.results.length !== 1 ? 's' : ''}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Ver análisis</p>
                 </div>
                 <svg
                   className="h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-blue-600"
