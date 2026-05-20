@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { WelcomeOverlay } from '@/src/components/layout/WelcomeOverlay';
 import { cn } from '@/src/lib/utils/cn';
 import { authService } from '@/src/modules/auth/services/AuthService';
-import { UserRole } from '@/src/types/user';
+import { type User, UserRole } from '@/src/types/user';
 
 export default function CompanyLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -12,9 +13,11 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [shouldEnter, setShouldEnter] = useState(false);
+  const [welcomeText, setWelcomeText] = useState<string | null>(null);
 
   useEffect(() => {
     const user = authService.getCurrentUser();
+    const timers: number[] = [];
 
     if (!authService.isAuthenticated()) {
       router.push('/auth/login');
@@ -30,10 +33,23 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
     if (window.sessionStorage.getItem('dashboard-enter-transition') === 'zoom-in') {
       window.sessionStorage.removeItem('dashboard-enter-transition');
       setShouldEnter(true);
+
+      const name = window.sessionStorage.getItem('login-welcome-name') || getUserDisplayName(user);
+      window.sessionStorage.removeItem('login-welcome-name');
+      setWelcomeText(`Bienvenido ${name}`);
+      timers.push(
+        window.setTimeout(() => {
+          setWelcomeText(null);
+        }, 2300),
+      );
     }
 
     setIsAuthorized(true);
     setIsValidating(false);
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
   }, [router]);
 
   if (isValidating) {
@@ -108,10 +124,18 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto max-w-7xl p-6">{children}</div>
       </main>
+      {welcomeText && <WelcomeOverlay text={welcomeText} />}
       <div className="dashboard-logout-fade" aria-hidden="true" />
       <LogoutTransitionStyles />
     </div>
   );
+}
+
+function getUserDisplayName(user: User | null) {
+  if (user?.name?.trim()) return user.name.trim();
+
+  const emailName = user?.email?.split('@')[0]?.trim();
+  return emailName || 'Usuario';
 }
 
 function wait(ms: number) {
