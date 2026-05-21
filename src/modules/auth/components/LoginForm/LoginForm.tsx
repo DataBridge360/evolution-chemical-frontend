@@ -94,6 +94,7 @@ export function LoginForm() {
       const authData = await authService.login(data.email, data.password);
       loginSucceeded = true;
       window.sessionStorage.setItem('dashboard-enter-transition', 'zoom-in');
+      window.sessionStorage.removeItem('dashboard-welcome-morph-played');
       window.sessionStorage.setItem(
         'login-welcome-name',
         getWelcomeName(authData.user.name, authData.user.email),

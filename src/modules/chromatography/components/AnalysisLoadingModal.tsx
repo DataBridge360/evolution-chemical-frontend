@@ -1,10 +1,11 @@
 /**
- * Modal de carga futurista para el análisis cromatográfico
+ * Modal de carga para el análisis cromatográfico
  */
 
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Atom, Beaker, FileSpreadsheet, Orbit } from 'lucide-react';
 
 type AnalysisStep = 'uploading' | 'calculating' | 'generating-report' | 'complete';
 
@@ -16,307 +17,248 @@ interface AnalysisLoadingModalProps {
 interface StepConfig {
   label: string;
   description: string;
-  icon: string;
-  progressStart: number;
   progressEnd: number;
+  icon: typeof FileSpreadsheet;
 }
 
 const STEPS: Record<AnalysisStep, StepConfig> = {
   uploading: {
-    label: 'Porcentajes Molares',
-    description: 'Extrayendo datos del cromatógrafo',
-    icon: 'M13 10V3L4 14h7v7l9-11h-7z',
-    progressStart: 0,
-    progressEnd: 33,
+    label: 'Lectura cromatográfica',
+    description: 'Validando la planilla y extrayendo la corrida.',
+    progressEnd: 28,
+    icon: FileSpreadsheet,
   },
   calculating: {
-    label: 'Analizando',
-    description: 'Calculando propiedades del gas',
-    icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
-    progressStart: 34,
-    progressEnd: 66,
+    label: 'Motor de propiedades',
+    description: 'Calculando composición y comportamiento del gas.',
+    progressEnd: 67,
+    icon: Atom,
   },
   'generating-report': {
-    label: 'Generando Informe',
-    description: 'Creando documento final',
-    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-    progressStart: 67,
-    progressEnd: 99,
+    label: 'Consolidación técnica',
+    description: 'Preparando resultados e informe.',
+    progressEnd: 93,
+    icon: Beaker,
   },
   complete: {
-    label: 'Completado',
-    description: 'Redirigiendo al informe',
-    icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-    progressStart: 100,
+    label: 'Análisis completado',
+    description: 'Redirigiendo al detalle del análisis.',
     progressEnd: 100,
+    icon: Orbit,
   },
 };
 
+const STEP_ORDER: AnalysisStep[] = ['uploading', 'calculating', 'generating-report', 'complete'];
+
 export default function AnalysisLoadingModal({ isOpen, currentStep }: AnalysisLoadingModalProps) {
   const [displayProgress, setDisplayProgress] = useState(0);
-  const [particles, setParticles] = useState<
-    Array<{ id: number; x: number; y: number; delay: number; duration: number }>
-  >([]);
-
   const stepConfig = STEPS[currentStep];
-  const targetProgress = stepConfig.progressEnd;
 
-  // Generar partículas de fondo
   useEffect(() => {
-    if (isOpen) {
-      const newParticles = Array.from({ length: 30 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        delay: Math.random() * 5,
-        duration: 10 + Math.random() * 20,
-      }));
-      setParticles(newParticles);
-    }
-  }, [isOpen]);
-
-  // Animar el progreso
-  useEffect(() => {
-    if (isOpen) {
-      const interval = setInterval(() => {
-        setDisplayProgress((prev) => {
-          if (prev < targetProgress) {
-            const increment = Math.max(1, Math.floor((targetProgress - prev) / 10));
-            return Math.min(prev + increment, targetProgress);
-          }
-          return prev;
-        });
-      }, 50);
-
-      return () => clearInterval(interval);
-    } else {
+    if (!isOpen) {
       setDisplayProgress(0);
+      return;
     }
-  }, [isOpen, targetProgress]);
+
+    const interval = window.setInterval(() => {
+      setDisplayProgress((previous) => {
+        if (previous >= stepConfig.progressEnd) return previous;
+        const delta = Math.max(1, Math.ceil((stepConfig.progressEnd - previous) / 10));
+        return Math.min(previous + delta, stepConfig.progressEnd);
+      });
+    }, 90);
+
+    return () => window.clearInterval(interval);
+  }, [isOpen, stepConfig.progressEnd]);
 
   if (!isOpen) return null;
 
-  const circumference = 2 * Math.PI * 120;
-  const strokeDashoffset = circumference - (displayProgress / 100) * circumference;
+  const activeIndex = STEP_ORDER.indexOf(currentStep);
+  const ActiveIcon = stepConfig.icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
-      {/* Fondo con gradiente animado */}
-      <div className="animate-gradient-shift absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900" />
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(241,246,251,0.82)] px-4 backdrop-blur-lg">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(72,142,220,0.10),transparent_26%),radial-gradient(circle_at_80%_75%,rgba(72,142,220,0.08),transparent_24%)]" />
 
-      {/* Partículas de fondo */}
-      <div className="absolute inset-0 overflow-hidden">
-        {particles.map((particle) => (
-          <div
-            key={particle.id}
-            className="animate-float absolute h-1 w-1 rounded-full bg-cyan-400 opacity-30"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              animationDelay: `${particle.delay}s`,
-              animationDuration: `${particle.duration}s`,
-            }}
-          />
-        ))}
-      </div>
+      <div className="relative w-full max-w-[720px] overflow-hidden rounded-[28px] border border-[#d7e3f0] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.16)]">
+        <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-[#0f4f84] via-[#0b63a8] to-[#7fb8f0]" />
 
-      {/* Grid de fondo */}
-      <div className="absolute inset-0 opacity-10">
-        <div
-          className="h-full w-full"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(6, 182, 212, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.2) 1px, transparent 1px)',
-            backgroundSize: '50px 50px',
-          }}
-        />
-      </div>
-
-      {/* Contenido principal */}
-      <div className="relative z-10 flex flex-col items-center space-y-12 px-8">
-        {/* Círculo de progreso */}
-        <div className="relative">
-          {/* Glow exterior */}
-          <div className="absolute inset-0 -m-8 animate-pulse rounded-full bg-cyan-500 opacity-20 blur-3xl" />
-
-          {/* SVG del círculo */}
-          <svg className="-rotate-90 transform" width="280" height="280">
-            {/* Círculo de fondo */}
-            <circle
-              cx="140"
-              cy="140"
-              r="120"
-              stroke="rgba(6, 182, 212, 0.1)"
-              strokeWidth="12"
-              fill="none"
-            />
-
-            {/* Círculo de progreso */}
-            <circle
-              cx="140"
-              cy="140"
-              r="120"
-              stroke="url(#gradient)"
-              strokeWidth="12"
-              fill="none"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              className="drop-shadow-[0_0_10px_rgba(6,182,212,0.8)] transition-all duration-300 ease-out"
-            />
-
-            {/* Gradiente */}
-            <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#06b6d4" />
-                <stop offset="50%" stopColor="#3b82f6" />
-                <stop offset="100%" stopColor="#8b5cf6" />
-              </linearGradient>
-            </defs>
-          </svg>
-
-          {/* Contenido interno del círculo */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            {/* Icono de la etapa actual */}
-            <div className="mb-4">
-              <svg
-                className="h-16 w-16 animate-pulse text-cyan-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d={stepConfig.icon}
-                />
-              </svg>
-            </div>
-
-            {/* Porcentaje */}
-            <div className="text-7xl font-bold tracking-tight text-white">
-              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-                {displayProgress}
-              </span>
-              <span className="text-5xl text-cyan-400">%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Información de la etapa */}
-        <div className="max-w-md space-y-3 text-center">
-          <h2 className="text-3xl font-bold tracking-wide text-white">{stepConfig.label}</h2>
-          <p className="text-lg font-light text-cyan-300">{stepConfig.description}</p>
-        </div>
-
-        {/* Indicadores de etapa */}
-        <div className="flex items-center space-x-4">
-          {(['uploading', 'calculating', 'generating-report', 'complete'] as AnalysisStep[]).map(
-            (step, index) => {
-              const isActive = step === currentStep;
-              const isCompleted = STEPS[step].progressEnd <= displayProgress;
-
-              return (
-                <div key={step} className="flex items-center">
-                  <div
-                    className={`
-                    h-3 w-3 rounded-full transition-all duration-500
-                    ${
-                      isCompleted
-                        ? 'scale-125 bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.8)]'
-                        : isActive
-                          ? 'scale-110 animate-pulse bg-cyan-500'
-                          : 'bg-slate-700'
-                    }
-                  `}
-                  />
-                  {index < 3 && (
-                    <div
-                      className={`
-                      h-0.5 w-16 transition-all duration-500
-                      ${
-                        STEPS[
-                          (
-                            [
-                              'uploading',
-                              'calculating',
-                              'generating-report',
-                              'complete',
-                            ] as AnalysisStep[]
-                          )[index + 1]
-                        ].progressEnd <= displayProgress
-                          ? 'bg-cyan-400'
-                          : 'bg-slate-700'
-                      }
-                    `}
-                    />
-                  )}
+        <div className="px-5 py-5 sm:px-7 sm:py-6">
+          <div className="flex flex-col gap-6 sm:gap-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#d8e5f2] bg-[#f5f9ff] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#2d6b9f]">
+                  <span className="h-2 w-2 rounded-full bg-[#4d96dc] shadow-[0_0_10px_rgba(77,150,220,0.55)]" />
+                  Procesando muestra
                 </div>
-              );
-            },
-          )}
-        </div>
+                <h2 className="mt-4 text-[clamp(1.35rem,4vw,1.8rem)] font-semibold tracking-[-0.04em] text-[#10243e]">
+                  {stepConfig.label}
+                </h2>
+                <p className="mt-2 max-w-[44ch] text-sm leading-6 text-[#5c7086]">
+                  {stepConfig.description}
+                </p>
+              </div>
 
-        {/* Mensaje adicional */}
-        {currentStep === 'complete' && (
-          <div className="animate-fade-in text-center">
-            <p className="text-sm text-cyan-300">Preparando visualización del informe...</p>
+              <div className="hidden rounded-2xl border border-[#dce8f4] bg-[#f8fbff] p-3 text-[#0b63a8] sm:block">
+                <ActiveIcon className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="grid items-center gap-6 sm:grid-cols-[minmax(0,1fr)_220px]">
+              <div className="space-y-4">
+                {STEP_ORDER.map((step, index) => {
+                  const isActive = step === currentStep;
+                  const isCompleted = index < activeIndex || currentStep === 'complete';
+
+                  return (
+                    <div key={step} className="flex items-start gap-3">
+                      <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
+                        <span
+                          className={`absolute h-8 w-8 rounded-full border transition-all ${
+                            isCompleted
+                              ? 'border-[#0b63a8] bg-[#0b63a8]'
+                              : isActive
+                                ? 'border-[#90bee6] bg-[#eaf4ff]'
+                                : 'border-[#d8e4ef] bg-white'
+                          }`}
+                        />
+                        <span
+                          className={`relative text-xs font-semibold ${
+                            isCompleted
+                              ? 'text-white'
+                              : isActive
+                                ? 'text-[#0b63a8]'
+                                : 'text-[#8a9caf]'
+                          }`}
+                        >
+                          {isCompleted ? '✓' : index + 1}
+                        </span>
+                      </div>
+
+                      <div className="min-w-0 pt-0.5">
+                        <p
+                          className={`text-sm font-medium ${
+                            isActive || isCompleted ? 'text-[#10243e]' : 'text-[#72859a]'
+                          }`}
+                        >
+                          {STEPS[step].label}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-center">
+                <div className="relative flex h-[180px] w-[180px] items-center justify-center">
+                  <div className="minimal-orbit absolute inset-0 rounded-full border border-[#d6e7f7]" />
+                  <div className="minimal-orbit-reverse absolute inset-[18px] rounded-full border border-dashed border-[#b8d5ee]" />
+
+                  <div className="minimal-dot absolute left-[8px] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-[#0b63a8]" />
+                  <div className="minimal-dot-delayed absolute right-[18px] top-[26px] h-2.5 w-2.5 rounded-full bg-[#7bb4ea]" />
+
+                  <svg
+                    className="absolute inset-0 -rotate-90"
+                    viewBox="0 0 220 220"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      cx="110"
+                      cy="110"
+                      r="76"
+                      fill="none"
+                      stroke="rgba(136,178,216,0.18)"
+                      strokeWidth="10"
+                    />
+                    <circle
+                      cx="110"
+                      cy="110"
+                      r="76"
+                      fill="none"
+                      stroke="url(#minimalLoadingGradient)"
+                      strokeWidth="10"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 76}`}
+                      strokeDashoffset={`${2 * Math.PI * 76 * (1 - displayProgress / 100)}`}
+                      className="transition-all duration-500 ease-out"
+                    />
+                    <defs>
+                      <linearGradient
+                        id="minimalLoadingGradient"
+                        x1="0%"
+                        x2="100%"
+                        y1="0%"
+                        y2="100%"
+                      >
+                        <stop offset="0%" stopColor="#8dc3f5" />
+                        <stop offset="55%" stopColor="#0b63a8" />
+                        <stop offset="100%" stopColor="#6eaee7" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+
+                  <div className="relative flex h-[112px] w-[112px] flex-col items-center justify-center rounded-full bg-[#fbfdff] shadow-[inset_0_0_0_1px_rgba(216,228,239,0.95)]">
+                    <ActiveIcon className="mb-2 h-5 w-5 text-[#0b63a8]" />
+                    <p className="text-[2rem] font-semibold leading-none tracking-[-0.06em] text-[#10243e]">
+                      {displayProgress}
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7395b7]">
+                      %
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.18em] text-[#70859b]">
+                <span>Progreso del análisis</span>
+                <span>{displayProgress}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-[#edf3f8]">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#0f4f84] via-[#0b63a8] to-[#88bff1] transition-all duration-500"
+                  style={{ width: `${displayProgress}%` }}
+                />
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       <style jsx>{`
-        @keyframes gradient-shift {
+        .minimal-orbit {
+          animation: orbit 8s linear infinite;
+        }
+
+        .minimal-orbit-reverse {
+          animation: orbit 10s linear infinite reverse;
+        }
+
+        .minimal-dot {
+          animation: pulse 2.2s ease-in-out infinite;
+        }
+
+        .minimal-dot-delayed {
+          animation: pulse 2.8s ease-in-out infinite 0.4s;
+        }
+
+        @keyframes orbit {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes pulse {
           0%,
           100% {
-            background-position: 0% 50%;
+            transform: scale(1);
+            opacity: 0.7;
           }
           50% {
-            background-position: 100% 50%;
-          }
-        }
-
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0) translateX(0);
-            opacity: 0;
-          }
-          10% {
-            opacity: 0.3;
-          }
-          90% {
-            opacity: 0.3;
-          }
-          100% {
-            transform: translateY(-100vh) translateX(50px);
-            opacity: 0;
-          }
-        }
-
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
+            transform: scale(1.35);
             opacity: 1;
-            transform: translateY(0);
           }
-        }
-
-        .animate-gradient-shift {
-          background-size: 200% 200%;
-          animation: gradient-shift 10s ease infinite;
-        }
-
-        .animate-float {
-          animation: float linear infinite;
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
         }
       `}</style>
     </div>

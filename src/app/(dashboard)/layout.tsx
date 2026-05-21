@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/src/components/layout/Sidebar';
-import { WelcomeOverlay } from '@/src/components/layout/WelcomeOverlay';
 import { cn } from '@/src/lib/utils/cn';
 import { authService } from '@/src/modules/auth/services/AuthService';
-import { type User, UserRole } from '@/src/types/user';
+import { UserRole } from '@/src/types/user';
 
 function DashboardHeader() {
   const router = useRouter();
@@ -14,7 +13,13 @@ function DashboardHeader() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const user = authService.getCurrentUser();
   const userInitial = getUserInitial(user?.email);
-  const userRoleLabel = user?.role === UserRole.OWNER ? 'Administrador Principal' : user?.role;
+  const userRoleLabel =
+    user?.role === UserRole.OWNER
+      ? 'Administrador principal'
+      : user?.role === UserRole.COMPANY_ADMIN
+        ? 'Administrador de empresa'
+        : 'Usuario';
+  const userName = user?.name?.trim() || user?.email?.split('@')[0] || 'Usuario';
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -33,21 +38,29 @@ function DashboardHeader() {
   };
 
   return (
-    <div className="pointer-events-none absolute right-6 top-6 z-50">
-      <div className="pointer-events-auto relative">
+    <div className="relative z-[220] flex items-center justify-end">
+      <div className="relative">
         <button
           onClick={() => setShowProfileMenu(!showProfileMenu)}
-          className="group flex h-11 items-center gap-2 rounded-full border border-blue-100 bg-white/95 py-1 pl-1 pr-2 shadow-lg shadow-slate-200/80 backdrop-blur-sm transition-all hover:border-blue-200 hover:bg-blue-50/80 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          className="group flex items-center gap-3 rounded-full border border-[#bfc7d3] bg-white px-2 py-1.5 shadow-sm transition-colors hover:border-[#006096] hover:bg-[#eff4ff]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006096] focus-visible:ring-offset-2"
           aria-label="Abrir menú de perfil"
           aria-expanded={showProfileMenu}
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#1d4ed8] via-[#0ea5e9] to-[#67e8f9] text-sm font-bold uppercase text-white shadow-sm shadow-blue-200">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#006096] text-sm font-bold uppercase text-white">
             {userInitial}
+          </span>
+          <span className="flex min-w-0 flex-col pr-1 text-left">
+            <span className="max-w-32 truncate text-sm font-semibold leading-5 text-[#0b1c30]">
+              {userName}
+            </span>
+            <span className="max-w-32 truncate text-[11px] font-medium leading-4 text-[#5f748b]">
+              {userRoleLabel}
+            </span>
           </span>
           <svg
             className={cn(
-              'h-4 w-4 text-slate-400 transition-transform group-hover:text-blue-700',
-              showProfileMenu && 'rotate-180 text-blue-700',
+              'h-4 w-4 text-[#3f4851] transition-transform group-hover:text-[#006096]',
+              showProfileMenu && 'rotate-180 text-[#006096]',
             )}
             fill="none"
             viewBox="0 0 24 24"
@@ -60,18 +73,18 @@ function DashboardHeader() {
 
         {showProfileMenu && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setShowProfileMenu(false)} />
-            <div className="absolute right-0 z-20 mt-3 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/70">
-              <div className="flex items-center gap-3 border-b border-slate-100 px-3 py-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1d4ed8] via-[#0ea5e9] to-[#67e8f9] text-sm font-bold uppercase text-white shadow-sm shadow-blue-200">
+            <div className="fixed inset-0 z-[210]" onClick={() => setShowProfileMenu(false)} />
+            <div className="absolute right-0 z-[230] mt-3 w-72 rounded-xl border border-[#bfc7d3] bg-white p-2 shadow-xl shadow-slate-200/70">
+              <div className="flex items-center gap-3 border-b border-[#bfc7d3]/40 px-3 py-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#006096] text-sm font-bold uppercase text-white">
                   {userInitial}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-950">
+                  <p className="truncate text-sm font-semibold text-[#0b1c30]">
                     {user?.name || user?.email || 'Usuario'}
                   </p>
-                  <p className="truncate text-xs text-slate-500">{user?.email}</p>
-                  <p className="mt-1 text-[11px] font-medium text-blue-700">{userRoleLabel}</p>
+                  <p className="truncate text-xs text-[#3f4851]">{user?.email}</p>
+                  <p className="mt-1 text-[11px] font-medium text-[#006096]">{userRoleLabel}</p>
                 </div>
               </div>
               <div className="p-1.5 pt-2">
@@ -116,11 +129,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isValidating, setIsValidating] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [shouldEnter, setShouldEnter] = useState(false);
-  const [welcomeText, setWelcomeText] = useState<string | null>(null);
 
   useEffect(() => {
     const user = authService.getCurrentUser();
-    const timers: number[] = [];
 
     if (!authService.isAuthenticated()) {
       router.push('/auth/login');
@@ -141,24 +152,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     if (window.sessionStorage.getItem('dashboard-enter-transition') === 'zoom-in') {
       window.sessionStorage.removeItem('dashboard-enter-transition');
-      setShouldEnter(true);
-
-      const name = window.sessionStorage.getItem('login-welcome-name') || getUserDisplayName(user);
-      window.sessionStorage.removeItem('login-welcome-name');
-      setWelcomeText(`Bienvenido ${name}`);
-      timers.push(
-        window.setTimeout(() => {
-          setWelcomeText(null);
-        }, 2300),
-      );
     }
 
     setIsAuthorized(true);
     setIsValidating(false);
-
-    return () => {
-      timers.forEach((timer) => window.clearTimeout(timer));
-    };
   }, [router]);
 
   if (isValidating) {
@@ -179,29 +176,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div
       className={cn(
-        'dashboard-shell relative flex h-screen overflow-hidden bg-muted/30',
+        'dashboard-shell relative flex h-screen overflow-hidden bg-[#f8f9ff]',
         shouldEnter && 'dashboard-entering',
       )}
     >
       <Sidebar />
-      <div className="relative flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader />
-        <main className="flex-1 overflow-y-auto">
-          <div className="container mx-auto max-w-7xl p-6">{children}</div>
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        <div className="bg-[#f8f9ff]/94 relative z-[200] border-b border-[#dbe4ef] px-6 py-4 backdrop-blur xl:px-8">
+          <div className="mx-auto w-full max-w-[1440px]">
+            <DashboardHeader />
+          </div>
+        </div>
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1440px] px-6 py-6 xl:px-8">{children}</div>
         </main>
       </div>
-      {welcomeText && <WelcomeOverlay text={welcomeText} />}
       <div className="dashboard-logout-fade" aria-hidden="true" />
       <LogoutTransitionStyles />
     </div>
   );
-}
-
-function getUserDisplayName(user: User | null) {
-  if (user?.name?.trim()) return user.name.trim();
-
-  const emailName = user?.email?.split('@')[0]?.trim();
-  return emailName || 'Usuario';
 }
 
 function LogoutSpinner() {

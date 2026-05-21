@@ -9,7 +9,6 @@ export interface MaskedSlideRevealProps {
   color?: string;
   fontWeight?: number;
   speed?: number;
-  startDelayFrames?: number;
   className?: string;
 }
 
@@ -20,10 +19,9 @@ export function MaskedSlideReveal({
   color = '#171717',
   fontWeight = 700,
   speed = 1,
-  startDelayFrames = 0,
   className,
 }: MaskedSlideRevealProps) {
-  const frame = useCurrentFrame() * speed - startDelayFrames;
+  const frame = useCurrentFrame() * speed;
   const { fps } = useVideoConfig();
 
   const words = text.split(' ');
@@ -51,14 +49,14 @@ export function MaskedSlideReveal({
       >
         {words.map((word, i) => {
           const t = spring({
-            frame: Math.max(0, frame - i * staggerDelay),
+            frame: frame - i * staggerDelay,
             fps,
             config: { damping: 14 },
           });
 
           return (
             <span
-              key={`${word}-${i}`}
+              key={i}
               style={{
                 display: 'inline-block',
                 overflow: 'hidden',
