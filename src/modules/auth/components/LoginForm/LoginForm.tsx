@@ -45,10 +45,7 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [titleReady, setTitleReady] = useState(false);
   const [showScene, setShowScene] = useState(false);
-  const [isBooting, setIsBooting] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.sessionStorage.getItem('skip-login-boot-loader') !== 'true';
-  });
+  const [isBooting, setIsBooting] = useState(true);
   const isLab = mode === 'laboratorio';
 
   useEffect(() => {
@@ -57,6 +54,7 @@ export function LoginForm() {
     window.sessionStorage.removeItem('skip-login-boot-loader');
 
     if (skipBootLoader) {
+      setIsBooting(false);
       requestAnimationFrame(() => setTitleReady(true));
       return;
     }
@@ -93,15 +91,21 @@ export function LoginForm() {
 
     try {
       // Llamada HTTP al backend - El backend maneja TODO el auth
-      await authService.login(data.email, data.password);
+      const authData = await authService.login(data.email, data.password);
       loginSucceeded = true;
       window.sessionStorage.setItem('dashboard-enter-transition', 'zoom-in');
-      router.prefetch('/dashboard');
+      window.sessionStorage.removeItem('dashboard-welcome-morph-played');
+      window.sessionStorage.setItem(
+        'login-welcome-name',
+        getWelcomeName(authData.user.name, authData.user.email),
+      );
+      const destination =
+        authData.user.role === 'company_admin' ? '/company/muestras' : '/dashboard';
+      router.prefetch(destination);
       setIsExiting(true);
       await wait(exitDurationMs);
 
-      // Redirect al dashboard
-      router.replace('/dashboard');
+      router.replace(destination);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
@@ -281,6 +285,13 @@ function wait(ms: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
+}
+
+function getWelcomeName(name?: string, email?: string) {
+  if (name?.trim()) return name.trim();
+
+  const emailName = email?.split('@')[0]?.trim();
+  return emailName || 'Usuario';
 }
 
 function ModeIntro({ mode }: { mode: LoginMode }) {

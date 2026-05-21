@@ -107,7 +107,7 @@ class ApiClient {
         localStorage.removeItem('user');
 
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          window.location.href = '/auth/login';
         }
 
         throw error;
@@ -205,7 +205,7 @@ class ApiClient {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          window.location.href = '/auth/login';
         }
         throw refreshError;
       }
@@ -323,7 +323,7 @@ class ApiClient {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          window.location.href = '/auth/login';
         }
         throw refreshError;
       }

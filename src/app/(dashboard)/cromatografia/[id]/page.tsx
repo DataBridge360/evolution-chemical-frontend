@@ -5,9 +5,18 @@
 
 'use client';
 
+import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  Droplets,
+  FileText,
+  FlaskConical,
+  Gauge,
+  ShieldAlert,
+  Thermometer,
+} from 'lucide-react';
 import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
-import { ChromatographicAnalysis } from '@/src/modules/chromatography/types';
 
 interface Props {
   params: { id: string };
@@ -78,17 +87,19 @@ export default function AnalysisDetailPage({ params }: Props) {
           <div className="mb-4 flex items-center justify-between">
             <button
               onClick={() => router.push('/cromatografia')}
-              className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
             >
-              ← Volver
+              <ArrowLeft className="h-4 w-4" />
+              Volver
             </button>
 
             {analysis.chroma_report_html && (
               <button
                 onClick={() => router.push(`/cromatografia/${analysis.analysis_id}/informe`)}
-                className="rounded-md bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700"
               >
-                📄 Ver Informe
+                <FileText className="h-4 w-4" />
+                Ver Informe
               </button>
             )}
           </div>
@@ -293,15 +304,6 @@ export default function AnalysisDetailPage({ params }: Props) {
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {props.composicion.map((comp, idx) => {
-                      // Log temporal para debugging
-                      if (idx === 0) {
-                        console.log('🔍 Estructura del primer compuesto:', comp);
-                        console.log('🔍 Propiedades disponibles:', Object.keys(comp));
-                      }
-                      if (idx === props.composicion.length - 1) {
-                        console.log('🔍 Último elemento (¿TOTALES?):', comp);
-                      }
-
                       // Detectar si es la fila de totales
                       const isTotalesRow =
                         comp.name?.toUpperCase() === 'TOTALES' ||
@@ -498,408 +500,283 @@ export default function AnalysisDetailPage({ params }: Props) {
               </div>
             </div>
 
-            {/* SECCIÓN 2: CARACTERÍSTICAS GENERALES */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* Características Generales */}
-              <div className="rounded-lg bg-white shadow lg:col-span-2">
-                <div className="bg-green-600 px-6 py-3">
-                  <h2 className="text-lg font-semibold text-white">Caracteristicas Generales</h2>
+            <div className="grid gap-6 xl:grid-cols-[1.75fr_1fr]">
+              <SectionCard
+                title="Características generales"
+                description="Resumen físico y energético de la mezcla."
+                icon={<FlaskConical className="h-4 w-4" />}
+              >
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <MetricTile
+                    label="Masa molecular"
+                    value={props.caracteristicas_generales.masa_molecular}
+                  />
+                  <MetricTile
+                    label="Volumen molar"
+                    value={props.caracteristicas_generales.volumen_molar}
+                  />
+                  <MetricTile
+                    label="Densidad relativa"
+                    value={props.caracteristicas_generales.densidad_relativa}
+                  />
+                  <MetricTile
+                    label="Densidad absoluta"
+                    value={props.caracteristicas_generales.densidad_absoluta}
+                  />
+                  <MetricTile
+                    label="Poder cal. superior"
+                    value={props.caracteristicas_generales.pcs}
+                  />
+                  <MetricTile
+                    label="Poder cal. inferior"
+                    value={props.caracteristicas_generales.pci}
+                  />
+                  {props.caracteristicas_generales.viscosidad_dean_stiel && (
+                    <MetricTile
+                      label="Viscosidad Dean-Stiel"
+                      value={props.caracteristicas_generales.viscosidad_dean_stiel}
+                    />
+                  )}
+                  {props.caracteristicas_generales.viscosidad_lucas && (
+                    <MetricTile
+                      label="Viscosidad Lucas"
+                      value={props.caracteristicas_generales.viscosidad_lucas}
+                    />
+                  )}
+                  <MetricTile
+                    label="Factor de compresibilidad"
+                    value={props.caracteristicas_generales.f_compresibilidad}
+                  />
+                  <MetricTile
+                    label="Índice de Wobbe"
+                    value={props.caracteristicas_generales.indice_wobbe}
+                  />
                 </div>
-                <div className="p-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <PropertyRow
-                      label="Masa Molecular"
-                      value={props.caracteristicas_generales.masa_molecular}
-                    />
-                    <PropertyRow
-                      label="Volumen Molar"
-                      value={props.caracteristicas_generales.volumen_molar}
-                    />
-                    <PropertyRow
-                      label="Densidad Relativa (aire=1)"
-                      value={props.caracteristicas_generales.densidad_relativa}
-                    />
-                    <PropertyRow
-                      label="Densidad Absoluta"
-                      value={props.caracteristicas_generales.densidad_absoluta}
-                    />
-                    <PropertyRow
-                      label="Poder Cal. Superior"
-                      value={props.caracteristicas_generales.pcs}
-                    />
-                    <PropertyRow
-                      label="Poder Cal. Inferior"
-                      value={props.caracteristicas_generales.pci}
-                    />
-                    {props.caracteristicas_generales.viscosidad_dean_stiel && (
-                      <PropertyRow
-                        label="Viscosidad gas - Dean-Stiel"
-                        value={props.caracteristicas_generales.viscosidad_dean_stiel}
-                      />
-                    )}
-                    {props.caracteristicas_generales.viscosidad_lucas && (
-                      <PropertyRow
-                        label="Viscosidad gas - Lucas"
-                        value={props.caracteristicas_generales.viscosidad_lucas}
-                      />
-                    )}
-                    <PropertyRow
-                      label="F. Compresibilidad"
-                      value={props.caracteristicas_generales.f_compresibilidad}
-                    />
-                    <PropertyRow
-                      label="Indice de Wobbe"
-                      value={props.caracteristicas_generales.indice_wobbe}
-                    />
-                  </div>
-                </div>
-              </div>
+              </SectionCard>
 
-              {/* SECCIÓN 3: NÚMERO DE METANO */}
-              <div className="rounded-lg bg-white shadow">
-                <div className="bg-orange-600 px-6 py-3">
-                  <h2 className="text-lg font-semibold text-white">Número de Metano</h2>
+              <SectionCard
+                title="Número de metano"
+                description="Indicadores de comportamiento del combustible."
+                icon={<Gauge className="h-4 w-4" />}
+              >
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                  <HighlightTile
+                    label="MON"
+                    caption="Motor Octane Number"
+                    value={props.numero_metano.mon}
+                  />
+                  <HighlightTile
+                    label="MN"
+                    caption="Methane Number"
+                    value={props.numero_metano.mn}
+                  />
                 </div>
-                <div className="space-y-4 p-6">
-                  <div className="rounded-lg bg-orange-50 p-4">
-                    <p className="mb-1 text-sm text-gray-600">MON (Motor Octane Number)</p>
-                    <p className="text-3xl font-bold text-orange-900">
-                      {safeFormat(props.numero_metano.mon, 2)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-orange-50 p-4">
-                    <p className="mb-1 text-sm text-gray-600">MN (Methane Number)</p>
-                    <p className="text-3xl font-bold text-orange-900">
-                      {safeFormat(props.numero_metano.mn, 2)}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              </SectionCard>
             </div>
 
-            {/* SECCIÓN 4: PROPIEDADES CRÍTICAS */}
-            <div className="rounded-lg bg-white shadow">
-              <div className="bg-purple-600 px-6 py-3">
-                <h2 className="text-lg font-semibold text-white">Propiedades Criticas</h2>
-              </div>
-              <div className="p-6">
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Temperatura Critica</p>
-                      <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.tc.value_k, 3)}
-                        </span>
-                        <span className="text-sm text-gray-600">°K</span>
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.tc.value_c, 4)}
-                        </span>
-                        <span className="text-sm text-gray-600">°C</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Temperatura Critica Corr.</p>
-                      <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.tc_corr.value_k, 3)}
-                        </span>
-                        <span className="text-sm text-gray-600">°K</span>
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.tc_corr.value_c, 4)}
-                        </span>
-                        <span className="text-sm text-gray-600">°C</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Presion Critica</p>
-                      <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.pc.value_kpa, 3)}
-                        </span>
-                        <span className="text-sm text-gray-600">kPa</span>
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.pc.value_kg_cm2, 4)}
-                        </span>
-                        <span className="text-sm text-gray-600">kg/cm2</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Presion Critica Corr.</p>
-                      <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.pc_corr.value_kpa, 3)}
-                        </span>
-                        <span className="text-sm text-gray-600">kPa</span>
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.pc_corr.value_kg_cm2, 4)}
-                        </span>
-                        <span className="text-sm text-gray-600">kg/cm2</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <PropertyRow label="Volumen Critico" value={props.propiedades_criticas.vc} />
-                    <PropertyRow
-                      label="Compresibilidad Critica"
-                      value={props.propiedades_criticas.zc}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Punto de Congelamiento</p>
-                      <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.t_congelamiento.value_k, 3)}
-                        </span>
-                        <span className="text-sm text-gray-600">°K</span>
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.t_congelamiento.value_c, 4)}
-                        </span>
-                        <span className="text-sm text-gray-600">°C</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Punto de Ebullicion</p>
-                      <div className="mt-1 flex items-baseline gap-4">
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.t_ebullicion.value_k, 3)}
-                        </span>
-                        <span className="text-sm text-gray-600">°K</span>
-                        <span className="text-base font-semibold">
-                          {safeFormat(props.propiedades_criticas.t_ebullicion.value_c, 4)}
-                        </span>
-                        <span className="text-sm text-gray-600">°C</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Temp. Reducida</p>
-                      <p className="text-base font-semibold">
-                        {safeFormat(props.propiedades_criticas.tr, 2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Presion Reducida</p>
-                      <p className="text-base font-semibold">
-                        {safeFormat(props.propiedades_criticas.pr, 2)}
-                      </p>
-                    </div>
-                  </div>
+            <SectionCard
+              title="Propiedades críticas"
+              description="Valores críticos, corregidos y reducidos de la mezcla."
+              icon={<Thermometer className="h-4 w-4" />}
+            >
+              <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+                <PairTile
+                  label="Temperatura crítica"
+                  primaryValue={props.propiedades_criticas.tc.value_k}
+                  primaryUnit="°K"
+                  secondaryValue={props.propiedades_criticas.tc.value_c}
+                  secondaryUnit="°C"
+                  primaryDecimals={3}
+                  secondaryDecimals={4}
+                />
+                <PairTile
+                  label="Temperatura crítica corregida"
+                  primaryValue={props.propiedades_criticas.tc_corr.value_k}
+                  primaryUnit="°K"
+                  secondaryValue={props.propiedades_criticas.tc_corr.value_c}
+                  secondaryUnit="°C"
+                  primaryDecimals={3}
+                  secondaryDecimals={4}
+                />
+                <PairTile
+                  label="Presión crítica"
+                  primaryValue={props.propiedades_criticas.pc.value_kpa}
+                  primaryUnit="kPa"
+                  secondaryValue={props.propiedades_criticas.pc.value_kg_cm2}
+                  secondaryUnit="kg/cm2"
+                  primaryDecimals={3}
+                  secondaryDecimals={4}
+                />
+                <PairTile
+                  label="Presión crítica corregida"
+                  primaryValue={props.propiedades_criticas.pc_corr.value_kpa}
+                  primaryUnit="kPa"
+                  secondaryValue={props.propiedades_criticas.pc_corr.value_kg_cm2}
+                  secondaryUnit="kg/cm2"
+                  primaryDecimals={3}
+                  secondaryDecimals={4}
+                />
+                <MetricTile label="Volumen crítico" value={props.propiedades_criticas.vc} />
+                <MetricTile label="Compresibilidad crítica" value={props.propiedades_criticas.zc} />
+                <PairTile
+                  label="Punto de congelamiento"
+                  primaryValue={props.propiedades_criticas.t_congelamiento.value_k}
+                  primaryUnit="°K"
+                  secondaryValue={props.propiedades_criticas.t_congelamiento.value_c}
+                  secondaryUnit="°C"
+                  primaryDecimals={3}
+                  secondaryDecimals={4}
+                />
+                <PairTile
+                  label="Punto de ebullición"
+                  primaryValue={props.propiedades_criticas.t_ebullicion.value_k}
+                  primaryUnit="°K"
+                  secondaryValue={props.propiedades_criticas.t_ebullicion.value_c}
+                  secondaryUnit="°C"
+                  primaryDecimals={3}
+                  secondaryDecimals={4}
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <NumberTile
+                    label="Temperatura reducida"
+                    value={props.propiedades_criticas.tr}
+                    decimals={2}
+                  />
+                  <NumberTile
+                    label="Presión reducida"
+                    value={props.propiedades_criticas.pr}
+                    decimals={2}
+                  />
                 </div>
               </div>
+            </SectionCard>
+
+            <div className="grid gap-6 xl:grid-cols-2">
+              <SectionCard
+                title="Volumen de líquido equivalente"
+                description="Cortes acumulados convertidos a líquido."
+                icon={<Droplets className="h-4 w-4" />}
+              >
+                <div className="space-y-2">
+                  <DataRow
+                    label="C1+"
+                    value={props.volumen_liquido_eq.c1_plus}
+                    decimals={4}
+                    suffix={props.volumen_liquido_eq.unit}
+                  />
+                  <DataRow
+                    label="C2+"
+                    value={props.volumen_liquido_eq.c2_plus}
+                    decimals={4}
+                    suffix={props.volumen_liquido_eq.unit}
+                  />
+                  <DataRow
+                    label="C3+"
+                    value={props.volumen_liquido_eq.c3_plus}
+                    decimals={4}
+                    suffix={props.volumen_liquido_eq.unit}
+                  />
+                  <DataRow
+                    label="C4+"
+                    value={props.volumen_liquido_eq.c4_plus}
+                    decimals={4}
+                    suffix={props.volumen_liquido_eq.unit}
+                  />
+                  <DataRow
+                    label="C5+"
+                    value={props.volumen_liquido_eq.c5_plus}
+                    decimals={4}
+                    suffix={props.volumen_liquido_eq.unit}
+                  />
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                title="Composición porcentual"
+                description="Participación elemental consolidada."
+                icon={<FlaskConical className="h-4 w-4" />}
+              >
+                <div className="space-y-2">
+                  <DataRow
+                    label="Oxígeno"
+                    value={props.composicion_porcentual.oxigeno}
+                    decimals={1}
+                    suffix="%"
+                  />
+                  <DataRow
+                    label="Nitrógeno"
+                    value={props.composicion_porcentual.nitrogeno}
+                    decimals={1}
+                    suffix="%"
+                  />
+                  <DataRow
+                    label="Carbono"
+                    value={props.composicion_porcentual.carbono}
+                    decimals={1}
+                    suffix="%"
+                  />
+                  <DataRow
+                    label="Hidrógeno"
+                    value={props.composicion_porcentual.hidrogeno}
+                    decimals={1}
+                    suffix="%"
+                  />
+                  <DataRow
+                    label="Relación carbono-hidrógeno"
+                    value={props.composicion_porcentual.ratio_c_h}
+                    decimals={2}
+                  />
+                </div>
+              </SectionCard>
             </div>
 
-            {/* SECCIÓN 5 y 6: VOLUMEN LÍQUIDO + COMPOSICIÓN PORCENTUAL */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {/* Volumen de Líquido Equivalente */}
-              <div className="rounded-lg bg-white shadow">
-                <div className="bg-cyan-600 px-6 py-3">
-                  <h2 className="text-lg font-semibold text-white">
-                    Volumen de liquido equivalente
-                  </h2>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">C1+</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c1_plus, 4)}{' '}
-                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">C2+</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c2_plus, 4)}{' '}
-                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">C3+</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c3_plus, 4)}{' '}
-                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">C4+</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c4_plus, 4)}{' '}
-                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">C5+</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.volumen_liquido_eq.c5_plus, 4)}{' '}
-                        <span className="text-gray-500">{props.volumen_liquido_eq.unit}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            <SectionCard
+              title="Otros datos"
+              description="Combustión, inflamabilidad y capacidad calorífica."
+              icon={<ShieldAlert className="h-4 w-4" />}
+            >
+              <div className="space-y-3">
+                <MetricTile
+                  label="Aire requerido p/combustión"
+                  value={props.otros_datos.aire_combustion}
+                />
+                <PairTile
+                  label="Límite de inflamabilidad inferior"
+                  primaryValue={props.otros_datos.lfl.value}
+                  primaryUnit="% Vol."
+                  secondaryValue={props.otros_datos.lfl_fracc_molar}
+                  secondaryUnit="Fracc. molar"
+                  primaryDecimals={3}
+                  secondaryDecimals={4}
+                />
+                <PairTile
+                  label="Límite de inflamabilidad superior"
+                  primaryValue={props.otros_datos.ufl.value}
+                  primaryUnit="% Vol."
+                  secondaryValue={props.otros_datos.ufl_fracc_molar}
+                  secondaryUnit="Fracc. molar"
+                  primaryDecimals={3}
+                  secondaryDecimals={4}
+                />
+                <TripleTile
+                  label="Cp"
+                  items={[
+                    { value: props.otros_datos.cp_kj_kg_k, unit: 'kJ/(kg °K)', decimals: 3 },
+                    { value: props.otros_datos.cp_kcal_kg_c, unit: 'kcal/(kg °C)', decimals: 4 },
+                    { value: props.otros_datos.cp_kcal_m3_c, unit: 'kcal/(m3 °C)', decimals: 4 },
+                  ]}
+                />
+                <TripleTile
+                  label="Cv"
+                  items={[
+                    { value: props.otros_datos.cv_kj_kg_k, unit: 'kJ/(kg °K)', decimals: 3 },
+                    { value: props.otros_datos.cv_kcal_kg_c, unit: 'kcal/(kg °C)', decimals: 4 },
+                    { value: props.otros_datos.cv_kcal_m3_c, unit: 'kcal/(m3 °C)', decimals: 4 },
+                  ]}
+                />
+                <NumberTile label="Relación Cp/Cv" value={props.otros_datos.k_cp_cv} decimals={3} />
               </div>
-
-              {/* Composición Porcentual */}
-              <div className="rounded-lg bg-white shadow">
-                <div className="bg-indigo-600 px-6 py-3">
-                  <h2 className="text-lg font-semibold text-white">Composicion Porcentual</h2>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Oxigeno</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.composicion_porcentual.oxigeno, 1)}{' '}
-                        <span className="text-gray-500">%</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Nitrogeno</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.composicion_porcentual.nitrogeno, 1)}{' '}
-                        <span className="text-gray-500">%</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Carbono</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.composicion_porcentual.carbono, 1)}{' '}
-                        <span className="text-gray-500">%</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Hidrogeno</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.composicion_porcentual.hidrogeno, 1)}{' '}
-                        <span className="text-gray-500">%</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Relacion Carbono-Hidrogeno</span>
-                      <span className="text-sm font-medium">
-                        {safeFormat(props.composicion_porcentual.ratio_c_h, 2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* SECCIÓN 7: OTROS DATOS */}
-            <div className="rounded-lg bg-white shadow">
-              <div className="bg-red-600 px-6 py-3">
-                <h2 className="text-lg font-semibold text-white">Otros Datos</h2>
-              </div>
-              <div className="p-6">
-                <div className="space-y-3">
-                  {/* Aire requerido */}
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Aire Req. p/Combust.</p>
-                    <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.aire_combustion.value, 3)}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        {props.otros_datos.aire_combustion.unit}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Límites de inflamabilidad */}
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">
-                      Limite de inflamabilidad Inf.
-                    </p>
-                    <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.lfl.value, 3)}
-                      </span>
-                      <span className="text-sm text-gray-600">% Vol.</span>
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.lfl_fracc_molar, 4)}
-                      </span>
-                      <span className="text-sm text-gray-600">Fracc. Molar</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">
-                      Limite de inflamabilidad Sup.
-                    </p>
-                    <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.ufl.value, 3)}
-                      </span>
-                      <span className="text-sm text-gray-600">% Vol.</span>
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.ufl_fracc_molar, 4)}
-                      </span>
-                      <span className="text-sm text-gray-600">Fracc. Molar</span>
-                    </div>
-                  </div>
-
-                  {/* Calores específicos */}
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Cp</p>
-                    <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.cp_kj_kg_k, 3)}
-                      </span>
-                      <span className="text-sm text-gray-600">kJ/(kg ºK)</span>
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.cp_kcal_kg_c, 4)}
-                      </span>
-                      <span className="text-sm text-gray-600">kcal/(kg ºC)</span>
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.cp_kcal_m3_c, 4)}
-                      </span>
-                      <span className="text-sm text-gray-600">kcal/(m3 ºC)</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Cv</p>
-                    <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.cv_kj_kg_k, 3)}
-                      </span>
-                      <span className="text-sm text-gray-600">kJ/(kg ºK)</span>
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.cv_kcal_kg_c, 4)}
-                      </span>
-                      <span className="text-sm text-gray-600">kcal/(kg ºC)</span>
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.cv_kcal_m3_c, 4)}
-                      </span>
-                      <span className="text-sm text-gray-600">kcal/(m3 ºC)</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Cp/Cv</p>
-                    <div className="mt-1 flex items-baseline gap-4">
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.k_cp_cv, 3)}
-                      </span>
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.k_cp_cv, 3)}
-                      </span>
-                      <span className="text-base font-semibold">
-                        {safeFormat(props.otros_datos.k_cp_cv, 3)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            </SectionCard>
           </div>
         )}
       </div>
@@ -907,7 +784,36 @@ export default function AnalysisDetailPage({ params }: Props) {
   );
 }
 
-function PropertyRow({
+function SectionCard({
+  title,
+  description,
+  icon,
+  children,
+}: {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-[#d8e3f0] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
+      <div className="border-b border-[#e6eef7] bg-[#f8fbff] px-6 py-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f3ff] text-[#0b63a8]">
+            {icon}
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-[#10243e]">{title}</h2>
+            <p className="text-sm text-[#60758b]">{description}</p>
+          </div>
+        </div>
+      </div>
+      <div className="p-6">{children}</div>
+    </section>
+  );
+}
+
+function MetricTile({
   label,
   value,
 }: {
@@ -916,39 +822,145 @@ function PropertyRow({
 }) {
   if (!value) {
     return (
-      <div>
-        <p className="text-sm text-gray-600">{label}</p>
-        <p className="text-base font-medium text-gray-400">N/A</p>
+      <div className="rounded-2xl border border-[#e5edf6] bg-[#fbfdff] p-4">
+        <p className="text-sm text-[#60758b]">{label}</p>
+        <p className="mt-2 text-base font-medium text-[#95a5b5]">N/A</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <p className="text-sm text-gray-600">{label}</p>
-      <p className="text-base font-medium">
-        {safeFormat(value.value, 4)} <span className="text-sm text-gray-500">{value.unit}</span>
+    <div className="rounded-2xl border border-[#e5edf6] bg-[#fbfdff] p-4">
+      <p className="text-sm text-[#60758b]">{label}</p>
+      <p className="mt-2 text-lg font-semibold text-[#10243e]">
+        {safeFormat(value.value, 4)}{' '}
+        <span className="text-sm font-medium text-[#7c90a5]">{value.unit}</span>
       </p>
     </div>
   );
 }
 
-function ValueRow({
+function HighlightTile({
+  label,
+  caption,
+  value,
+}: {
+  label: string;
+  caption: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-2xl border border-[#d7e7f8] bg-[linear-gradient(180deg,#f8fbff_0%,#eef6ff_100%)] p-5">
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#0b63a8]">{label}</p>
+      <p className="mt-2 text-sm text-[#60758b]">{caption}</p>
+      <p className="mt-5 text-4xl font-semibold tracking-[-0.03em] text-[#10243e]">
+        {safeFormat(value, 2)}
+      </p>
+    </div>
+  );
+}
+
+function PairTile({
+  label,
+  primaryValue,
+  primaryUnit,
+  secondaryValue,
+  secondaryUnit,
+  primaryDecimals = 2,
+  secondaryDecimals = 2,
+}: {
+  label: string;
+  primaryValue: number | undefined | null;
+  primaryUnit: string;
+  secondaryValue: number | undefined | null;
+  secondaryUnit: string;
+  primaryDecimals?: number;
+  secondaryDecimals?: number;
+}) {
+  return (
+    <div className="rounded-2xl border border-[#e5edf6] bg-[#fbfdff] p-4">
+      <p className="text-sm text-[#60758b]">{label}</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-[#edf3f8] bg-white px-3 py-2">
+          <p className="text-xs uppercase tracking-[0.08em] text-[#8aa0b6]">{primaryUnit}</p>
+          <p className="mt-1 text-lg font-semibold text-[#10243e]">
+            {safeFormat(primaryValue, primaryDecimals)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-[#edf3f8] bg-white px-3 py-2">
+          <p className="text-xs uppercase tracking-[0.08em] text-[#8aa0b6]">{secondaryUnit}</p>
+          <p className="mt-1 text-lg font-semibold text-[#10243e]">
+            {safeFormat(secondaryValue, secondaryDecimals)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TripleTile({
+  label,
+  items,
+}: {
+  label: string;
+  items: Array<{ value: number; unit: string; decimals?: number }>;
+}) {
+  return (
+    <div className="rounded-2xl border border-[#e5edf6] bg-[#fbfdff] p-4">
+      <p className="text-sm text-[#60758b]">{label}</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {items.map((item) => (
+          <div key={item.unit} className="rounded-xl border border-[#edf3f8] bg-white px-3 py-2">
+            <p className="text-xs uppercase tracking-[0.08em] text-[#8aa0b6]">{item.unit}</p>
+            <p className="mt-1 text-base font-semibold text-[#10243e]">
+              {safeFormat(item.value, item.decimals ?? 2)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NumberTile({
   label,
   value,
   decimals = 2,
   suffix = '',
 }: {
   label: string;
-  value: number;
+  value: number | undefined | null;
   decimals?: number;
   suffix?: string;
 }) {
   return (
-    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-      <span className="text-sm text-gray-600">{label}</span>
-      <span className="text-sm font-medium">
-        {safeFormat(value, decimals)} {suffix}
+    <div className="rounded-2xl border border-[#e5edf6] bg-[#fbfdff] p-4">
+      <p className="text-sm text-[#60758b]">{label}</p>
+      <p className="mt-2 text-lg font-semibold text-[#10243e]">
+        {safeFormat(value, decimals)}
+        {suffix ? <span className="ml-2 text-sm font-medium text-[#7c90a5]">{suffix}</span> : null}
+      </p>
+    </div>
+  );
+}
+
+function DataRow({
+  label,
+  value,
+  decimals = 2,
+  suffix = '',
+}: {
+  label: string;
+  value: number | undefined | null;
+  decimals?: number;
+  suffix?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-[#eaf0f6] bg-[#fbfdff] px-4 py-3">
+      <span className="text-sm text-[#60758b]">{label}</span>
+      <span className="text-sm font-semibold text-[#10243e]">
+        {safeFormat(value, decimals)}
+        {suffix ? <span className="ml-2 font-medium text-[#7c90a5]">{suffix}</span> : null}
       </span>
     </div>
   );

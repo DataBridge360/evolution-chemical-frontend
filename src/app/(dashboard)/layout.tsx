@@ -12,117 +12,116 @@ function DashboardHeader() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const user = authService.getCurrentUser();
+  const userInitial = getUserInitial(user?.email);
+  const userRoleLabel =
+    user?.role === UserRole.OWNER
+      ? 'Administrador principal'
+      : user?.role === UserRole.COMPANY_ADMIN
+        ? 'Administrador de empresa'
+        : 'Usuario';
+  const userName = user?.name?.trim() || user?.email?.split('@')[0] || 'Usuario';
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
 
-    try {
-      setIsLoggingOut(true);
-      router.prefetch('/auth/login');
-      await authService.logout();
-      window.sessionStorage.setItem('skip-login-boot-loader', 'true');
-      document.body.classList.add('logout-zooming');
-      await wait(300);
-      router.replace('/auth/login');
-      window.setTimeout(() => document.body.classList.remove('logout-zooming'), 600);
-    } catch (error) {
-      setIsLoggingOut(false);
-      document.body.classList.remove('logout-zooming');
-      console.error('Error al cerrar sesión:', error);
-    }
+    setIsLoggingOut(true);
+    setShowProfileMenu(false);
+    router.prefetch('/auth/login');
+    void authService.logout().catch((error) => {
+      console.error('Error al notificar cierre de sesión:', error);
+    });
+    window.sessionStorage.setItem('skip-login-boot-loader', 'true');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    router.replace('/auth/login');
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
-      <div className="flex h-14 items-center justify-end px-6">
-        {/* Profile Menu */}
-        <div className="relative">
-          <button
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 transition-colors hover:bg-muted"
+    <div className="relative z-[220] flex items-center justify-end">
+      <div className="relative">
+        <button
+          onClick={() => setShowProfileMenu(!showProfileMenu)}
+          className="group flex items-center gap-3 rounded-full border border-[#bfc7d3] bg-white px-2 py-1.5 shadow-sm transition-colors hover:border-[#006096] hover:bg-[#eff4ff]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006096] focus-visible:ring-offset-2"
+          aria-label="Abrir menú de perfil"
+          aria-expanded={showProfileMenu}
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#006096] text-sm font-bold uppercase text-white">
+            {userInitial}
+          </span>
+          <span className="flex min-w-0 flex-col pr-1 text-left">
+            <span className="max-w-32 truncate text-sm font-semibold leading-5 text-[#0b1c30]">
+              {userName}
+            </span>
+            <span className="max-w-32 truncate text-[11px] font-medium leading-4 text-[#5f748b]">
+              {userRoleLabel}
+            </span>
+          </span>
+          <svg
+            className={cn(
+              'h-4 w-4 text-[#3f4851] transition-transform group-hover:text-[#006096]',
+              showProfileMenu && 'rotate-180 text-[#006096]',
+            )}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
-              <svg
-                className="h-4 w-4 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </div>
-            <div className="text-left">
-              <p className="text-xs font-medium text-foreground">
-                {user?.role === UserRole.OWNER ? 'Owner' : user?.role}
-              </p>
-              <p className="text-[10px] text-muted-foreground">Sesión Activa</p>
-            </div>
-            <svg
-              className={`h-3 w-3 text-muted-foreground transition-transform ${
-                showProfileMenu ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-          {/* Dropdown Menu */}
-          {showProfileMenu && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowProfileMenu(false)} />
-              <div className="absolute right-0 z-20 mt-2 w-52 rounded-lg border border-border bg-card shadow-lg">
-                <div className="border-b border-border px-3 py-2.5">
-                  <p className="text-sm font-medium text-foreground">{user?.email}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {user?.role === UserRole.OWNER ? 'Administrador Principal' : user?.role}
+        {showProfileMenu && (
+          <>
+            <div className="fixed inset-0 z-[210]" onClick={() => setShowProfileMenu(false)} />
+            <div className="absolute right-0 z-[230] mt-3 w-72 rounded-xl border border-[#bfc7d3] bg-white p-2 shadow-xl shadow-slate-200/70">
+              <div className="flex items-center gap-3 border-b border-[#bfc7d3]/40 px-3 py-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#006096] text-sm font-bold uppercase text-white">
+                  {userInitial}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#0b1c30]">
+                    {user?.name || user?.email || 'Usuario'}
                   </p>
-                </div>
-                <div className="p-1.5">
-                  <button
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-70"
-                  >
-                    {isLoggingOut ? (
-                      <LogoutSpinner />
-                    ) : (
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                        />
-                      </svg>
-                    )}
-                    {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
-                  </button>
+                  <p className="truncate text-xs text-[#3f4851]">{user?.email}</p>
+                  <p className="mt-1 text-[11px] font-medium text-[#006096]">{userRoleLabel}</p>
                 </div>
               </div>
-            </>
-          )}
-        </div>
+              <div className="p-1.5 pt-2">
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-70"
+                >
+                  {isLoggingOut ? (
+                    <LogoutSpinner />
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                  )}
+                  {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-    </header>
+    </div>
   );
+}
+
+function getUserInitial(email?: string | null) {
+  const trimmedEmail = email?.trim();
+
+  if (!trimmedEmail) return 'U';
+
+  return trimmedEmail.charAt(0).toUpperCase();
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -153,7 +152,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     if (window.sessionStorage.getItem('dashboard-enter-transition') === 'zoom-in') {
       window.sessionStorage.removeItem('dashboard-enter-transition');
-      setShouldEnter(true);
     }
 
     setIsAuthorized(true);
@@ -178,27 +176,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div
       className={cn(
-        'dashboard-shell relative flex h-screen overflow-hidden bg-muted/30',
+        'dashboard-shell relative flex h-screen overflow-hidden bg-[#f8f9ff]',
         shouldEnter && 'dashboard-entering',
       )}
     >
       <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader />
-        <main className="flex-1 overflow-y-auto">
-          <div className="container mx-auto max-w-7xl p-6">{children}</div>
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        <div className="bg-[#f8f9ff]/94 relative z-[200] border-b border-[#dbe4ef] px-6 py-4 backdrop-blur xl:px-8">
+          <div className="mx-auto w-full max-w-[1440px]">
+            <DashboardHeader />
+          </div>
+        </div>
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1440px] px-6 py-6 xl:px-8">{children}</div>
         </main>
       </div>
       <div className="dashboard-logout-fade" aria-hidden="true" />
       <LogoutTransitionStyles />
     </div>
   );
-}
-
-function wait(ms: number) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
 }
 
 function LogoutSpinner() {
