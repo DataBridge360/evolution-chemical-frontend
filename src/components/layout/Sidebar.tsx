@@ -18,16 +18,16 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-[260px] shrink-0 flex-col border-r border-[#bfc7d3] bg-white py-6 text-[#0b1c30] [font-family:Manrope,ui-sans-serif,system-ui,sans-serif]">
-      <div className="mb-10 px-6">
+    <aside className="flex h-full w-[260px] shrink-0 flex-col border-r border-[#bfc7d3] bg-white text-[#0b1c30] [font-family:Manrope,ui-sans-serif,system-ui,sans-serif]">
+      <div className="flex h-[65px] items-center px-6">
         <div className="flex flex-col">
-          <span className="text-[2rem] font-extrabold leading-none tracking-[-0.08em] text-[#0f2850]">
+          <span className="text-[1.5rem] font-extrabold leading-none tracking-[-0.08em] text-[#0f2850]">
             EVOLUTION
           </span>
-          <span className="mt-1 text-[11px] font-bold uppercase tracking-[0.28em] text-[#4d6075]">
+          <span className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.28em] text-[#4d6075]">
             CHEMICAL S.R.L.
           </span>
-          <div className="mt-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#8b9bad]">
+          <div className="mt-1 flex items-center gap-1.5 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#8b9bad]">
             <span>Análisis</span>
             <span>•</span>
             <span>Calidad</span>
@@ -37,7 +37,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto py-6">
         {navigation.map((item) => {
           const isActive =
             pathname === item.href ||

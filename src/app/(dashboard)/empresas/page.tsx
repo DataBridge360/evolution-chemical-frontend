@@ -1,52 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCompanies } from '@/src/modules/companies/hooks/useCompanies';
 import { companiesService } from '@/src/modules/companies/services/CompaniesService';
 import { Company } from '@/src/types/company';
 import { formatDateAR } from '@/src/lib/dateUtils';
+import NewCompanyDrawer from '@/src/modules/companies/components/NewCompanyDrawer';
 
 export default function EmpresasPage() {
-  const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: companies = [], isLoading: loading } = useCompanies();
   const [updatingPermission, setUpdatingPermission] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadCompanies();
-  }, []);
-
-  const loadCompanies = async () => {
-    try {
-      setLoading(true);
-      const data = await companiesService.getAllCompanies();
-      setCompanies(data);
-    } catch (error) {
-      console.error('Error al cargar empresas:', error);
-      setCompanies([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleTogglePermission = async (companyId: string, currentValue: boolean) => {
     try {
       setUpdatingPermission(companyId);
       await companiesService.updateViewResultsPermission(companyId, !currentValue);
-      // Actualizar el estado local
-      setCompanies((prev) =>
-        prev.map((company) =>
-          company.company_id === companyId
-            ? { ...company, can_view_results: !currentValue }
-            : company,
-        ),
-      );
+
+      // Invalidar el cache para refrescar los datos
+      await queryClient.invalidateQueries({ queryKey: ['companies'] });
+      await queryClient.invalidateQueries({ queryKey: ['company', companyId] });
     } catch (error) {
       console.error('Error al actualizar permiso:', error);
       alert('Error al actualizar el permiso');
     } finally {
       setUpdatingPermission(null);
     }
+  };
+
+  const handleDrawerSuccess = async () => {
+    // Invalidar el cache para refrescar la lista después de crear
+    await queryClient.invalidateQueries({ queryKey: ['companies'] });
   };
 
   if (loading) {
@@ -69,7 +55,7 @@ export default function EmpresasPage() {
           <p className="mt-1 text-sm text-muted-foreground">Gestión de empresas clientes</p>
         </div>
         <button
-          onClick={() => router.push('/empresas/nueva')}
+          onClick={() => setIsDrawerOpen(true)}
           className="bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
         >
           Nueva Empresa
@@ -139,6 +125,13 @@ export default function EmpresasPage() {
           </div>
         )}
       </div>
+
+      {/* Drawer para nueva empresa */}
+      <NewCompanyDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        onSuccess={handleDrawerSuccess}
+      />
     </div>
   );
 }

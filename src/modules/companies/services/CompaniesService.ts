@@ -1,5 +1,5 @@
 import { apiClient } from '@/src/lib/api/client';
-import { Company } from '@/src/types/company';
+import { Company, CreateCompanyDto } from '@/src/types/company';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -9,18 +9,23 @@ interface ApiResponse<T> {
 
 class CompaniesService {
   async getAllCompanies(): Promise<Company[]> {
-    const response = await apiClient.get<ApiResponse<Company[]>>('/companies', true);
+    const response = await apiClient.get<ApiResponse<Company[]>>('/companies/', true);
     return response.data;
   }
 
   async getCompanyById(id: string): Promise<Company> {
-    const response = await apiClient.get<ApiResponse<Company>>(`/companies/${id}`, true);
+    const response = await apiClient.get<ApiResponse<Company>>(`/companies/${id}/`, true);
+    return response.data;
+  }
+
+  async createCompany(data: CreateCompanyDto): Promise<Company> {
+    const response = await apiClient.post<ApiResponse<Company>>('/companies/', data, true);
     return response.data;
   }
 
   async updateViewResultsPermission(companyId: string, canViewResults: boolean): Promise<Company> {
     const response = await apiClient.patch<ApiResponse<Company>>(
-      `/companies/${companyId}/view-results-permission`,
+      `/companies/${companyId}/view-results-permission/`,
       { can_view_results: canViewResults },
       true,
     );

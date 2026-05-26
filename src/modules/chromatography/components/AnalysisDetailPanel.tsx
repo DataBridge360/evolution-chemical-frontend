@@ -63,6 +63,25 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
   const { data: analysis, isLoading } = useAnalysis(analysisId);
   const [showReport, setShowReport] = useState(false);
 
+  // Función para imprimir / guardar el informe HTML como PDF
+  const handleDownloadReportPDF = () => {
+    if (!analysis) return;
+
+    // Guardar título original
+    const originalTitle = document.title;
+
+    // Cambiar título temporalmente para el nombre del PDF
+    document.title = `Informe_${analysis.report_number || analysis.analysis_id}`;
+
+    // Abrir diálogo de impresión (el usuario podrá elegir "Guardar como PDF")
+    window.print();
+
+    // Restaurar título original después de un breve delay
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
+  };
+
   if (isLoading) {
     return (
       <>
@@ -619,16 +638,28 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
       >
         <div className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Informe HTML</h2>
-          <button
-            onClick={() => setShowReport(false)}
-            className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium"
-          >
-            ← Volver a Resultados
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleDownloadReportPDF}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Imprimir / Guardar PDF
+            </button>
+            <button
+              onClick={() => setShowReport(false)}
+              className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium"
+            >
+              ← Volver a Resultados
+            </button>
+          </div>
         </div>
 
         {/* Contenido del Informe */}
         <div
+          id="report-html-content"
           className="p-6"
           dangerouslySetInnerHTML={{ __html: analysis.chroma_report_html || '' }}
         />

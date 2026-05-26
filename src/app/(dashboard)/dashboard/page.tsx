@@ -15,23 +15,19 @@ import {
 
 import { formatDateAR, formatDateTimeAR } from '@/src/lib/dateUtils';
 import { authService } from '@/src/modules/auth/services/AuthService';
-import { listAnalyses } from '@/src/modules/chromatography/services/chromatographyService';
+import { useAnalysesList } from '@/src/modules/chromatography/hooks/useAnalysesList';
 import { type ChromatographicAnalysis } from '@/src/modules/chromatography/types';
 
 export default function DashboardPage() {
-  const [recentAnalyses, setRecentAnalyses] = useState<ChromatographicAnalysis[]>([]);
-  const [isLoadingRecentAnalyses, setIsLoadingRecentAnalyses] = useState(true);
-  const [recentAnalysesError, setRecentAnalysesError] = useState<string | null>(null);
+  // Usar hook con cache para análisis
+  const { data: recentAnalyses = [], isLoading: isLoadingRecentAnalyses } = useAnalysesList();
+
   const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
   const [isWelcomeExiting, setIsWelcomeExiting] = useState(false);
   const [welcomeLabel, setWelcomeLabel] = useState('');
 
   const user = authService.getCurrentUser();
   const name = getDisplayName(user?.name, user?.email);
-
-  useEffect(() => {
-    void loadRecentAnalyses();
-  }, []);
 
   useEffect(() => {
     const storedName = window.sessionStorage.getItem('login-welcome-name');
@@ -63,28 +59,16 @@ export default function DashboardPage() {
     return () => window.clearTimeout(timeout);
   }, [showWelcomeOverlay, isWelcomeExiting]);
 
-  const loadRecentAnalyses = async () => {
-    try {
-      setIsLoadingRecentAnalyses(true);
-      setRecentAnalysesError(null);
-
-      const analyses = await listAnalyses();
-      const sortedAnalyses = [...analyses].sort(
-        (a, b) => getAnalysisSortDate(b) - getAnalysisSortDate(a),
-      );
-
-      setRecentAnalyses(sortedAnalyses);
-    } catch (error) {
-      console.error('Error cargando cromatografía reciente:', error);
-      setRecentAnalysesError('No se pudo cargar la cromatografía reciente.');
-    } finally {
-      setIsLoadingRecentAnalyses(false);
-    }
-  };
+  // Ordenar análisis por fecha
+  const sortedAnalyses = useMemo(
+    () =>
+      [...recentAnalyses].sort((a, b) => getAnalysisSortDate(b) - getAnalysisSortDate(a)),
+    [recentAnalyses],
+  );
 
   const recentChromatography = useMemo(
     () =>
-      recentAnalyses.slice(0, 4).map((analysis) => ({
+      sortedAnalyses.slice(0, 4).map((analysis) => ({
         id: analysis.analysis_id,
         title:
           analysis.report_number ||
@@ -95,7 +79,7 @@ export default function DashboardPage() {
         dateLabel: getAnalysisDateTimeLabel(analysis),
         href: `/cromatografia/${analysis.analysis_id}`,
       })),
-    [recentAnalyses],
+    [sortedAnalyses],
   );
 
   const recentCompanies = useMemo(() => {
@@ -104,7 +88,7 @@ export default function DashboardPage() {
       { name: string; fieldName?: string; dateLabel: string; analysisId: string; count: number }
     >();
 
-    for (const analysis of recentAnalyses) {
+    for (const analysis of sortedAnalyses) {
       const key = analysis.company_name;
       const current = map.get(key);
 
@@ -123,7 +107,7 @@ export default function DashboardPage() {
     }
 
     return Array.from(map.values()).slice(0, 4);
-  }, [recentAnalyses]);
+  }, [sortedAnalyses]);
 
   return (
     <div className="space-y-7 pb-10 [font-family:Manrope,ui-sans-serif,system-ui,sans-serif]">

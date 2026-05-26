@@ -1,36 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { companiesService } from '@/src/modules/companies/services/CompaniesService';
-import { Company, Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
+import { useCompanies } from '@/src/modules/companies/hooks/useCompanies';
+import { Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
 
 export default function LocalidadEmpresasPage() {
   const router = useRouter();
   const params = useParams();
   const localidad = params.localidad as Localidad;
 
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Usar hook con cache
+  const { data: allCompanies = [], isLoading: loading } = useCompanies();
 
-  useEffect(() => {
-    loadCompanies();
-  }, [localidad]);
-
-  const loadCompanies = async () => {
-    try {
-      setLoading(true);
-      const allCompanies = await companiesService.getAllCompanies();
-      // Filtrar por localidad
-      const filtered = allCompanies.filter((company) => company.localidad === localidad);
-      setCompanies(filtered);
-    } catch (error) {
-      console.error('Error al cargar empresas:', error);
-      setCompanies([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Filtrar por localidad usando useMemo para evitar re-renders innecesarios
+  const companies = useMemo(
+    () => allCompanies.filter((company) => company.localidad === localidad),
+    [allCompanies, localidad],
+  );
 
   if (loading) {
     return (

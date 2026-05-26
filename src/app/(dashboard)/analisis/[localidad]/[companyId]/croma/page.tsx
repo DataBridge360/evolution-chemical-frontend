@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { getAnalysesByCompanyId } from '@/src/modules/chromatography/services/chromatographyService';
-import { ChromatographicAnalysis } from '@/src/modules/chromatography/types';
+import { useAnalysesByCompany } from '@/src/modules/chromatography/hooks/useAnalysesByCompany';
+import { useCompany } from '@/src/modules/companies/hooks/useCompany';
 import { formatDateAR } from '@/src/lib/dateUtils';
 import { Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
-import { companiesService } from '@/src/modules/companies/services/CompaniesService';
-import { AnalysisDetailPanel } from '@/src/modules/chromatography/components/AnalysisDetailPanel';
 
 export default function CromaAnalysesPage() {
   const router = useRouter();
@@ -15,33 +13,14 @@ export default function CromaAnalysesPage() {
   const localidad = params.localidad as Localidad;
   const companyId = params.companyId as string;
 
-  const [analyses, setAnalyses] = useState<ChromatographicAnalysis[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [companyName, setCompanyName] = useState('');
-  const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, [companyId]);
+  // Usar hooks con cache
+  const { data: company, isLoading: loadingCompany } = useCompany(companyId);
+  const { data: analyses = [], isLoading: loadingAnalyses } = useAnalysesByCompany(companyId);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [company, analysesData] = await Promise.all([
-        companiesService.getCompanyById(companyId),
-        getAnalysesByCompanyId(companyId),
-      ]);
-
-      setCompanyName(company.name);
-      setAnalyses(analysesData);
-    } catch (error) {
-      console.error('Error cargando datos:', error);
-      setAnalyses([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = loadingCompany || loadingAnalyses;
+  const companyName = company?.name || '';
 
   // Filtrar análisis por término de búsqueda
   const filteredAnalyses = analyses.filter((analysis) => {
@@ -132,101 +111,115 @@ export default function CromaAnalysesPage() {
           />
         </div>
 
-        {/* Tabla de análisis */}
-        <div className="overflow-hidden border border-border bg-white">
+        {/* Lista de análisis con diseño de tarjetas */}
+        <div className="space-y-2">
           {filteredAnalyses.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">
-              {searchTerm
-                ? 'No se encontraron análisis con ese criterio.'
-                : 'No hay análisis cromatográficos para esta empresa.'}
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
+              <p className="text-sm text-gray-600">
+                {searchTerm
+                  ? 'No se encontraron análisis con ese criterio.'
+                  : 'No hay análisis cromatográficos para esta empresa.'}
+              </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-border bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                      N° Informe
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                      Yacimiento
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                      Pozo
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                      Fecha Análisis
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                      Estado
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredAnalyses.map((analysis) => (
-                    <tr key={analysis.analysis_id} className="transition-colors hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        {analysis.report_number || 'Sin N°'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {analysis.field_name || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {analysis.well_name || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {analysis.analysis_date
-                          ? formatDateAR(analysis.analysis_date)
-                          : analysis.created_at
-                            ? formatDateAR(analysis.created_at)
-                            : '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span
-                          className={`inline-flex border px-2 py-1 text-xs font-medium ${
-                            analysis.status === 'reported' || analysis.status === 'approved'
-                              ? 'border-green-200 bg-green-50 text-green-700'
-                              : analysis.status === 'calculated'
-                                ? 'border-blue-200 bg-blue-50 text-blue-700'
-                                : 'border-yellow-200 bg-yellow-50 text-yellow-700'
-                          }`}
-                        >
-                          {analysis.status === 'reported'
-                            ? 'Informado'
-                            : analysis.status === 'approved'
-                              ? 'Aprobado'
-                              : analysis.status === 'calculated'
-                                ? 'Calculado'
-                                : 'Borrador'}
+            filteredAnalyses.map((analysis) => {
+              const getStatusInfo = (status: string) => {
+                const statusMap: Record<string, { label: string; color: string }> = {
+                  draft: { label: 'Borrador', color: 'bg-gray-100 text-gray-700' },
+                  calculated: { label: 'Calculado', color: 'bg-blue-100 text-blue-700' },
+                  approved: { label: 'Aprobado', color: 'bg-green-100 text-green-700' },
+                  reported: { label: 'Informado', color: 'bg-green-100 text-green-700' },
+                };
+                return statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-700' };
+              };
+
+              const statusInfo = getStatusInfo(analysis.status);
+              const displayDate = analysis.analysis_date || analysis.created_at;
+
+              return (
+                <div
+                  key={analysis.analysis_id}
+                  onClick={() => router.push(`/analisis/${localidad}/${companyId}/croma/${analysis.analysis_id}`)}
+                  className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-blue-300 hover:shadow-md"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <h4 className="font-semibold text-gray-900">
+                        {analysis.report_number
+                          ? `Informe N° ${analysis.report_number}`
+                          : companyName}
+                      </h4>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusInfo.color}`}
+                      >
+                        {statusInfo.label}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
+                      {analysis.field_name && (
+                        <span className="flex items-center gap-1">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                          {analysis.field_name}
+                          {analysis.well_name && ` - ${analysis.well_name}`}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => setSelectedAnalysisId(analysis.analysis_id)}
-                          className="bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-                        >
-                          Ver Detalle
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      )}
+                      {displayDate && (
+                        <span className="flex items-center gap-1">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          {formatDateAR(displayDate)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
-
-      {/* Panel de Detalle (se abre al hacer click en "Ver Detalle") */}
-      {selectedAnalysisId && (
-        <AnalysisDetailPanel
-          analysisId={selectedAnalysisId}
-          onClose={() => setSelectedAnalysisId(null)}
-        />
-      )}
     </>
   );
 }

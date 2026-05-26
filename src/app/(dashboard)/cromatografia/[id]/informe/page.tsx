@@ -105,29 +105,150 @@ export default function InformePage({ params }: Props) {
 
   const props = analysis.calculated_properties;
 
+  // Función para imprimir/guardar como PDF
+  const handleDownloadPDF = () => {
+    const element = document.getElementById('report-content');
+    if (!element) return;
+
+    // Abrir nueva ventana
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (!printWindow) {
+      alert('Por favor permite ventanas emergentes para descargar el PDF');
+      return;
+    }
+
+    // Obtener todos los estilos de la página actual
+    const styles = Array.from(document.styleSheets)
+      .map(styleSheet => {
+        try {
+          return Array.from(styleSheet.cssRules)
+            .map(rule => rule.cssText)
+            .join('\n');
+        } catch (e) {
+          return '';
+        }
+      })
+      .join('\n');
+
+    // Escribir el HTML completo en la nueva ventana
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Informe_${analysis.report_number || params.id}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            ${styles}
+
+            @page {
+              size: A4 portrait;
+              margin: 0;
+            }
+
+            body {
+              margin: 0;
+              padding: 0;
+              background: white !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              font-size: 7px !important;
+            }
+
+            #report-content {
+              width: 100% !important;
+              max-width: 210mm !important;
+              margin: 0 auto !important;
+              padding: 15px 12px !important;
+              font-size: 7px !important;
+              line-height: 1.1 !important;
+            }
+
+            #report-content * {
+              font-size: 7px !important;
+            }
+
+            #report-content table {
+              font-size: 6px !important;
+            }
+
+            #report-content h1 {
+              font-size: 12px !important;
+              margin: 1px 0 !important;
+            }
+
+            #report-content .text-\\[11px\\],
+            #report-content .text-\\[10px\\],
+            #report-content .text-\\[9px\\] {
+              font-size: 7px !important;
+            }
+
+            #report-content img {
+              max-width: 60% !important;
+              height: auto !important;
+            }
+
+            #report-content .mt-4,
+            #report-content .mt-3,
+            #report-content .mt-2 {
+              margin-top: 0.5rem !important;
+            }
+
+            #report-content .p-\\[25px_18px\\] {
+              padding: 15px 12px !important;
+            }
+
+            .vertical-note {
+              writing-mode: vertical-rl !important;
+              transform: rotate(180deg) !important;
+              position: absolute !important;
+              left: 2px !important;
+              top: 200px !important;
+              font-size: 5px !important;
+              max-height: 400px !important;
+            }
+
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+          </style>
+        </head>
+        <body>
+          ${element.outerHTML}
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                setTimeout(function() {
+                  window.close();
+                }, 100);
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+  };
+
   return (
     <div className="min-h-screen bg-[#e9e9e9] p-6">
       <style jsx global>{`
-        @media print {
-          body {
-            background: #fff !important;
-            padding: 0 !important;
-          }
-          .print-hidden {
-            display: none !important;
-          }
-          .print-page {
-            box-shadow: none !important;
-            margin: 0 !important;
-          }
-          input {
-            border: none !important;
-            background: transparent !important;
+        @media screen {
+          input:focus {
+            background: #ffffcc !important;
+            outline: 1px solid #1a5fb4 !important;
           }
         }
-        input:focus {
-          background: #ffffcc !important;
-          outline: 1px solid #1a5fb4 !important;
+
+        @media screen {
+          input:focus {
+            background: #ffffcc !important;
+            outline: 1px solid #1a5fb4 !important;
+          }
         }
       `}</style>
 
@@ -140,30 +261,32 @@ export default function InformePage({ params }: Props) {
           ← Volver
         </button>
         <button
-          onClick={() => window.print()}
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          onClick={handleDownloadPDF}
+          className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
-          Imprimir / PDF
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Descargar Informe
         </button>
       </div>
 
       {/* Página del informe */}
-      <div className="print-page relative mx-auto min-h-[1100px] w-[850px] bg-white p-[30px_20px] text-[11px] leading-tight shadow-lg">
+      <div id="report-content" className="print-page relative mx-auto min-h-[1123px] w-[794px] bg-white p-[25px_18px] text-[10px] leading-tight shadow-lg">
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-black pb-1.5">
-          <div className="flex-1">
+        <div className="border-b border-black pb-1.5">
+          <div>
             <Image
               src="/croma/image.png"
               alt="Evolution Chemical"
-              width={192}
-              height={70}
+              width={140}
+              height={52}
               className="mb-1"
             />
-            <p className="text-[11px] font-bold italic">
+            <p className="text-[9px] font-bold italic">
               Laboratorio Certificado en Normas de Calidad ISO 9001 / 2015 por Bureau Veritas.
             </p>
           </div>
-          <div className="h-[90px] w-[90px] border-2 border-white bg-gradient-to-br from-pink-500 to-pink-500" />
         </div>
 
         {/* Título */}
@@ -217,7 +340,7 @@ export default function InformePage({ params }: Props) {
 
         {/* Nota vertical lateral */}
         <div
-          className="absolute left-2 top-[340px] max-h-[600px] text-[8.5px] leading-[1.4] text-gray-600"
+          className="vertical-note absolute left-2 top-[340px] max-h-[600px] text-[8.5px] leading-[1.4] text-gray-600"
           style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
         >
           Datos, constantes y formulas tomadas de las normas IRAM-IAPG A 6854 - GPSA Electronic Data
@@ -226,8 +349,8 @@ export default function InformePage({ params }: Props) {
         </div>
 
         {/* Tabla de componentes */}
-        <div className="mx-[60px] mt-3">
-          <table className="w-full border-collapse border border-black text-[11px]">
+        <div className="mx-[60px] mt-2">
+          <table className="w-full border-collapse border border-black text-[9px]">
             <thead>
               <tr className="bg-[#cfe8c8]">
                 <th
@@ -292,13 +415,13 @@ export default function InformePage({ params }: Props) {
         </div>
 
         {/* BLOQUE 1: Características Generales + Propiedades Críticas */}
-        <div className="mx-[60px] mt-2.5 grid grid-cols-2 gap-0">
+        <div className="mx-[60px] mt-1.5 grid grid-cols-2 gap-0">
           {/* Características Generales - COMPLETAS (9 propiedades) */}
           <div className="border border-t border-black">
             <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
               Caracteristicas Generales
             </div>
-            <table className="w-full text-[11px]">
+            <table className="w-full text-[9px]">
               <tbody>
                 <PropRow
                   label="Masa Molecular"
@@ -347,7 +470,7 @@ export default function InformePage({ params }: Props) {
             <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
               Propiedades Criticas
             </div>
-            <table className="w-full text-[11px]">
+            <table className="w-full text-[9px]">
               <tbody>
                 <tr>
                   <td className="w-1/2 px-1.5 py-0.5">Temp. Critica</td>
@@ -419,7 +542,7 @@ export default function InformePage({ params }: Props) {
             <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
               Volumen de liquido equivalente
             </div>
-            <table className="w-full text-[11px]">
+            <table className="w-full text-[9px]">
               <tbody>
                 <tr>
                   <td className="w-1/2 px-1.5 py-0.5">C1+</td>
@@ -465,7 +588,7 @@ export default function InformePage({ params }: Props) {
             <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
               Porcentual de composicion
             </div>
-            <table className="w-full text-[11px]">
+            <table className="w-full text-[9px]">
               <tbody>
                 <tr>
                   <td className="w-1/2 px-1.5 py-0.5">Oxigeno (O)</td>
@@ -603,7 +726,7 @@ export default function InformePage({ params }: Props) {
             <div className="border-b border-black bg-gray-100 p-0.5 text-center font-bold">
               Viscosidad Gas (estimada)
             </div>
-            <table className="w-full text-[11px]">
+            <table className="w-full text-[9px]">
               <tbody>
                 {props.caracteristicas_generales.viscosidad_dean_stiel && (
                   <tr>
@@ -638,16 +761,16 @@ export default function InformePage({ params }: Props) {
         )}
 
         {/* Footer */}
-        <div className="mx-8 mt-8 flex items-end justify-between text-[10px]">
+        <div className="mx-8 mt-3 flex items-end justify-between text-[8px]">
           <div className="flex-1 text-black">
-            (NR) No reportada (NE) No ensayado (ND) No disponible (NS) No solicitado
+            <p>(NR) No reportada (NE) No ensayado (ND) No disponible (NS) No solicitado</p>
           </div>
-          <div className="w-[280px] text-center">
+          <div className="w-[180px] text-center">
             <Image
               src="/croma/firma.jpeg"
               alt="Firma"
-              width={200}
-              height={80}
+              width={120}
+              height={48}
               className="mx-auto"
             />
           </div>

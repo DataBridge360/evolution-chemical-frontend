@@ -171,29 +171,29 @@ export default function FileUpload01({
   const canSubmit = Boolean(file && selectedCompanyId) && !disabled;
 
   return (
-    <Card className="w-full rounded-3xl border border-[#d8e4f2] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+    <Card className="w-full rounded-2xl border border-[#d8e4f2] bg-white shadow-sm">
       <CardContent className="p-0">
-        <div className="border-b border-[#e6eef7] px-5 py-4 sm:px-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <h1 className="text-xl font-semibold tracking-[-0.02em] text-[#10243e]">
+        <div className="border-b border-[#e6eef7] px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5">
+              <h1 className="text-lg font-semibold tracking-[-0.02em] text-[#10243e]">
                 Carga cromatográfica
               </h1>
-              <p className="text-sm leading-6 text-[#56667a]">
+              <p className="text-xs leading-5 text-[#56667a]">
                 Subí el Excel del cromatógrafo, asociá la empresa y procesá el análisis.
               </p>
             </div>
 
-            <div className="rounded-full border border-[#d5e6f8] bg-[#f5f9ff] px-3 py-1 text-xs font-semibold text-[#0b63a8]">
+            <div className="rounded-full border border-[#d5e6f8] bg-[#f5f9ff] px-2.5 py-0.5 text-[10px] font-semibold text-[#0b63a8]">
               XLSX / XLS
             </div>
           </div>
         </div>
 
-        <div className="space-y-5 px-5 py-5 sm:px-6">
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="fieldName" className="text-sm font-medium text-[#21364d]">
+        <div className="space-y-4 px-4 py-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="fieldName" className="text-xs font-medium text-[#21364d]">
                 Yacimiento <span className="text-[#7b8da1]">(opcional)</span>
               </Label>
               <Input
@@ -202,18 +202,18 @@ export default function FileUpload01({
                 disabled={disabled}
                 onChange={(event) => onFieldNameChange(event.target.value)}
                 placeholder="Nombre del yacimiento"
-                className="h-11 rounded-xl border-[#d6e1ee] bg-white px-4 text-[#10243e] shadow-none placeholder:text-[#8ca0b3] focus-visible:border-[#0b63a8] focus-visible:ring-4 focus-visible:ring-[#d9ebfb]"
+                className="h-9 rounded-lg border-[#d6e1ee] bg-white px-3 text-sm text-[#10243e] shadow-none placeholder:text-[#8ca0b3] focus-visible:border-[#0b63a8] focus-visible:ring-2 focus-visible:ring-[#d9ebfb]"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="companySearch" className="text-sm font-medium text-[#21364d]">
+            <div className="space-y-1.5">
+              <Label htmlFor="companySearch" className="text-xs font-medium text-[#21364d]">
                 Empresa <span className="text-[#0b63a8]">*</span>
               </Label>
 
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-[#7c90a5]">
-                  <Search className="h-4 w-4" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#7c90a5]">
+                  <Search className="h-3.5 w-3.5" />
                 </div>
 
                 <Input
@@ -228,21 +228,21 @@ export default function FileUpload01({
                     setIsCompanyMenuOpen(true);
                   }}
                   placeholder={loadingCompanies ? 'Cargando empresas...' : 'Buscar empresa'}
-                  className="h-11 rounded-xl border-[#d6e1ee] bg-white pl-11 pr-11 text-[#10243e] shadow-none placeholder:text-[#8ca0b3] focus-visible:border-[#0b63a8] focus-visible:ring-4 focus-visible:ring-[#d9ebfb]"
+                  className="h-9 rounded-lg border-[#d6e1ee] bg-white pl-9 pr-9 text-sm text-[#10243e] shadow-none placeholder:text-[#8ca0b3] focus-visible:border-[#0b63a8] focus-visible:ring-2 focus-visible:ring-[#d9ebfb]"
                   autoComplete="off"
                 />
 
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-[#7c90a5]">
-                  <ChevronDown className="h-4 w-4" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#7c90a5]">
+                  <ChevronDown className="h-3.5 w-3.5" />
                 </div>
 
                 {isCompanyMenuOpen && !disabled && (
-                  <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 overflow-hidden rounded-2xl border border-[#d6e1ee] bg-white shadow-[0_20px_45px_rgba(15,23,42,0.12)]">
-                    <div className="max-h-64 overflow-y-auto py-2">
+                  <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-xl border border-[#d6e1ee] bg-white shadow-lg">
+                    <div className="max-h-52 overflow-y-auto py-1">
                       {loadingCompanies ? (
-                        <div className="px-4 py-3 text-sm text-[#5c7086]">Cargando empresas...</div>
+                        <div className="px-3 py-2 text-xs text-[#5c7086]">Cargando empresas...</div>
                       ) : filteredCompanies.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-[#5c7086]">
+                        <div className="px-3 py-2 text-xs text-[#5c7086]">
                           No se encontraron empresas.
                         </div>
                       ) : (
@@ -254,7 +254,7 @@ export default function FileUpload01({
                               key={company.company_id}
                               type="button"
                               className={cn(
-                                'flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition-colors',
+                                'flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs transition-colors',
                                 isSelected
                                   ? 'bg-[#eef6ff] text-[#0b63a8]'
                                   : 'text-[#21364d] hover:bg-[#f7fafe]',
@@ -264,21 +264,21 @@ export default function FileUpload01({
                                 handleCompanySelect(company);
                               }}
                             >
-                              <span className="flex min-w-0 items-center gap-3">
+                              <span className="flex min-w-0 items-center gap-2">
                                 <span
                                   className={cn(
-                                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+                                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
                                     isSelected
                                       ? 'bg-[#d9ebfb] text-[#0b63a8]'
                                       : 'bg-[#eef3f8] text-[#6d8197]',
                                   )}
                                 >
-                                  <Building2 className="h-4 w-4" />
+                                  <Building2 className="h-3 w-3" />
                                 </span>
                                 <span className="truncate">{company.name}</span>
                               </span>
 
-                              {isSelected && <Check className="h-4 w-4 shrink-0" />}
+                              {isSelected && <Check className="h-3 w-3 shrink-0" />}
                             </button>
                           );
                         })
@@ -295,7 +295,7 @@ export default function FileUpload01({
             tabIndex={disabled ? -1 : 0}
             aria-disabled={disabled}
             className={cn(
-              'relative flex min-h-[240px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#bcd4ec] bg-[#f8fbff] px-6 py-10 text-center transition-colors',
+              'relative flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#bcd4ec] bg-[#f8fbff] px-4 py-6 text-center transition-colors',
               'hover:border-[#8eb8e2] hover:bg-[#f5f9ff]',
               isDragging && 'border-[#0b63a8] bg-[#eef6ff]',
               disabled && 'cursor-not-allowed opacity-60',
@@ -318,44 +318,44 @@ export default function FileUpload01({
                   type="button"
                   aria-label="Quitar archivo"
                   disabled={disabled}
-                  className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d5e6f8] bg-white text-[#53708f] shadow-sm transition-colors hover:border-[#b8d4f0] hover:bg-[#f5f9ff] hover:text-[#0b63a8] disabled:pointer-events-none"
+                  className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#d5e6f8] bg-white text-[#53708f] shadow-sm transition-colors hover:border-[#b8d4f0] hover:bg-[#f5f9ff] hover:text-[#0b63a8] disabled:pointer-events-none"
                   onClick={(event) => {
                     event.stopPropagation();
                     handleClearSelection();
                   }}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
 
-                <div className="w-full max-w-2xl space-y-5 text-left">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0b63a8] shadow-[0_10px_24px_rgba(11,99,168,0.08)]">
-                      <FileSpreadsheet className="h-6 w-6" />
+                <div className="w-full max-w-2xl space-y-3 text-left">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#0b63a8] shadow-sm">
+                      <FileSpreadsheet className="h-5 w-5" />
                     </div>
 
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
-                          <p className="truncate text-base font-semibold text-[#10243e]">
+                          <p className="truncate text-sm font-semibold text-[#10243e]">
                             {file.name}
                           </p>
-                          <p className="text-sm text-[#5c7086]">
+                          <p className="text-xs text-[#5c7086]">
                             {Math.round(file.size / 1024)} KB
                           </p>
                         </div>
 
-                        <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[#e8f3ff] px-3 py-1 text-xs font-semibold text-[#0b63a8]">
-                          <span className="h-2 w-2 rounded-full bg-[#0b63a8]" />
+                        <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#e8f3ff] px-2.5 py-0.5 text-[10px] font-semibold text-[#0b63a8]">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#0b63a8]" />
                           Archivo listo
                         </span>
                       </div>
 
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5c7086]">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-medium text-[#5c7086]">
                           <span>Preparado para procesar</span>
                           <span>{Math.round(fileProgress)}%</span>
                         </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-[#dbe8f5]">
+                        <div className="h-1.5 overflow-hidden rounded-full bg-[#dbe8f5]">
                           <div
                             className="h-full rounded-full bg-[#0b63a8] transition-[width] duration-150"
                             style={{ width: `${fileProgress}%` }}
@@ -365,9 +365,9 @@ export default function FileUpload01({
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-[#5c7086]">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-[#5c7086]">
                     <span>Hacé clic o arrastrá otro archivo para reemplazarlo.</span>
-                    <span className="rounded-full border border-[#d5e6f8] bg-white px-3 py-1 text-xs font-medium text-[#21466b]">
+                    <span className="rounded-full border border-[#d5e6f8] bg-white px-2 py-0.5 text-[10px] font-medium text-[#21466b]">
                       .xlsx / .xls
                     </span>
                   </div>
@@ -375,15 +375,15 @@ export default function FileUpload01({
               </>
             ) : (
               <>
-                <div className="mb-4 rounded-2xl bg-white p-4 shadow-[0_10px_24px_rgba(11,99,168,0.08)]">
-                  <Upload className="h-6 w-6 text-[#0b63a8]" />
+                <div className="mb-3 rounded-xl bg-white p-3 shadow-sm">
+                  <Upload className="h-5 w-5 text-[#0b63a8]" />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-base font-medium text-[#10243e]">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-[#10243e]">
                     Arrastrá el archivo o hacé clic para cargarlo
                   </p>
-                  <p className="text-sm leading-6 text-[#5c7086]">
+                  <p className="text-xs leading-5 text-[#5c7086]">
                     Se aceptan archivos Excel del cromatógrafo en formato{' '}
                     <span className="font-medium text-[#21466b]">.xlsx</span> y{' '}
                     <span className="font-medium text-[#21466b]">.xls</span>.
@@ -404,26 +404,26 @@ export default function FileUpload01({
           </div>
 
           {error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
               {error}
             </div>
           )}
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-[#e6eef7] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex flex-col gap-2 border-t border-[#e6eef7] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 text-sm text-[#5c7086] transition-colors hover:text-[#21466b]"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#5c7086] transition-colors hover:text-[#21466b]"
                 >
-                  <HelpCircle className="h-4 w-4" />
+                  <HelpCircle className="h-3.5 w-3.5" />
                   Formatos admitidos y tamaño máximo
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[240px] border border-[#d6e1ee] bg-white py-3 text-[#10243e] shadow-lg">
-                <p className="text-xs leading-5 text-[#5c7086]">
+              <TooltipContent className="max-w-[240px] border border-[#d6e1ee] bg-white py-2.5 text-[#10243e] shadow-lg">
+                <p className="text-[10px] leading-4 text-[#5c7086]">
                   Solo se aceptan archivos Excel del cromatógrafo en formato XLSX o XLS. Tamaño
                   máximo: 10MB.
                 </p>
@@ -431,13 +431,13 @@ export default function FileUpload01({
             </Tooltip>
           </TooltipProvider>
 
-          <div className="flex gap-3 self-end">
+          <div className="flex gap-2 self-end">
             <Button
               type="button"
               variant="outline"
               disabled={disabled}
               onClick={handleClearSelection}
-              className="h-11 rounded-xl border-[#d6e1ee] bg-white px-5 text-sm font-medium text-[#33485f] hover:bg-[#f7fafe]"
+              className="h-9 rounded-lg border-[#d6e1ee] bg-white px-4 text-xs font-medium text-[#33485f] hover:bg-[#f7fafe]"
             >
               Limpiar
             </Button>
@@ -445,7 +445,7 @@ export default function FileUpload01({
               type="button"
               disabled={!canSubmit}
               onClick={onSubmit}
-              className="h-11 rounded-xl bg-[#0b63a8] px-5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(11,99,168,0.22)] hover:bg-[#09568f] disabled:bg-[#b7c4d2] disabled:shadow-none"
+              className="h-9 rounded-lg bg-[#0b63a8] px-4 text-xs font-semibold text-white shadow-sm hover:bg-[#09568f] disabled:bg-[#b7c4d2] disabled:shadow-none"
             >
               Procesar análisis
             </Button>

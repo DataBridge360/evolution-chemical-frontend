@@ -4,17 +4,19 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
 import FileUpload01 from '@/src/components/file-upload-01';
 import AnalysisLoadingModal from '@/src/modules/chromatography/components/AnalysisLoadingModal';
+import RecentAnalysesHistory from '@/src/modules/chromatography/components/RecentAnalysesHistory';
 import {
   calculateProperties,
   generateReport,
   uploadXLSXFile,
 } from '@/src/modules/chromatography/services/chromatographyService';
-import { companiesService } from '@/src/modules/companies/services/CompaniesService';
+import { useCompanies } from '@/src/modules/companies/hooks/useCompanies';
 import { Company } from '@/src/types/company';
 
 type ProcessStep = 'idle' | 'uploading' | 'calculating' | 'generating-report' | 'complete';
@@ -24,31 +26,17 @@ const EXCEL_EXTENSIONS = ['.xlsx', '.xls'];
 
 export default function ChromatographyPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // Usar hook con cache para empresas
+  const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
+
   const [file, setFile] = useState<File | null>(null);
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [fieldName, setFieldName] = useState('');
   const [currentStep, setCurrentStep] = useState<ProcessStep>('idle');
   const [error, setError] = useState<string | null>(null);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
-
-  useEffect(() => {
-    void loadCompanies();
-  }, []);
-
-  const loadCompanies = async () => {
-    try {
-      setLoadingCompanies(true);
-      const data = await companiesService.getAllCompanies();
-      setCompanies(data);
-    } catch (loadError) {
-      console.error('Error cargando empresas:', loadError);
-      setError('Error cargando lista de empresas');
-    } finally {
-      setLoadingCompanies(false);
-    }
-  };
 
   const handleCompanySearchChange = (value: string) => {
     setSearchTerm(value);
@@ -114,6 +102,10 @@ export default function ChromatographyPage() {
 
       setCurrentStep('complete');
 
+      // Invalidar cache para refrescar el historial
+      await queryClient.invalidateQueries({ queryKey: ['analyses'] });
+      await queryClient.invalidateQueries({ queryKey: ['analyses', 'company', selectedCompanyId] });
+
       setTimeout(() => {
         router.push(`/cromatografia/${uploadResult.analysis_id}`);
       }, 1000);
@@ -136,7 +128,7 @@ export default function ChromatographyPage() {
   return (
     <>
       <div className="flex justify-center py-2 sm:py-3">
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-4xl space-y-6">
           <FileUpload01
             companies={companies}
             companySearch={searchTerm}
@@ -153,6 +145,16 @@ export default function ChromatographyPage() {
             onFileSelect={handleFileSelect}
             onSubmit={handleUpload}
           />
+
+          {/* Historial del último mes */}
+          <div className="rounded-lg border border-gray-200 bg-white p-5">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">
+              Historial del último mes
+            </h3>
+            <div className="max-h-[500px] overflow-y-auto pr-2">
+              <RecentAnalysesHistory />
+            </div>
+          </div>
         </div>
       </div>
 

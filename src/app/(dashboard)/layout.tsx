@@ -42,24 +42,24 @@ function DashboardHeader() {
       <div className="relative">
         <button
           onClick={() => setShowProfileMenu(!showProfileMenu)}
-          className="group flex items-center gap-3 rounded-full border border-[#bfc7d3] bg-white px-2 py-1.5 shadow-sm transition-colors hover:border-[#006096] hover:bg-[#eff4ff]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006096] focus-visible:ring-offset-2"
+          className="group flex items-center gap-2 rounded-full border border-[#bfc7d3] bg-white px-1.5 py-1 shadow-sm transition-colors hover:border-[#006096] hover:bg-[#eff4ff]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006096] focus-visible:ring-offset-2"
           aria-label="Abrir menú de perfil"
           aria-expanded={showProfileMenu}
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#006096] text-sm font-bold uppercase text-white">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#006096] text-xs font-bold uppercase text-white">
             {userInitial}
           </span>
           <span className="flex min-w-0 flex-col pr-1 text-left">
-            <span className="max-w-32 truncate text-sm font-semibold leading-5 text-[#0b1c30]">
+            <span className="max-w-32 truncate text-xs font-semibold leading-4 text-[#0b1c30]">
               {userName}
             </span>
-            <span className="max-w-32 truncate text-[11px] font-medium leading-4 text-[#5f748b]">
+            <span className="max-w-32 truncate text-[10px] font-medium leading-3 text-[#5f748b]">
               {userRoleLabel}
             </span>
           </span>
           <svg
             className={cn(
-              'h-4 w-4 text-[#3f4851] transition-transform group-hover:text-[#006096]',
+              'h-3.5 w-3.5 text-[#3f4851] transition-transform group-hover:text-[#006096]',
               showProfileMenu && 'rotate-180 text-[#006096]',
             )}
             fill="none"
@@ -180,9 +180,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         shouldEnter && 'dashboard-entering',
       )}
     >
+      {/* Línea divisoria única que atraviesa toda la página */}
+      <div className="absolute left-0 right-0 top-[65px] z-[250] border-b border-[#dbe4ef]" />
+
       <Sidebar />
       <div className="relative flex min-w-0 flex-1 flex-col">
-        <div className="bg-[#f8f9ff]/94 relative z-[200] border-b border-[#dbe4ef] px-6 py-4 backdrop-blur xl:px-8">
+        <div className="bg-[#f8f9ff]/94 relative z-[200] px-6 py-3 backdrop-blur xl:px-8">
           <div className="mx-auto w-full max-w-[1440px]">
             <DashboardHeader />
           </div>
