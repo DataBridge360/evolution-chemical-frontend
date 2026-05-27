@@ -27,9 +27,9 @@ const PropertyRow = ({
   unit: string;
   decimals?: number;
 }) => (
-  <div className="flex justify-between items-center py-1 border-b border-gray-100">
-    <span className="text-gray-700 font-medium">{label}</span>
-    <span className="text-gray-900 font-semibold">
+  <div className="flex items-center justify-between border-b border-gray-100 py-1">
+    <span className="font-medium text-gray-700">{label}</span>
+    <span className="font-semibold text-gray-900">
       {safeFormat(value, decimals)} {unit}
     </span>
   </div>
@@ -51,9 +51,9 @@ const ValueRow = ({
   unit2: string;
   decimals?: number;
 }) => (
-  <div className="flex justify-between items-center py-1 border-b border-gray-100">
-    <span className="text-gray-700 font-medium">{label}</span>
-    <span className="text-gray-900 font-semibold">
+  <div className="flex items-center justify-between border-b border-gray-100 py-1">
+    <span className="font-medium text-gray-700">{label}</span>
+    <span className="font-semibold text-gray-900">
       {safeFormat(value1, decimals)} {unit1} / {safeFormat(value2, decimals)} {unit2}
     </span>
   </div>
@@ -85,10 +85,10 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
   if (isLoading) {
     return (
       <>
-        <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-        <div className="fixed right-0 top-0 h-full w-3/4 bg-white shadow-2xl z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
+        <div className="fixed right-0 top-0 z-50 flex h-full w-3/4 items-center justify-center bg-white shadow-2xl">
           <div className="text-center">
-            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600 mx-auto"></div>
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
             <p className="mt-4 text-gray-600">Cargando análisis...</p>
           </div>
         </div>
@@ -99,11 +99,11 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
   if (!analysis) {
     return (
       <>
-        <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-        <div className="fixed right-0 top-0 h-full w-3/4 bg-white shadow-2xl z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
+        <div className="fixed right-0 top-0 z-50 flex h-full w-3/4 items-center justify-center bg-white shadow-2xl">
           <div className="text-center">
             <p className="text-red-600">No se encontró el análisis</p>
-            <button onClick={onClose} className="mt-4 bg-gray-600 text-white px-4 py-2 rounded">
+            <button onClick={onClose} className="mt-4 rounded bg-gray-600 px-4 py-2 text-white">
               Cerrar
             </button>
           </div>
@@ -117,12 +117,12 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
 
       {/* Panel Principal - Resultados */}
-      <div className="fixed right-0 top-0 h-full w-3/4 bg-gray-50 shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed right-0 top-0 z-50 h-full w-3/4 overflow-y-auto bg-gray-50 shadow-2xl">
         {/* Header Sticky */}
-        <div className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Análisis Cromatográfico</h2>
             <p className="text-gray-600">
@@ -133,15 +133,12 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
             {analysis.chroma_report_html && (
               <button
                 onClick={() => setShowReport(true)}
-                className="bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 flex items-center gap-2"
+                className="flex items-center gap-2 rounded bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700"
               >
                 📄 Ver Informe
               </button>
             )}
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl px-3"
-            >
+            <button onClick={onClose} className="px-3 text-2xl text-gray-500 hover:text-gray-700">
               ✕
             </button>
           </div>
@@ -150,7 +147,7 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
         {/* Contenido - Implementación completa desde /cromatografia/[id]/page.tsx */}
         <div className="p-6">
           {!props ? (
-            <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+            <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
               <p className="text-yellow-800">
                 Este análisis aún no ha sido calculado. Las propiedades no están disponibles.
               </p>
@@ -158,13 +155,13 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
           ) : (
             <div className="space-y-8">
               {/* Tabla de Composición Completa */}
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="overflow-hidden rounded-lg bg-white shadow-lg">
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
                   <h3 className="text-xl font-bold text-white">Composición Detallada</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-xs">
-                    <thead className="bg-gray-100 border-b-2 border-gray-300">
+                    <thead className="border-b-2 border-gray-300 bg-gray-100">
                       <tr>
                         <th className="sticky left-0 z-10 bg-gray-100 px-3 py-2 text-left font-semibold">
                           Compuesto
@@ -201,27 +198,49 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
                       {props.composicion
                         .filter((c) => c.name?.toUpperCase() !== 'TOTALES')
                         .map((compound, idx) => (
-                          <tr key={idx} className="hover:bg-blue-50 transition-colors">
+                          <tr key={idx} className="transition-colors hover:bg-blue-50">
                             <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-gray-900">
                               {compound.name}
                             </td>
                             <td className="px-3 py-2 text-center text-gray-600">
                               {compound.formula}
                             </td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.pct_molar, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.fracc_molar, 6)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.pct_volumen, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.pct_masa, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.masa_molar, 4)}</td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.pct_molar, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.fracc_molar, 6)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.pct_volumen, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.pct_masa, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.masa_molar, 4)}
+                            </td>
                             <td className="px-3 py-2 text-right">
                               {safeFormat(compound.densidad_relativa, 4)}
                             </td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.pcs_mezcla, 2)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.pci_mezcla, 2)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.tc_contrib, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.pc_contrib, 2)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.vc_contrib, 6)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.zc_contrib, 6)}</td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.pcs_mezcla, 2)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.pci_mezcla, 2)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.tc_contrib, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.pc_contrib, 2)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.vc_contrib, 6)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.zc_contrib, 6)}
+                            </td>
                             <td className="px-3 py-2 text-right">
                               {safeFormat(compound.t_solid_contrib, 2)}
                             </td>
@@ -231,17 +250,33 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
                             <td className="px-3 py-2 text-right">
                               {safeFormat(compound.vol_liq_eq, 6)}
                             </td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.n_carbon, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.n_hydrogen, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.n_oxygen, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.n_nitrogen, 4)}</td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.n_carbon, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.n_hydrogen, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.n_oxygen, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.n_nitrogen, 4)}
+                            </td>
                             <td className="px-3 py-2 text-right">
                               {safeFormat(compound.aire_req_contrib, 4)}
                             </td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.lfl_contrib, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.ufl_contrib, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.cp_mezcla, 4)}</td>
-                            <td className="px-3 py-2 text-right">{safeFormat(compound.cv_mezcla, 4)}</td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.lfl_contrib, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.ufl_contrib, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.cp_mezcla, 4)}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {safeFormat(compound.cv_mezcla, 4)}
+                            </td>
                             <td className="px-3 py-2 text-right">
                               {safeFormat(compound.hc_ratio_contrib, 4)}
                             </td>
@@ -249,7 +284,7 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
                         ))}
 
                       {/* Fila de Totales */}
-                      <tr className="bg-gray-100 font-bold border-t-2 border-gray-400">
+                      <tr className="border-t-2 border-gray-400 bg-gray-100 font-bold">
                         <td className="sticky left-0 z-10 bg-gray-100 px-3 py-2">TOTALES</td>
                         <td className="px-3 py-2"></td>
                         <td className="px-3 py-2 text-right">
@@ -290,13 +325,13 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
               </div>
 
               {/* Grid de Secciones */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Características Generales */}
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-hidden rounded-lg bg-white shadow-lg">
                   <div className="bg-gradient-to-r from-green-600 to-green-700 px-4 py-3">
                     <h3 className="text-lg font-bold text-white">Características Generales</h3>
                   </div>
-                  <div className="p-4 space-y-2 text-sm">
+                  <div className="space-y-2 p-4 text-sm">
                     <PropertyRow
                       label="Masa Molecular"
                       value={props.caracteristicas_generales.masa_molecular.value}
@@ -365,11 +400,11 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
                 </div>
 
                 {/* Número de Metano */}
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-hidden rounded-lg bg-white shadow-lg">
                   <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-4 py-3">
                     <h3 className="text-lg font-bold text-white">Número de Metano</h3>
                   </div>
-                  <div className="p-4 space-y-2 text-sm">
+                  <div className="space-y-2 p-4 text-sm">
                     <PropertyRow
                       label="MON (Motor Octane Number)"
                       value={props.numero_metano.mon}
@@ -386,11 +421,11 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
                 </div>
 
                 {/* Propiedades Críticas */}
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-hidden rounded-lg bg-white shadow-lg">
                   <div className="bg-gradient-to-r from-red-600 to-red-700 px-4 py-3">
                     <h3 className="text-lg font-bold text-white">Propiedades Críticas</h3>
                   </div>
-                  <div className="p-4 space-y-2 text-sm">
+                  <div className="space-y-2 p-4 text-sm">
                     <ValueRow
                       label="Tc (Temp. Crítica)"
                       value1={props.propiedades_criticas.tc.value_k}
@@ -467,11 +502,11 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
                 </div>
 
                 {/* Volumen Líquido Equivalente */}
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-hidden rounded-lg bg-white shadow-lg">
                   <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-4 py-3">
                     <h3 className="text-lg font-bold text-white">Volumen Líquido Equivalente</h3>
                   </div>
-                  <div className="p-4 space-y-2 text-sm">
+                  <div className="space-y-2 p-4 text-sm">
                     <PropertyRow
                       label="C1+"
                       value={props.volumen_liquido_eq.c1_plus}
@@ -506,11 +541,11 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
                 </div>
 
                 {/* Composición Porcentual */}
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-hidden rounded-lg bg-white shadow-lg">
                   <div className="bg-gradient-to-r from-yellow-600 to-yellow-700 px-4 py-3">
                     <h3 className="text-lg font-bold text-white">Composición Porcentual</h3>
                   </div>
-                  <div className="p-4 space-y-2 text-sm">
+                  <div className="space-y-2 p-4 text-sm">
                     <PropertyRow
                       label="Oxígeno (O₂)"
                       value={props.composicion_porcentual.oxigeno}
@@ -545,11 +580,11 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
                 </div>
 
                 {/* Otros Datos */}
-                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-hidden rounded-lg bg-white shadow-lg">
                   <div className="bg-gradient-to-r from-orange-600 to-orange-700 px-4 py-3">
                     <h3 className="text-lg font-bold text-white">Otros Datos</h3>
                   </div>
-                  <div className="p-4 space-y-2 text-sm">
+                  <div className="space-y-2 p-4 text-sm">
                     <PropertyRow
                       label="Aire de Combustión"
                       value={props.otros_datos.aire_combustion.value}
@@ -632,25 +667,30 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
 
       {/* Panel Slide-in del Informe HTML */}
       <div
-        className={`fixed right-0 top-0 h-full w-full bg-white shadow-2xl z-[60] transform transition-transform duration-300 overflow-y-auto ${
+        className={`fixed right-0 top-0 z-[60] h-full w-full transform overflow-y-auto bg-white shadow-2xl transition-transform duration-300 ${
           showReport ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4">
           <h2 className="text-2xl font-bold text-gray-900">Informe HTML</h2>
           <div className="flex items-center gap-3">
             <button
               onClick={handleDownloadReportPDF}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700"
+              className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                />
               </svg>
               Imprimir / Guardar PDF
             </button>
             <button
               onClick={() => setShowReport(false)}
-              className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium"
+              className="flex items-center gap-2 font-medium text-gray-700 hover:text-gray-900"
             >
               ← Volver a Resultados
             </button>

@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "evolution-lab"
+  },
+  "targets": {
+    "evolution-lab": {
+      "hosting": {
+        "app": [
+          "evolution-lab-app"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

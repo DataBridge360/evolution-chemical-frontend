@@ -77,10 +77,10 @@ class AuthService {
     // 3. Llamar al backend en background (fire-and-forget)
     // Usa el token capturado ANTES de limpiar
     if (accessToken) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/logout`, {
+      fetch('/api/v1/auth/logout', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       }).catch(() => {

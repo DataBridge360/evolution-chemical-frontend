@@ -22,14 +22,14 @@ import { PaginatedSamplesResponse } from '@/src/types/sample';
  */
 export function useSamples(
   page: number = 1,
-  limit: number = 50
+  limit: number = 50,
 ): UseQueryResult<PaginatedSamplesResponse, Error> {
   return useQuery({
     queryKey: ['samples', page, limit],
     queryFn: () => samplesService.getAllSamplesPaginated(page, limit),
     staleTime: 2 * 60 * 1000, // 2 minutos - datos considerados frescos
-    gcTime: 5 * 60 * 1000,    // 5 minutos - tiempo en caché después de no uso
-    retry: 1,                  // Reintentar una vez si falla
+    gcTime: 5 * 60 * 1000, // 5 minutos - tiempo en caché después de no uso
+    retry: 1, // Reintentar una vez si falla
     refetchOnWindowFocus: false, // No refetch al enfocar ventana
   });
 }

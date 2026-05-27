@@ -54,9 +54,7 @@ export default function LocalidadEmpresasPage() {
           </svg>
         </button>
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">
-            {LOCALIDAD_LABELS[localidad]}
-          </h1>
+          <h1 className="text-2xl font-semibold text-foreground">{LOCALIDAD_LABELS[localidad]}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {companies.length} empresa{companies.length !== 1 ? 's' : ''} en esta localidad
           </p>

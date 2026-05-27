@@ -149,9 +149,7 @@ export default function MuestrasPage() {
                             : 'bg-blue-600 hover:bg-blue-700'
                         }`}
                       >
-                        {sample.status === SampleStatus.LISTO
-                          ? 'Ver Análisis'
-                          : 'Cargar Análisis'}
+                        {sample.status === SampleStatus.LISTO ? 'Ver Análisis' : 'Cargar Análisis'}
                       </button>
                     </td>
                   </tr>

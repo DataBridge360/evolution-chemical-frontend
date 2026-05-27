@@ -1,9 +1,5 @@
 import { apiClient } from '@/src/lib/api/client';
-import {
-  Analysis,
-  CreateAnalysisDto,
-  AnalysisWithDetails,
-} from '@/src/types/analysis';
+import { Analysis, CreateAnalysisDto, AnalysisWithDetails } from '@/src/types/analysis';
 
 interface ApiResponse<T> {
   success: boolean;

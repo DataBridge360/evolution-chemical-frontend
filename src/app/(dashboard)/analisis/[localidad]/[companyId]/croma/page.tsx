@@ -91,17 +91,15 @@ export default function CromaAnalysesPage() {
             </div>
             <h1 className="text-2xl font-semibold text-foreground">Cromatografía</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {analyses.length} análisis cromatográfico{analyses.length !== 1 ? 's' : ''}{' '}
-              registrado{analyses.length !== 1 ? 's' : ''}
+              {analyses.length} análisis cromatográfico{analyses.length !== 1 ? 's' : ''} registrado
+              {analyses.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
 
         {/* Buscador */}
         <div className="border border-border bg-white p-4">
-          <label className="mb-2 block text-sm font-medium text-gray-900">
-            Buscar análisis
-          </label>
+          <label className="mb-2 block text-sm font-medium text-gray-900">Buscar análisis</label>
           <input
             type="text"
             value={searchTerm}
@@ -139,7 +137,9 @@ export default function CromaAnalysesPage() {
               return (
                 <div
                   key={analysis.analysis_id}
-                  onClick={() => router.push(`/analisis/${localidad}/${companyId}/croma/${analysis.analysis_id}`)}
+                  onClick={() =>
+                    router.push(`/analisis/${localidad}/${companyId}/croma/${analysis.analysis_id}`)
+                  }
                   className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-blue-300 hover:shadow-md"
                 >
                   <div className="flex-1">

@@ -1,0 +1,12 @@
+{
+  "hosting": [
+    {
+      "site": "evolution-lab-app",
+      "source": ".",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "frameworksBackend": {
+        "region": "us-central1"
+      }
+    }
+  ]
+}

@@ -47,11 +47,7 @@ export default function RecentAnalysesHistory() {
   }
 
   if (error) {
-    return (
-      <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
-        {error}
-      </div>
-    );
+    return <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">{error}</div>;
   }
 
   if (analyses.length === 0) {
@@ -86,12 +82,7 @@ export default function RecentAnalysesHistory() {
               <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
                 {analysis.field_name && (
                   <span className="flex items-center gap-1">
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -109,12 +100,7 @@ export default function RecentAnalysesHistory() {
                   </span>
                 )}
                 <span className="flex items-center gap-1">
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -132,12 +118,7 @@ export default function RecentAnalysesHistory() {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </div>
         );

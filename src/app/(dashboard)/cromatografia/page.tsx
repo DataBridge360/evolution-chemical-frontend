@@ -148,9 +148,7 @@ export default function ChromatographyPage() {
 
           {/* Historial del último mes */}
           <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">
-              Historial del último mes
-            </h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Historial del último mes</h3>
             <div className="max-h-[500px] overflow-y-auto pr-2">
               <RecentAnalysesHistory />
             </div>

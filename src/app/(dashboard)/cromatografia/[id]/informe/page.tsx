@@ -119,10 +119,10 @@ export default function InformePage({ params }: Props) {
 
     // Obtener todos los estilos de la página actual
     const styles = Array.from(document.styleSheets)
-      .map(styleSheet => {
+      .map((styleSheet) => {
         try {
           return Array.from(styleSheet.cssRules)
-            .map(rule => rule.cssText)
+            .map((rule) => rule.cssText)
             .join('\n');
         } catch (e) {
           return '';
@@ -265,14 +265,22 @@ export default function InformePage({ params }: Props) {
           className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+            />
           </svg>
           Descargar Informe
         </button>
       </div>
 
       {/* Página del informe */}
-      <div id="report-content" className="print-page relative mx-auto min-h-[1123px] w-[794px] bg-white p-[25px_18px] text-[10px] leading-tight shadow-lg">
+      <div
+        id="report-content"
+        className="print-page relative mx-auto min-h-[1123px] w-[794px] bg-white p-[25px_18px] text-[10px] leading-tight shadow-lg"
+      >
         {/* Header */}
         <div className="border-b border-black pb-1.5">
           <div>

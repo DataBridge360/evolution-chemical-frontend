@@ -33,7 +33,7 @@ export interface RecentChromatographyItem {
   reportNumber: string;
   client: string;
   dateLabel: string;
-  status: AnalysisStatus | (string & {});
+  status: AnalysisStatus | (string & Record<never, never>);
   fieldName?: string;
   sampleLabel?: string;
   actions?: RecentChromatographyAction[];

