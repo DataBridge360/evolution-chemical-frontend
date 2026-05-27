@@ -1,5 +1,5 @@
-export interface SampleResult {
-  sample_result_id: string;
+export interface Analysis {
+  analysis_id: string;
   sample_id: string;
   analysis_date: string;
   analysis_performed: string;
@@ -8,15 +8,15 @@ export interface SampleResult {
   updated_at: string;
 }
 
-export interface CreateSampleResultDto {
+export interface CreateAnalysisDto {
   analysis_performed: string;
   observations?: string;
   analysis_date?: string;
 }
 
-// Tipo actualizado para coincidir con el backend Django
-export interface SampleResultWithDetails extends SampleResult {
-  // Sample fields (directos del backend)
+// Type matching Django backend serializer
+export interface AnalysisWithDetails extends Analysis {
+  // Sample fields (from backend)
   internal_code: string;
   sample_type: string;
   sample_date: string;
@@ -24,7 +24,7 @@ export interface SampleResultWithDetails extends SampleResult {
   requested_analysis: string;
   status: string;
 
-  // Company fields (directos del backend)
+  // Company fields (from backend)
   company_id: string;
   company_name: string;
 }

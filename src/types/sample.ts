@@ -22,8 +22,9 @@ export interface Sample {
   status: SampleStatus;
   created_at: string;
   updated_at: string;
-  // Campo virtual con nombre de compañía
+  // Campos virtuales del backend
   company_name?: string;
+  can_view_results?: boolean;
 }
 
 export interface CreateSampleDto {

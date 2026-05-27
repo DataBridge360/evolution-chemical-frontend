@@ -2,16 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { WelcomeOverlay } from '@/src/components/layout/WelcomeOverlay';
+import { cn } from '@/src/lib/utils/cn';
 import { authService } from '@/src/modules/auth/services/AuthService';
-import { UserRole } from '@/src/types/user';
+import { type User, UserRole } from '@/src/types/user';
 
 export default function CompanyLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isValidating, setIsValidating] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [shouldEnter, setShouldEnter] = useState(false);
+  const [welcomeText, setWelcomeText] = useState<string | null>(null);
 
   useEffect(() => {
     const user = authService.getCurrentUser();
+    const timers: number[] = [];
 
     if (!authService.isAuthenticated()) {
       router.push('/auth/login');
@@ -24,8 +30,26 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
       return;
     }
 
+    if (window.sessionStorage.getItem('dashboard-enter-transition') === 'zoom-in') {
+      window.sessionStorage.removeItem('dashboard-enter-transition');
+      setShouldEnter(true);
+
+      const name = window.sessionStorage.getItem('login-welcome-name') || getUserDisplayName(user);
+      window.sessionStorage.removeItem('login-welcome-name');
+      setWelcomeText(`Bienvenido ${name}`);
+      timers.push(
+        window.setTimeout(() => {
+          setWelcomeText(null);
+        }, 2300),
+      );
+    }
+
     setIsAuthorized(true);
     setIsValidating(false);
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
   }, [router]);
 
   if (isValidating) {
@@ -44,7 +68,12 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-muted/30">
+    <div
+      className={cn(
+        'dashboard-shell relative flex h-screen overflow-hidden bg-muted/30',
+        shouldEnter && 'dashboard-entering',
+      )}
+    >
       {/* Sidebar simplificado para company */}
       <div className="flex h-full w-64 flex-col border-r border-border bg-white">
         <div className="flex h-16 items-center border-b border-border px-6">
@@ -66,12 +95,28 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
         <div className="border-t border-border p-4">
           <button
             onClick={async () => {
-              await authService.logout();
-              router.push('/auth/login');
+              if (isLoggingOut) return;
+
+              try {
+                setIsLoggingOut(true);
+                router.prefetch('/auth/login');
+                await authService.logout();
+                window.sessionStorage.setItem('skip-login-boot-loader', 'true');
+                document.body.classList.add('logout-zooming');
+                await wait(300);
+                router.replace('/auth/login');
+                window.setTimeout(() => document.body.classList.remove('logout-zooming'), 600);
+              } catch (error) {
+                setIsLoggingOut(false);
+                document.body.classList.remove('logout-zooming');
+                console.error('Error al cerrar sesión:', error);
+              }
             }}
-            className="w-full px-4 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            disabled={isLoggingOut}
+            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-70"
           >
-            Cerrar Sesión
+            {isLoggingOut && <LogoutSpinner />}
+            {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
           </button>
         </div>
       </div>
@@ -79,6 +124,83 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto max-w-7xl p-6">{children}</div>
       </main>
+      {welcomeText && <WelcomeOverlay text={welcomeText} />}
+      <div className="dashboard-logout-fade" aria-hidden="true" />
+      <LogoutTransitionStyles />
     </div>
+  );
+}
+
+function getUserDisplayName(user: User | null) {
+  if (user?.name?.trim()) return user.name.trim();
+
+  const emailName = user?.email?.split('@')[0]?.trim();
+  return emailName || 'Usuario';
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function LogoutSpinner() {
+  return (
+    <span
+      className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground"
+      aria-hidden="true"
+    />
+  );
+}
+
+function LogoutTransitionStyles() {
+  return (
+    <style jsx global>{`
+      .dashboard-shell {
+        transform-origin: center;
+        will-change: opacity;
+      }
+
+      body.logout-zooming .dashboard-shell {
+        pointer-events: none;
+      }
+
+      .dashboard-shell.dashboard-entering {
+        animation: dashboard-login-zoom-in 0.82s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      .dashboard-logout-fade {
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+        z-index: 50;
+        background: #ffffff;
+        opacity: 0;
+      }
+
+      body.logout-zooming .dashboard-logout-fade {
+        animation: dashboard-logout-fade-in 0.28s ease forwards;
+      }
+
+      @keyframes dashboard-login-zoom-in {
+        0% {
+          opacity: 0;
+          transform: scale(0.935);
+        }
+        42% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes dashboard-logout-fade-in {
+        to {
+          opacity: 1;
+        }
+      }
+    `}</style>
   );
 }

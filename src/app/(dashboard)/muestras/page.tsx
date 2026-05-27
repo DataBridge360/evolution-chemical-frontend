@@ -1,67 +1,43 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { samplesService } from '@/src/modules/samples/services/SamplesService';
 import { Sample, SampleStatus } from '@/src/types/sample';
 import { LoadResultsModal } from '@/src/modules/samples/components/LoadResultsModal';
 import { formatDateAR } from '@/src/lib/dateUtils';
+import { useSamples, useInvalidateSamples } from '@/src/modules/samples/hooks/useSamples';
 
 export default function MuestrasPage() {
   const router = useRouter();
-  const [samples, setSamples] = useState<Sample[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 50,
-    total: 0,
-    totalPages: 0,
-  });
 
-  useEffect(() => {
-    loadSamples(1);
-  }, []);
+  // Usar React Query para obtener muestras con caché automático
+  const { data, isLoading, error } = useSamples(currentPage, 50);
+  const invalidateSamples = useInvalidateSamples();
 
-  const loadSamples = async (page: number) => {
-    try {
-      setLoading(true);
-      const response = await samplesService.getAllSamplesPaginated(page, pagination.limit);
-
-      setSamples(response?.data || []);
-      setPagination({
-        page: response?.page || 1,
-        limit: response?.limit || 50,
-        total: response?.total || 0,
-        totalPages: response?.totalPages || 0,
-      });
-    } catch (error) {
-      console.error('Error al cargar muestras:', error);
-      setSamples([]);
-      setPagination({
-        page: 1,
-        limit: 50,
-        total: 0,
-        totalPages: 0,
-      });
-    } finally {
-      setLoading(false);
-    }
+  const samples = data?.data || [];
+  const pagination = {
+    page: data?.page || 1,
+    limit: data?.limit || 50,
+    total: data?.total || 0,
+    totalPages: data?.totalPages || 0,
   };
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
-      loadSamples(newPage);
+      setCurrentPage(newPage);
     }
   };
 
   const handleViewSample = (sample: Sample) => {
     if (sample.status === SampleStatus.LISTO) {
-      // Redirigir al módulo de resultados de la empresa
-      router.push(`/resultados/${sample.company_id}`);
+      // Redirigir al módulo de análisis de la empresa
+      // NOTA: Necesita localidad de la empresa - por ahora vamos directo a croma
+      router.push(`/analisis`);
     } else {
-      // Abrir modal para cargar resultados
+      // Abrir modal para cargar análisis
       setSelectedSample(sample);
       setShowResultsModal(true);
     }
@@ -73,10 +49,11 @@ export default function MuestrasPage() {
   };
 
   const handleSuccess = () => {
-    loadSamples(pagination.page);
+    // Invalidar caché para recargar datos
+    invalidateSamples();
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
@@ -173,8 +150,8 @@ export default function MuestrasPage() {
                         }`}
                       >
                         {sample.status === SampleStatus.LISTO
-                          ? 'Ver Resultados'
-                          : 'Cargar Resultados'}
+                          ? 'Ver Análisis'
+                          : 'Cargar Análisis'}
                       </button>
                     </td>
                   </tr>

@@ -7,29 +7,97 @@ import { apiClient } from '@/src/lib/api/client';
 import {
   ChromatographicAnalysis,
   AnalysisReport,
-  UploadXLSXRequest,
   UploadXLSXResponse,
   CalculatePropertiesRequest,
-  GenerateReportRequest,
 } from '../types';
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+interface PaginatedPayload<T> {
+  data?: T[];
+  results?: T[];
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+}
+
+interface DrfPaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+type CollectionResponse<T> =
+  | T[]
+  | ApiResponse<T[]>
+  | ApiResponse<PaginatedPayload<T>>
+  | DrfPaginatedResponse<T>
+  | PaginatedPayload<T>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function extractCollectionFromRecord<T>(value: Record<string, unknown>): T[] | null {
+  if (Array.isArray(value.results)) {
+    return value.results as T[];
+  }
+
+  if (Array.isArray(value.data)) {
+    return value.data as T[];
+  }
+
+  return null;
+}
+
+function unwrapCollectionResponse<T>(response: CollectionResponse<T>): T[] {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (!isRecord(response)) {
+    return [];
+  }
+
+  const directCollection = extractCollectionFromRecord<T>(response);
+  if (directCollection) {
+    return directCollection;
+  }
+
+  if (isRecord(response.data)) {
+    const nestedCollection = extractCollectionFromRecord<T>(response.data);
+    if (nestedCollection) {
+      return nestedCollection;
+    }
+  }
+
+  throw new Error('Formato inesperado en listado de cromatografía');
+}
 
 /**
  * Sube un archivo XLSX del cromatógrafo y crea un análisis borrador
  */
 export async function uploadXLSXFile(
   file: File,
-  metadata?: Partial<UploadXLSXRequest>,
+  metadata: { company_id: string; field_name?: string; well_name?: string },
 ): Promise<UploadXLSXResponse> {
   const formData = new FormData();
   formData.append('xlsx_file', file);
+  formData.append('company_id', metadata.company_id);
 
-  if (metadata?.company_name) {
-    formData.append('company_name', metadata.company_name);
-  }
-  if (metadata?.field_name) {
+  if (metadata.field_name) {
     formData.append('field_name', metadata.field_name);
   }
-  if (metadata?.well_name) {
+  if (metadata.well_name) {
     formData.append('well_name', metadata.well_name);
   }
 
@@ -49,10 +117,30 @@ export async function uploadXLSXFile(
  * Lista todos los análisis cromatográficos
  */
 export async function listAnalyses(): Promise<ChromatographicAnalysis[]> {
-  return apiClient.get<ChromatographicAnalysis[]>(
+  const response = await apiClient.get<CollectionResponse<ChromatographicAnalysis>>(
     '/chromatography/analyses/',
     true, // includeAuth
   );
+
+  return unwrapCollectionResponse(response);
+}
+
+/**
+ * Obtiene análisis cromatográficos filtrados por empresa
+ */
+export async function getAnalysesByCompanyId(
+  companyId: string,
+): Promise<ChromatographicAnalysis[]> {
+  try {
+    const response = await apiClient.get<CollectionResponse<ChromatographicAnalysis>>(
+      `/chromatography/analyses/company/${companyId}/`,
+      true, // includeAuth
+    );
+
+    return unwrapCollectionResponse(response);
+  } catch (error: any) {
+    throw new Error(error.message || 'Error obteniendo análisis de la empresa');
+  }
 }
 
 /**

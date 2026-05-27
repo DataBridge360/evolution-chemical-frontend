@@ -1,74 +1,43 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { samplesService } from '@/src/modules/samples/services/SamplesService';
-import { resultsService } from '@/src/modules/results/services/ResultsService';
-import { companiesService } from '@/src/modules/companies/services/CompaniesService';
+import { analysesService } from '@/src/modules/analyses/services/AnalysesService';
 import { Sample, SampleStatus } from '@/src/types/sample';
-import { SampleResult } from '@/src/types/sampleResult';
+import { Analysis } from '@/src/types/analysis';
 import { formatDateAR } from '@/src/lib/dateUtils';
+import { useSamples } from '@/src/modules/samples/hooks/useSamples';
 
 export default function CompanyMuestrasPage() {
   const router = useRouter();
-  const [samples, setSamples] = useState<Sample[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedResult, setSelectedResult] = useState<SampleResult | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedResult, setSelectedResult] = useState<Analysis | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
-  const [canViewResults, setCanViewResults] = useState(true);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 50,
-    total: 0,
-    totalPages: 0,
-  });
 
-  useEffect(() => {
-    loadSamples(1);
-  }, []);
+  // Usar React Query para obtener muestras con caché automático
+  const { data, isLoading, error } = useSamples(currentPage, 50);
 
-  const loadSamples = async (page: number) => {
-    try {
-      setLoading(true);
-      const response = await samplesService.getAllSamplesPaginated(page, pagination.limit);
-
-      setSamples(response?.data || []);
-      setPagination({
-        page: response?.page || 1,
-        limit: response?.limit || 50,
-        total: response?.total || 0,
-        totalPages: response?.totalPages || 0,
-      });
-
-      // Si hay muestras, verificar el permiso de la compañía
-      if (response?.data && response.data.length > 0) {
-        const companyId = response.data[0].company_id;
-        const company = await companiesService.getCompanyById(companyId);
-        setCanViewResults(company.can_view_results);
-      }
-    } catch (error) {
-      console.error('Error al cargar muestras:', error);
-      setSamples([]);
-      setPagination({
-        page: 1,
-        limit: 50,
-        total: 0,
-        totalPages: 0,
-      });
-    } finally {
-      setLoading(false);
-    }
+  const samples = data?.data || [];
+  const pagination = {
+    page: data?.page || 1,
+    limit: data?.limit || 50,
+    total: data?.total || 0,
+    totalPages: data?.totalPages || 0,
   };
+
+  // can_view_results ahora viene en cada sample desde el backend
+  // Usamos el primer sample para obtener el permiso (todas las muestras son de la misma empresa)
+  const canViewResults = samples.length > 0 ? samples[0].can_view_results ?? true : true;
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
-      loadSamples(newPage);
+      setCurrentPage(newPage);
     }
   };
 
   const handleViewResult = async (sample: Sample) => {
     try {
-      const result = await resultsService.getResultBySampleId(sample.sample_id);
+      const result = await analysesService.getAnalysisBySampleId(sample.sample_id);
       if (result) {
         setSelectedResult(result);
         setShowResultModal(true);
@@ -79,7 +48,7 @@ export default function CompanyMuestrasPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">

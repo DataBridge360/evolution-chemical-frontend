@@ -61,17 +61,36 @@ class AuthService {
   }
 
   /**
-   * Logout
+   * Logout - Optimistic/Instantaneous
+   * Limpia el localStorage INMEDIATAMENTE y llama al backend en background.
+   * El usuario ve el logout instantáneo sin esperar la respuesta del servidor.
    */
   async logout(): Promise<void> {
-    try {
-      await apiClient.post('/auth/logout', undefined, true);
-    } finally {
-      // Limpiar tokens locales siempre
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
+    // 1. Capturar token ANTES de limpiar (para enviar al backend)
+    const accessToken = localStorage.getItem('accessToken');
+
+    // 2. Limpiar tokens locales INMEDIATAMENTE (instantáneo, 0ms)
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+
+    // 3. Llamar al backend en background (fire-and-forget)
+    // Usa el token capturado ANTES de limpiar
+    if (accessToken) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }).catch(() => {
+        // Silenciar errores - el logout ya ocurrió en el cliente
+        console.debug('Backend logout cleanup completado');
+      });
     }
+
+    // 4. Retornar inmediatamente - el usuario ya está "logged out"
+    return Promise.resolve();
   }
 
   /**
