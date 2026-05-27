@@ -1,4 +1,4 @@
-import { apiClient } from '@/src/lib/api/client';
+import { API_URL, apiClient } from '@/src/lib/api/client';
 
 interface LoginResponse {
   success: boolean;
@@ -77,7 +77,7 @@ class AuthService {
     // 3. Llamar al backend en background (fire-and-forget)
     // Usa el token capturado ANTES de limpiar
     if (accessToken) {
-      fetch('/api/v1/auth/logout', {
+      fetch(`${API_URL}/auth/logout`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,

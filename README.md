@@ -103,7 +103,7 @@ cp .env.example .env.local
 
 ```env
 # Backend API
-NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 
 # O para producción
 NEXT_PUBLIC_API_URL=https://api.evolutionchemical.com/api/v1
