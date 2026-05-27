@@ -61,8 +61,7 @@ export default function DashboardPage() {
 
   // Ordenar análisis por fecha
   const sortedAnalyses = useMemo(
-    () =>
-      [...recentAnalyses].sort((a, b) => getAnalysisSortDate(b) - getAnalysisSortDate(a)),
+    () => [...recentAnalyses].sort((a, b) => getAnalysisSortDate(b) - getAnalysisSortDate(a)),
     [recentAnalyses],
   );
 

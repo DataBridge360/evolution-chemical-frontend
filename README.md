@@ -39,23 +39,27 @@ src/
 ## 📦 Módulos Principales
 
 ### Samples (Muestras)
+
 - Registro de nuevas muestras
 - Visualización y búsqueda de muestras
 - Estados: Pendiente, Listo
 - Tipos: Sólido, Agua, Petróleo, Producto Químico, Otro
 
 ### Results (Resultados)
+
 - Carga de resultados de análisis
 - Visualización de resultados por muestra
 - Visualización de resultados por empresa
 - Generación de informes imprimibles
 
 ### Companies (Empresas)
+
 - Gestión de empresas cliente
 - Permisos de visualización de resultados
 - Asignación de muestras por empresa
 
 ### Dashboard
+
 - Estadísticas generales
 - Resumen de actividad
 - Accesos rápidos
@@ -63,6 +67,7 @@ src/
 ## 🎨 Sistema de Diseño
 
 **Paleta de Colores:**
+
 - Primary: Azul `#0066CC` / `hsl(210, 100%, 40%)`
 - Secondary: Naranja `#FF6B35` / `hsl(16, 100%, 60%)`
 - Background: Blanco `#FFFFFF`
@@ -70,6 +75,7 @@ src/
 - Text: Gris oscuro `#1F2937`
 
 **Principios de Diseño:**
+
 - Minimalista y profesional
 - Sin bordes redondeados grandes
 - Sin iconos decorativos
@@ -124,12 +130,15 @@ pnpm format:check     # Verificar formato con Prettier
 ## 🔄 Flujo de Desarrollo
 
 1. **Desarrollo local**
+
    ```bash
    pnpm dev
    ```
+
    El servidor estará disponible en `http://localhost:3000`
 
 2. **Verificar código antes de commit**
+
    ```bash
    pnpm type-check    # Verificar tipos
    pnpm lint          # Verificar ESLint
@@ -145,12 +154,15 @@ pnpm format:check     # Verificar formato con Prettier
 ## 📁 Estructura de Componentes
 
 ### UI Components (`src/components/ui/`)
+
 - `button.tsx` - Botones con variantes
 - `input.tsx` - Inputs de formulario
 - `card.tsx` - Contenedores de contenido
 
 ### Module Components
+
 Cada módulo tiene su propia carpeta de componentes:
+
 ```
 src/modules/samples/
 ├── components/
@@ -167,12 +179,14 @@ src/modules/samples/
 El frontend se comunica con el backend a través de:
 
 **API Client** (`src/lib/api/client.ts`)
+
 - Wrapper de Fetch API
 - Manejo automático de headers
 - Gestión de tokens de autenticación
 - Manejo centralizado de errores
 
 **Services** (uno por módulo)
+
 - Encapsulan llamadas al backend
 - Transforman datos según necesidad
 - Manejo de respuestas y errores

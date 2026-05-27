@@ -75,10 +75,17 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-semibold tracking-tight;
   }
 }
@@ -110,7 +117,7 @@
   }
 
   /* Remover bordes de inputs al imprimir */
-  input[type="text"] {
+  input[type='text'] {
     border: none !important;
     padding: 0 !important;
     background: transparent !important;
@@ -122,7 +129,12 @@
   }
 
   /* Evitar que los encabezados queden solos al final de página */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     page-break-after: avoid;
   }
 

@@ -27,7 +27,7 @@ export default function CompanyMuestrasPage() {
 
   // can_view_results ahora viene en cada sample desde el backend
   // Usamos el primer sample para obtener el permiso (todas las muestras son de la misma empresa)
-  const canViewResults = samples.length > 0 ? samples[0].can_view_results ?? true : true;
+  const canViewResults = samples.length > 0 ? (samples[0].can_view_results ?? true) : true;
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {

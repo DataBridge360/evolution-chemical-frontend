@@ -16,9 +16,7 @@ export default function AnalisisPage() {
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Análisis</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Análisis organizados por localidad
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Análisis organizados por localidad</p>
         </div>
       </div>
 
@@ -42,9 +40,7 @@ export default function AnalisisPage() {
                 <h3 className="mb-1 truncate text-lg font-semibold text-foreground">
                   {localidad.name}
                 </h3>
-                <p className="text-sm text-muted-foreground">
-                  Ver empresas y análisis
-                </p>
+                <p className="text-sm text-muted-foreground">Ver empresas y análisis</p>
               </div>
               <svg
                 className="h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-blue-600"

@@ -5,12 +5,14 @@
 ### Algoritmo de Firma (ACTUAL)
 
 **Supabase usa ES256 (ECC P-256)**
+
 - **Current Key**: ES256 (Elliptic Curve Cryptography)
 - **Curva**: P-256 (NIST Prime Curve)
 - **Tipo**: Asimétrico (clave pública/privada)
 - **Key ID**: `5abeb82f-488c-4ca4-a5ec-47ff4212aaa4`
 
 **Clave Legacy (Previous):**
+
 - **Previous Key**: HS256 (HMAC-SHA256)
 - **Key ID**: `8abcbe10-dfb3-4fc6-98c8-5d854e76fe3f`
 - **Estado**: Aún válida para verificar tokens viejos
@@ -21,9 +23,9 @@
 ```json
 {
   "header": {
-    "alg": "ES256",                              // Nuevo algoritmo
+    "alg": "ES256", // Nuevo algoritmo
     "typ": "JWT",
-    "kid": "5abeb82f-488c-4ca4-a5ec-47ff4212aaa4"  // Key ID actual
+    "kid": "5abeb82f-488c-4ca4-a5ec-47ff4212aaa4" // Key ID actual
   },
   "payload": {
     "sub": "user-uuid",
@@ -33,7 +35,7 @@
     "iat": 1234567890,
     "exp": 1234571490
   },
-  "signature": "..."  // Firma con ECC P-256
+  "signature": "..." // Firma con ECC P-256
 }
 ```
 
@@ -41,12 +43,13 @@
 
 **Estado Actual (3 horas después de la rotación):**
 
-| Status | Key ID | Type | Uso |
-|--------|--------|------|-----|
-| **Current** | 5abeb82f... | ES256 (ECC P-256) | Firmar NUEVOS tokens |
-| **Previous** | 8abcbe10... | HS256 (Legacy) | Verificar tokens VIEJOS |
+| Status       | Key ID      | Type              | Uso                     |
+| ------------ | ----------- | ----------------- | ----------------------- |
+| **Current**  | 5abeb82f... | ES256 (ECC P-256) | Firmar NUEVOS tokens    |
+| **Previous** | 8abcbe10... | HS256 (Legacy)    | Verificar tokens VIEJOS |
 
 **Proceso de Rotación:**
+
 1. ✅ Se creó nueva clave ES256
 2. ✅ Nuevos tokens se firman con ES256
 3. ⏳ Tokens viejos (HS256) aún son válidos
@@ -54,6 +57,7 @@
 5. 🔄 Entonces se puede revocar la clave legacy
 
 **⚠️ NO revocar la clave legacy ahora porque:**
+
 - Usuarios con sesiones activas tienen tokens firmados con HS256
 - Si revocas, esos usuarios serán deslogueados
 - Espera que expiren naturalmente (máx 7 días)
@@ -61,6 +65,7 @@
 ### ES256 vs HS256
 
 **Ventajas de ES256 (Actual):**
+
 - ✅ Más seguro que HS256
 - ✅ Usa criptografía de curva elíptica
 - ✅ Clave pública/privada (asimétrico)
@@ -68,6 +73,7 @@
 - ✅ Mejor rendimiento
 
 **HS256 (Legacy):**
+
 - ❌ Menos seguro
 - ❌ Shared secret (simétrico)
 - ✅ Más simple
@@ -95,6 +101,7 @@
 ### Configuración de Seguridad
 
 **JWT Settings en Supabase Dashboard:**
+
 ```
 Current Key:
 - Type: ES256 (ECC P-256)
@@ -108,6 +115,7 @@ Previous Key:
 ```
 
 **Cookies Seguras:**
+
 ```typescript
 {
   httpOnly: true,
@@ -121,16 +129,19 @@ Previous Key:
 ### Cuándo Revocar la Clave Legacy
 
 **Esperar hasta que:**
+
 1. Todos los tokens HS256 hayan expirado (máx 7 días)
 2. No haya usuarios con sesiones activas antiguas
 3. Supabase te lo recomiende en el dashboard
 
 **Cómo revocar:**
+
 1. Supabase Dashboard → Settings → API → JWT Signing Keys
 2. Click en "Revoke" en la clave legacy
 3. Confirmar
 
 **⚠️ Solo revocar si:**
+
 - Han pasado al menos 7 días desde la rotación
 - Estás seguro de que no hay tokens activos con HS256
 - O si sospechas que la clave legacy fue comprometida
@@ -139,7 +150,9 @@ Previous Key:
 
 ```typescript
 // El código NO cambia, Supabase maneja todo automáticamente
-const { data: { user } } = await supabase.auth.getUser();
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 
 // Supabase:
 // 1. Lee el 'kid' del header
@@ -161,6 +174,7 @@ Create Standby Key → Nueva clave ES256 se crea
 ```
 
 **Cuándo usar:**
+
 - Rotación planificada
 - Migración gradual
 - Mayor control sobre el proceso
@@ -168,6 +182,7 @@ Create Standby Key → Nueva clave ES256 se crea
 ### Monitoreo
 
 **Revisar regularmente:**
+
 - Supabase Dashboard → Settings → API → JWT Signing Keys
 - Ver estado de claves
 - Ver cuándo fue la última rotación
@@ -176,12 +191,14 @@ Create Standby Key → Nueva clave ES256 se crea
 ### Buenas Prácticas
 
 ✅ **Hacer:**
+
 - Dejar que Supabase maneje ES256 automáticamente
 - Esperar al menos 7 días antes de revocar claves legacy
 - Monitorear el dashboard para ver cuándo revocar
 - Usar HTTPS en producción
 
 ❌ **NO Hacer:**
+
 - Revocar claves legacy inmediatamente después de rotación
 - Rotar claves manualmente sin necesidad
 - Guardar JWT en localStorage

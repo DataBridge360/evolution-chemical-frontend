@@ -74,10 +74,7 @@ export default function CompanyFoldersPage() {
         </button>
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <button
-              onClick={() => router.push('/analisis')}
-              className="hover:text-blue-600"
-            >
+            <button onClick={() => router.push('/analisis')} className="hover:text-blue-600">
               Análisis
             </button>
             <span>/</span>
@@ -89,9 +86,7 @@ export default function CompanyFoldersPage() {
             </button>
           </div>
           <h1 className="text-2xl font-semibold text-foreground">{companyName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Selecciona un tipo de análisis
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Selecciona un tipo de análisis</p>
         </div>
       </div>
 

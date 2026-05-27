@@ -3,7 +3,7 @@
  * El token se renueva ANTES de expirar, el usuario NUNCA ve 401
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+const API_URL = '/api/v1';
 
 // Tiempo antes de la expiración para hacer refresh (5 minutos)
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutos
