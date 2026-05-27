@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const backendApiUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL;
+const backendApiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const nextConfig = {
   reactStrictMode: true,
