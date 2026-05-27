@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -18,6 +18,8 @@ import {
 } from '@/src/modules/chromatography/services/chromatographyService';
 import { useCompanies } from '@/src/modules/companies/hooks/useCompanies';
 import { Company } from '@/src/types/company';
+import { useAuth } from '@/src/modules/auth/hooks/useAuth/useAuth';
+import { UserRole } from '@/src/types/user';
 
 type ProcessStep = 'idle' | 'uploading' | 'calculating' | 'generating-report' | 'complete';
 
@@ -27,9 +29,18 @@ const EXCEL_EXTENSIONS = ['.xlsx', '.xls'];
 export default function ChromatographyPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Usar hook con cache para empresas
-  const { data: companies = [], isLoading: loadingCompanies } = useCompanies();
+  const { data: allCompanies = [], isLoading: loadingCompanies } = useCompanies();
+
+  // Filtrar empresa del usuario OWNER si tiene company_id
+  const companies = useMemo(() => {
+    if (user?.role === UserRole.OWNER && user?.company_id) {
+      return allCompanies.filter((company) => company.company_id !== user.company_id);
+    }
+    return allCompanies;
+  }, [allCompanies, user]);
 
   const [file, setFile] = useState<File | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');

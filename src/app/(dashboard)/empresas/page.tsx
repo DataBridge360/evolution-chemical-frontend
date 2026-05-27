@@ -1,16 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCompanies } from '@/src/modules/companies/hooks/useCompanies';
 import { companiesService } from '@/src/modules/companies/services/CompaniesService';
-import { Company } from '@/src/types/company';
 import { formatDateAR } from '@/src/lib/dateUtils';
 import NewCompanyDrawer from '@/src/modules/companies/components/NewCompanyDrawer';
+import { useAuth } from '@/src/modules/auth/hooks/useAuth/useAuth';
+import { UserRole } from '@/src/types/user';
 
 export default function EmpresasPage() {
   const queryClient = useQueryClient();
-  const { data: companies = [], isLoading: loading } = useCompanies();
+  const { user } = useAuth();
+  const { data: allCompanies = [], isLoading: loading } = useCompanies();
+
+  // Filtrar empresa del usuario OWNER si tiene company_id
+  const companies = useMemo(() => {
+    if (user?.role === UserRole.OWNER && user?.company_id) {
+      return allCompanies.filter((company) => company.company_id !== user.company_id);
+    }
+    return allCompanies;
+  }, [allCompanies, user]);
   const [updatingPermission, setUpdatingPermission] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
