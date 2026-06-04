@@ -8,6 +8,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
+import { useUpdateAnalysis } from '@/src/modules/chromatography/hooks/useUpdateAnalysis';
 import { ChromatographicAnalysis } from '@/src/modules/chromatography/types';
 import Image from 'next/image';
 
@@ -18,6 +19,7 @@ interface Props {
 export default function InformePage({ params }: Props) {
   const router = useRouter();
   const { data: analysis, isLoading: loading, error: queryError } = useAnalysis(params.id);
+  const updateMutation = useUpdateAnalysis(params.id);
 
   // Campos editables
   const [reportNumber, setReportNumber] = useState('');
@@ -36,6 +38,7 @@ export default function InformePage({ params }: Props) {
   const [sampledBy, setSampledBy] = useState('');
   const [sampleDate, setSampleDate] = useState('');
   const [lastCalibration, setLastCalibration] = useState('');
+  const [h2sContent, setH2sContent] = useState('');
 
   // Cargar datos en los campos editables cuando el análisis cambia
   useMemo(() => {
@@ -56,6 +59,7 @@ export default function InformePage({ params }: Props) {
       setSampledBy('');
       setSampleDate(analysis.sample_date || '');
       setLastCalibration('');
+      setH2sContent(analysis.h2s_content || 'NE');
     }
   }, [analysis]);
 
@@ -104,6 +108,29 @@ export default function InformePage({ params }: Props) {
   }
 
   const props = analysis.calculated_properties;
+
+  // Función para guardar cambios
+  const handleSaveChanges = async () => {
+    try {
+      await updateMutation.mutateAsync({
+        h2s_content: h2sContent,
+        report_number: reportNumber,
+        chromatograph_operator: operator,
+        sample_point: origin,
+        field_name: field,
+        company_name: company,
+        analysis_date: reportDate,
+        sample_date: sampleDate,
+        operating_pressure_kpa: pressure === 'NR' ? undefined : parseFloat(pressure),
+        operating_temperature_c: temperature === 'NR' ? undefined : parseFloat(temperature),
+        flow_rate: flowRate === 'NR' ? undefined : parseFloat(flowRate),
+      });
+      alert('Cambios guardados correctamente');
+    } catch (error) {
+      console.error('Error guardando cambios:', error);
+      alert('Error al guardar los cambios. Por favor intente nuevamente.');
+    }
+  };
 
   // Función para imprimir/guardar como PDF
   const handleDownloadPDF = () => {
@@ -259,6 +286,44 @@ export default function InformePage({ params }: Props) {
           className="rounded bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
         >
           ← Volver
+        </button>
+        <button
+          onClick={handleSaveChanges}
+          disabled={updateMutation.isPending}
+          className="flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:bg-green-400"
+        >
+          {updateMutation.isPending ? (
+            <>
+              <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Guardando...
+            </>
+          ) : (
+            <>
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              Guardar Cambios
+            </>
+          )}
         </button>
         <button
           onClick={handleDownloadPDF}
@@ -457,6 +522,20 @@ export default function InformePage({ params }: Props) {
                   label="Indice de Wobbe"
                   value={props.caracteristicas_generales.indice_wobbe}
                 />
+                {/* Campo editable para Contenido de H2S */}
+                <tr className="group hover:bg-yellow-50">
+                  <td className="w-1/2 px-1.5 py-0.5">Contenido de H2S</td>
+                  <td className="px-1.5 py-0.5 text-right">
+                    <input
+                      type="text"
+                      value={h2sContent}
+                      onChange={(e) => setH2sContent(e.target.value)}
+                      className="w-full border-none bg-transparent text-right outline-none focus:bg-yellow-100"
+                      placeholder="NE"
+                    />
+                  </td>
+                  <td className="w-[75px] px-1">ppm,v (*)</td>
+                </tr>
                 {props.caracteristicas_generales.viscosidad_dean_stiel && (
                   <PropRow
                     label="Viscosidad (Dean-Stiel)"
@@ -723,6 +802,18 @@ export default function InformePage({ params }: Props) {
                 </td>
                 <td className="px-1">kcal/m³·°C</td>
               </tr>
+              {/* Datos personalizados agregados */}
+              {props.otros_datos._custom &&
+                props.otros_datos._custom.map((data, index) => (
+                  <tr key={index}>
+                    <td className="px-1.5 py-0.5">{data.name}</td>
+                    <td className="px-1.5 py-0.5 text-right">{data.value}</td>
+                    <td className="px-1">{data.unit}</td>
+                    <td className="px-1.5 py-0.5"></td>
+                    <td className="px-1.5 py-0.5 text-right"></td>
+                    <td className="px-1"></td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>

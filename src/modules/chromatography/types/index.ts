@@ -81,6 +81,12 @@ export interface PropertyValue {
   unit: string;
 }
 
+export interface CustomDataField {
+  name: string;
+  value: string;
+  unit: string;
+}
+
 export interface CalculatedProperties {
   input: {
     presion_kpa: number;
@@ -164,6 +170,7 @@ export interface CalculatedProperties {
     cp_kcal_m3_c: number;
     cv_kcal_m3_c: number;
     k_cp_cv: number;
+    _custom?: CustomDataField[];
   };
   numero_metano: {
     mon: number;
@@ -198,6 +205,9 @@ export interface ChromatographicAnalysis {
   apply_o2_n2_discount: boolean;
   discount_percentage: number;
   include_viscosities: boolean;
+
+  // Campos editables adicionales
+  h2s_content?: string; // Contenido de H2S en ppm,v
 
   calculated_properties?: CalculatedProperties;
   chroma_report_html?: string;
