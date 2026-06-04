@@ -5,6 +5,7 @@
 
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -15,8 +16,14 @@ import {
   Gauge,
   ShieldAlert,
   Thermometer,
+  Save,
+  Plus,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
+import { useUpdateAnalysis } from '@/src/modules/chromatography/hooks/useUpdateAnalysis';
+import type { CustomDataField } from '@/src/modules/chromatography/types';
 
 interface Props {
   params: { id: string };
@@ -38,6 +45,112 @@ const safeFormat = (value: number | undefined | null, decimals: number = 2): str
 export default function AnalysisDetailPage({ params }: Props) {
   const router = useRouter();
   const { data: analysis, isLoading: loading, error: queryError } = useAnalysis(params.id);
+  const updateMutation = useUpdateAnalysis(params.id);
+
+  const [h2sContent, setH2sContent] = useState('');
+  const [isEditingCharacteristics, setIsEditingCharacteristics] = useState(false);
+  const [isEditingOtherData, setIsEditingOtherData] = useState(false);
+  const [customData, setCustomData] = useState<CustomDataField[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [formData, setFormData] = useState({ name: '', value: '', unit: '' });
+  const otherDataSectionRef = useRef<HTMLDivElement>(null);
+
+  // Cargar valores iniciales cuando cambia el análisis
+  useEffect(() => {
+    if (analysis) {
+      setH2sContent(analysis.h2s_content || 'NE');
+      setCustomData(analysis.calculated_properties?.otros_datos?._custom || []);
+    }
+  }, [analysis]);
+
+  // Función para guardar H2S
+  const handleSaveCharacteristics = async () => {
+    try {
+      await updateMutation.mutateAsync({
+        h2s_content: h2sContent,
+      });
+
+      window.location.reload();
+    } catch (error: any) {
+      console.error('❌ Error guardando:', error);
+      alert(`Error al guardar: ${error?.message || 'Error desconocido'}`);
+    }
+  };
+
+  // Función para guardar datos personalizados
+  const handleSaveOtherData = async () => {
+    try {
+      const updatedProperties = analysis?.calculated_properties
+        ? JSON.parse(JSON.stringify(analysis.calculated_properties))
+        : {};
+
+      if (!updatedProperties.otros_datos) {
+        updatedProperties.otros_datos = {};
+      }
+      updatedProperties.otros_datos._custom = customData;
+
+      await updateMutation.mutateAsync({
+        calculated_properties: updatedProperties,
+      });
+
+      window.location.reload();
+    } catch (error: any) {
+      console.error('❌ Error guardando:', error);
+      alert(`Error al guardar: ${error?.message || 'Error desconocido'}`);
+    }
+  };
+
+  // Funciones para manejar datos personalizados
+  const handleAddCustomData = () => {
+    setEditingIndex(null);
+    setFormData({ name: '', value: '', unit: '' });
+    setShowAddForm(true);
+  };
+
+  const handleEditCustomData = (index: number) => {
+    setEditingIndex(index);
+    setFormData(customData[index]);
+    setShowAddForm(true);
+  };
+
+  const handleDeleteCustomData = (index: number) => {
+    if (confirm('¿Eliminar este dato?')) {
+      setCustomData(customData.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleSaveForm = () => {
+    if (!formData.name.trim()) {
+      alert('El nombre es requerido');
+      return;
+    }
+
+    if (editingIndex !== null) {
+      const updated = [...customData];
+      updated[editingIndex] = formData;
+      setCustomData(updated);
+    } else {
+      setCustomData([...customData, formData]);
+    }
+
+    setShowAddForm(false);
+    setFormData({ name: '', value: '', unit: '' });
+    setEditingIndex(null);
+  };
+
+  const handleCancelForm = () => {
+    setShowAddForm(false);
+    setFormData({ name: '', value: '', unit: '' });
+    setEditingIndex(null);
+  };
+
+  const handleEnterEditMode = () => {
+    setIsEditingOtherData(true);
+    setTimeout(() => {
+      otherDataSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
 
   // Convertir error de React Query a string
   const error = queryError
@@ -505,6 +618,46 @@ export default function AnalysisDetailPage({ params }: Props) {
                 title="Características generales"
                 description="Resumen físico y energético de la mezcla."
                 icon={<FlaskConical className="h-4 w-4" />}
+                headerActions={
+                  !isEditingCharacteristics ? (
+                    <button
+                      onClick={() => setIsEditingCharacteristics(true)}
+                      className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Editar
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setIsEditingCharacteristics(false);
+                          setH2sContent(analysis?.h2s_content || 'NE');
+                        }}
+                        className="flex items-center gap-2 rounded-lg bg-gray-500 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-gray-600"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleSaveCharacteristics}
+                        disabled={updateMutation.isPending}
+                        className="flex items-center gap-2 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:bg-green-400"
+                      >
+                        {updateMutation.isPending ? (
+                          <>
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                            Guardando...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            Guardar
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )
+                }
               >
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   <MetricTile
@@ -551,6 +704,22 @@ export default function AnalysisDetailPage({ params }: Props) {
                     label="Índice de Wobbe"
                     value={props.caracteristicas_generales.indice_wobbe}
                   />
+                  {/* Campo editable H2S */}
+                  <div className="rounded-2xl border border-[#e5edf6] bg-[#fbfdff] p-4">
+                    <p className="text-sm text-[#60758b]">Contenido de H2S</p>
+                    {isEditingCharacteristics ? (
+                      <input
+                        type="text"
+                        value={h2sContent}
+                        onChange={(e) => setH2sContent(e.target.value)}
+                        className="mt-2 w-full rounded-lg border-2 border-blue-500 bg-white px-3 py-2 text-lg font-semibold text-[#10243e] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="NE"
+                      />
+                    ) : (
+                      <p className="mt-2 text-lg font-semibold text-[#10243e]">{h2sContent}</p>
+                    )}
+                    <p className="mt-1 text-sm text-[#60758b]">ppm,v (*)</p>
+                  </div>
                 </div>
               </SectionCard>
 
@@ -734,6 +903,38 @@ export default function AnalysisDetailPage({ params }: Props) {
               title="Otros datos"
               description="Combustión, inflamabilidad y capacidad calorífica."
               icon={<ShieldAlert className="h-4 w-4" />}
+              headerActions={
+                !isEditingOtherData ? (
+                  <button
+                    onClick={handleEnterEditMode}
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                  >
+                    Editar
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsEditingOtherData(false);
+                        setCustomData(analysis.calculated_properties?.otros_datos._custom || []);
+                        setShowAddForm(false);
+                        setFormData({ name: '', value: '', unit: '' });
+                        setEditingIndex(null);
+                      }}
+                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveOtherData}
+                      disabled={updateMutation.isPending}
+                      className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {updateMutation.isPending ? 'Guardando...' : 'Guardar'}
+                    </button>
+                  </>
+                )
+              }
             >
               <div className="space-y-3">
                 <MetricTile
@@ -775,6 +976,118 @@ export default function AnalysisDetailPage({ params }: Props) {
                   ]}
                 />
                 <NumberTile label="Relación Cp/Cv" value={props.otros_datos.k_cp_cv} decimals={3} />
+
+                {/* Datos personalizados como tiles más */}
+                {customData.map((data, index) => (
+                  <div
+                    key={index}
+                    className="relative rounded-2xl border border-[#e5edf6] bg-[#fbfdff] p-4"
+                  >
+                    <p className="text-sm text-[#60758b]">{data.name}</p>
+                    <p className="mt-2 text-lg font-semibold text-[#10243e]">
+                      {data.value}{' '}
+                      <span className="text-sm font-medium text-[#7c90a5]">{data.unit}</span>
+                    </p>
+                    {isEditingOtherData && (
+                      <div className="absolute right-2 top-2 flex items-center gap-1">
+                        <button
+                          onClick={() => handleEditCustomData(index)}
+                          className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-100"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCustomData(index)}
+                          className="rounded-lg p-1.5 text-red-600 transition-colors hover:bg-red-100"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Sección de edición - solo en modo edición */}
+                {isEditingOtherData && (
+                  <div ref={otherDataSectionRef} className="space-y-3">
+                    {!showAddForm && (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={handleAddCustomData}
+                          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Agregar dato
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Formulario inline para agregar/editar */}
+                    {showAddForm && (
+                      <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
+                        <h4 className="mb-3 text-sm font-semibold text-gray-900">
+                          {editingIndex !== null ? 'Editar dato' : 'Nuevo dato'}
+                        </h4>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-gray-700">
+                              Nombre <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                              placeholder="Ej: Temperatura ambiente"
+                              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-700">
+                                Valor
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.value}
+                                onChange={(e) =>
+                                  setFormData({ ...formData, value: e.target.value })
+                                }
+                                placeholder="Ej: 25"
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-700">
+                                Unidad
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.unit}
+                                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                                placeholder="Ej: °C"
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2 pt-2">
+                            <button
+                              onClick={handleCancelForm}
+                              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              onClick={handleSaveForm}
+                              className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                            >
+                              {editingIndex !== null ? 'Actualizar' : 'Agregar'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </SectionCard>
           </div>
@@ -789,23 +1102,28 @@ function SectionCard({
   description,
   icon,
   children,
+  headerActions,
 }: {
   title: string;
   description: string;
   icon: ReactNode;
   children: ReactNode;
+  headerActions?: ReactNode;
 }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-[#d8e3f0] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
       <div className="border-b border-[#e6eef7] bg-[#f8fbff] px-6 py-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f3ff] text-[#0b63a8]">
-            {icon}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f3ff] text-[#0b63a8]">
+              {icon}
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold text-[#10243e]">{title}</h2>
+              <p className="text-sm text-[#60758b]">{description}</p>
+            </div>
           </div>
-          <div className="space-y-1">
-            <h2 className="text-base font-semibold text-[#10243e]">{title}</h2>
-            <p className="text-sm text-[#60758b]">{description}</p>
-          </div>
+          {headerActions && <div className="flex items-center gap-2">{headerActions}</div>}
         </div>
       </div>
       <div className="p-6">{children}</div>
