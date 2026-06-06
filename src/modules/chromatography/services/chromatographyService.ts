@@ -36,6 +36,29 @@ interface DrfPaginatedResponse<T> {
   results: T[];
 }
 
+interface DownloadHistoryParams {
+  companyId: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export type ChromatographicAnalysisUpdate = Partial<
+  Omit<
+    ChromatographicAnalysis,
+    | 'analysis_date'
+    | 'sample_date'
+    | 'operating_pressure_kpa'
+    | 'operating_temperature_c'
+    | 'flow_rate'
+  >
+> & {
+  analysis_date?: string | null;
+  sample_date?: string | null;
+  operating_pressure_kpa?: number | null;
+  operating_temperature_c?: number | null;
+  flow_rate?: number | null;
+};
+
 type CollectionResponse<T> =
   | T[]
   | ApiResponse<T[]>
@@ -168,7 +191,7 @@ export async function getAnalysis(analysisId: string): Promise<ChromatographicAn
  */
 export async function updateAnalysis(
   analysisId: string,
-  data: Partial<ChromatographicAnalysis>,
+  data: ChromatographicAnalysisUpdate,
 ): Promise<ChromatographicAnalysis> {
   try {
     return await apiClient.patch<ChromatographicAnalysis>(
@@ -228,6 +251,28 @@ export async function generateReport(
     );
   } catch (error: any) {
     throw new Error(error.message || 'Error generando informe');
+  }
+}
+
+export async function downloadChromatographyHistory({
+  companyId,
+  dateFrom,
+  dateTo,
+}: DownloadHistoryParams): Promise<Blob> {
+  const params = new URLSearchParams({ company_id: companyId });
+
+  if (dateFrom && dateTo) {
+    params.set('date_from', dateFrom);
+    params.set('date_to', dateTo);
+  }
+
+  try {
+    return await apiClient.downloadBlob(
+      `/chromatography/analyses/history.xlsx/?${params.toString()}`,
+      true,
+    );
+  } catch (error: any) {
+    throw new Error(error.message || 'Error descargando historial de cromatografía');
   }
 }
 

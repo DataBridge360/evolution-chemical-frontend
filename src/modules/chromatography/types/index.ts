@@ -181,6 +181,7 @@ export interface CalculatedProperties {
 export interface ChromatographicAnalysis {
   analysis_id: string;
   sample?: string;
+  company?: string;
   report_number?: string;
   company_name: string;
   field_name?: string;

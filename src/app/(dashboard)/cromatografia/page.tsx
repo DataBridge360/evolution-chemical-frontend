@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import FileUpload01 from '@/src/components/file-upload-01';
 import AnalysisLoadingModal from '@/src/modules/chromatography/components/AnalysisLoadingModal';
+import { ChromatographyHistoryModal } from '@/src/modules/chromatography/components/ChromatographyHistoryModal';
 import RecentAnalysesHistory from '@/src/modules/chromatography/components/RecentAnalysesHistory';
 import {
   calculateProperties,
@@ -20,6 +21,7 @@ import { useCompanies } from '@/src/modules/companies/hooks/useCompanies';
 import { Company } from '@/src/types/company';
 import { useAuth } from '@/src/modules/auth/hooks/useAuth/useAuth';
 import { UserRole } from '@/src/types/user';
+import { Download } from 'lucide-react';
 
 type ProcessStep = 'idle' | 'uploading' | 'calculating' | 'generating-report' | 'complete';
 
@@ -48,6 +50,7 @@ export default function ChromatographyPage() {
   const [fieldName, setFieldName] = useState('');
   const [currentStep, setCurrentStep] = useState<ProcessStep>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   const handleCompanySearchChange = (value: string) => {
     setSearchTerm(value);
@@ -159,7 +162,22 @@ export default function ChromatographyPage() {
 
           {/* Historial del último mes */}
           <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Historial del último mes</h3>
+            <div className="mb-4 flex flex-col gap-1">
+              <h3 className="text-lg font-semibold text-gray-900">Historial del último mes</h3>
+              <p className="text-sm text-gray-500">
+                Genere el historial Excel por empresa y rango de fechas.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsHistoryModalOpen(true)}
+              className="mb-5 inline-flex h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+            >
+              <Download className="h-4 w-4" />
+              Generar historial
+            </button>
+
             <div className="max-h-[500px] overflow-y-auto pr-2">
               <RecentAnalysesHistory />
             </div>
@@ -170,6 +188,12 @@ export default function ChromatographyPage() {
       <AnalysisLoadingModal
         isOpen={isProcessing}
         currentStep={currentStep === 'idle' ? 'uploading' : currentStep}
+      />
+      <ChromatographyHistoryModal
+        isOpen={isHistoryModalOpen}
+        companies={companies}
+        loadingCompanies={loadingCompanies}
+        onClose={() => setIsHistoryModalOpen(false)}
       />
     </>
   );

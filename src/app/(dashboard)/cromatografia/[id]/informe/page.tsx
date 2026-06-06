@@ -9,7 +9,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
 import { useUpdateAnalysis } from '@/src/modules/chromatography/hooks/useUpdateAnalysis';
-import { ChromatographicAnalysis } from '@/src/modules/chromatography/types';
+import { downloadChromatographyHistory } from '@/src/modules/chromatography/services/chromatographyService';
 import Image from 'next/image';
 
 interface Props {
@@ -39,6 +39,9 @@ export default function InformePage({ params }: Props) {
   const [sampleDate, setSampleDate] = useState('');
   const [lastCalibration, setLastCalibration] = useState('');
   const [h2sContent, setH2sContent] = useState('');
+  const [downloadMode, setDownloadMode] = useState<'pdf' | 'pdf-history'>('pdf');
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [isDownloadingHistory, setIsDownloadingHistory] = useState(false);
 
   // Cargar datos en los campos editables cuando el análisis cambia
   useMemo(() => {
@@ -112,23 +115,29 @@ export default function InformePage({ params }: Props) {
   // Función para guardar cambios
   const handleSaveChanges = async () => {
     try {
-      await updateMutation.mutateAsync({
+      const payload = removeUndefinedFields({
         h2s_content: h2sContent,
         report_number: reportNumber,
         chromatograph_operator: operator,
         sample_point: origin,
         field_name: field,
-        company_name: company,
-        analysis_date: reportDate,
-        sample_date: sampleDate,
-        operating_pressure_kpa: pressure === 'NR' ? undefined : parseFloat(pressure),
-        operating_temperature_c: temperature === 'NR' ? undefined : parseFloat(temperature),
-        flow_rate: flowRate === 'NR' ? undefined : parseFloat(flowRate),
+        company_name: cleanRequiredString(company),
+        analysis_date: cleanOptionalDate(reportDate),
+        sample_date: cleanOptionalDate(sampleDate),
+        operating_pressure_kpa: cleanOptionalNumber(pressure),
+        operating_temperature_c: cleanOptionalNumber(temperature),
+        flow_rate: cleanOptionalNumber(flowRate),
       });
+
+      await updateMutation.mutateAsync(payload);
       alert('Cambios guardados correctamente');
     } catch (error) {
       console.error('Error guardando cambios:', error);
-      alert('Error al guardar los cambios. Por favor intente nuevamente.');
+      alert(
+        `Error al guardar los cambios: ${
+          error instanceof Error ? error.message : 'Por favor intente nuevamente.'
+        }`,
+      );
     }
   };
 
@@ -261,6 +270,42 @@ export default function InformePage({ params }: Props) {
     printWindow.document.close();
   };
 
+  const handleDownloadReport = async () => {
+    setDownloadError(null);
+    handleDownloadPDF();
+
+    if (downloadMode !== 'pdf-history') {
+      return;
+    }
+
+    if (!analysis.company) {
+      setDownloadError('El análisis no tiene una empresa asociada para generar historial.');
+      return;
+    }
+
+    const dateTo = getTodayInputValue();
+    const dateFrom = getDefaultDateFrom();
+    setIsDownloadingHistory(true);
+
+    try {
+      const blob = await downloadChromatographyHistory({
+        companyId: analysis.company,
+        dateFrom,
+        dateTo,
+      });
+      downloadBlob(
+        blob,
+        `historial_cromatografia_${sanitizeFilename(analysis.company_name || 'empresa')}_${dateFrom}_${dateTo}.xlsx`,
+      );
+    } catch (error) {
+      setDownloadError(
+        error instanceof Error ? error.message : 'Error descargando historial de cromatografía',
+      );
+    } finally {
+      setIsDownloadingHistory(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#e9e9e9] p-6">
       <style jsx global>{`
@@ -325,9 +370,22 @@ export default function InformePage({ params }: Props) {
             </>
           )}
         </button>
+        <select
+          value={downloadMode}
+          onChange={(event) => {
+            setDownloadMode(event.target.value as 'pdf' | 'pdf-history');
+            setDownloadError(null);
+          }}
+          disabled={isDownloadingHistory}
+          className="rounded border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-100"
+        >
+          <option value="pdf">Informe PDF</option>
+          <option value="pdf-history">PDF + Historial Excel</option>
+        </select>
         <button
-          onClick={handleDownloadPDF}
-          className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          onClick={handleDownloadReport}
+          disabled={isDownloadingHistory}
+          className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-blue-400"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -337,9 +395,15 @@ export default function InformePage({ params }: Props) {
               d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
             />
           </svg>
-          Descargar Informe
+          {isDownloadingHistory ? 'Descargando...' : 'Descargar Informe'}
         </button>
       </div>
+
+      {downloadError && (
+        <div className="print-hidden mx-auto mb-4 max-w-[850px] rounded bg-red-50 p-3 text-sm text-red-700">
+          {downloadError}
+        </div>
+      )}
 
       {/* Página del informe */}
       <div
@@ -921,4 +985,67 @@ function PropRow({ label, value }: any) {
       <td className="w-[75px] px-1">{value.unit}</td>
     </tr>
   );
+}
+
+function getTodayInputValue() {
+  return formatDateInput(new Date());
+}
+
+function cleanRequiredString(value: string) {
+  const trimmed = value.trim();
+  return trimmed || undefined;
+}
+
+function cleanOptionalDate(value: string) {
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function cleanOptionalNumber(value: string) {
+  const trimmed = value.trim().replace(',', '.').toUpperCase();
+
+  if (!trimmed || trimmed === 'NR' || trimmed === 'NE') {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function removeUndefinedFields<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined),
+  ) as T;
+}
+
+function getDefaultDateFrom() {
+  const date = new Date();
+  date.setMonth(date.getMonth() - 1);
+  return formatDateInput(date);
+}
+
+function formatDateInput(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function sanitizeFilename(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/gi, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }

@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAnalysesByCompany } from '@/src/modules/chromatography/hooks/useAnalysesByCompany';
 import { useCompany } from '@/src/modules/companies/hooks/useCompany';
+import { ChromatographyHistoryModal } from '@/src/modules/chromatography/components/ChromatographyHistoryModal';
 import { formatDateAR } from '@/src/lib/dateUtils';
 import { Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
+import { Download } from 'lucide-react';
 
 export default function CromaAnalysesPage() {
   const router = useRouter();
@@ -14,6 +16,7 @@ export default function CromaAnalysesPage() {
   const companyId = params.companyId as string;
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   // Usar hooks con cache
   const { data: company, isLoading: loadingCompany } = useCompany(companyId);
@@ -107,6 +110,25 @@ export default function CromaAnalysesPage() {
             placeholder="Buscar por N° informe, yacimiento, pozo..."
             className="w-full max-w-md border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-none"
           />
+        </div>
+
+        {/* Historial de cromatografía de la empresa */}
+        <div className="border border-border bg-white p-4">
+          <div className="mb-4 flex flex-col gap-1">
+            <h2 className="text-base font-semibold text-gray-900">Historial de cromatografía</h2>
+            <p className="text-sm text-gray-500">
+              Descargue el historial Excel de {companyName || 'esta empresa'} por rango de fechas.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsHistoryModalOpen(true)}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+          >
+            <Download className="h-4 w-4" />
+            Generar historial
+          </button>
         </div>
 
         {/* Lista de análisis con diseño de tarjetas */}
@@ -220,6 +242,12 @@ export default function CromaAnalysesPage() {
           )}
         </div>
       </div>
+      <ChromatographyHistoryModal
+        isOpen={isHistoryModalOpen}
+        fixedCompanyId={companyId}
+        fixedCompanyName={companyName}
+        onClose={() => setIsHistoryModalOpen(false)}
+      />
     </>
   );
 }

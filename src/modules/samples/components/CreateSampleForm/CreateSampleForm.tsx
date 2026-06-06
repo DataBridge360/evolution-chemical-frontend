@@ -8,6 +8,7 @@ import { samplesService } from '../../services/SamplesService';
 import { companiesService } from '@/src/modules/companies/services/CompaniesService';
 import { useAuth } from '@/src/modules/auth/hooks/useAuth';
 import { SampleLabelModal } from '../SampleLabelModal';
+import { SingleDateCalendar } from '@/src/components/ui/calendar';
 
 interface CreateSampleFormData {
   sample_date: string;
@@ -31,10 +32,12 @@ export function CreateSampleForm() {
     handleSubmit,
     formState: { errors },
     setError,
+    setValue,
     watch,
   } = useForm<CreateSampleFormData>();
 
   const selectedType = watch('sample_type');
+  const sampleDate = watch('sample_date');
 
   useEffect(() => {
     const loadCompanyName = async () => {
@@ -133,13 +136,22 @@ export function CreateSampleForm() {
                 <p className="mt-1 text-xs text-gray-500">(Automático)</p>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-900">
-                  Fecha: <span className="text-red-600">*</span>
-                </label>
+                <SingleDateCalendar
+                  id="sample-date"
+                  label="Fecha"
+                  value={sampleDate}
+                  required
+                  onChange={(value) =>
+                    setValue('sample_date', value, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    })
+                  }
+                />
                 <input
-                  type="date"
+                  type="hidden"
                   {...register('sample_date', { required: 'Campo requerido' })}
-                  className="w-full border-b border-gray-900 px-2 py-1 focus:border-blue-600 focus:outline-none"
                 />
                 {errors.sample_date && (
                   <p className="mt-1 text-sm text-red-600">{errors.sample_date.message}</p>
