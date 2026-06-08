@@ -194,6 +194,14 @@ export interface ChromatographicAnalysis {
   flow_rate?: number;
   flow_rate_unit?: string;
 
+  // Nuevos campos del informe
+  pdt?: string;
+  data_acquisition_date?: string;
+  zone?: string;
+  formation?: string;
+  sampled_by?: string;
+  last_calibration_date?: string;
+
   chromatograph_sample_name?: string;
   chromatograph_data_file?: string;
   chromatograph_instrument?: string;

@@ -11,6 +11,7 @@ import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
 import { useUpdateAnalysis } from '@/src/modules/chromatography/hooks/useUpdateAnalysis';
 import { downloadChromatographyHistory } from '@/src/modules/chromatography/services/chromatographyService';
 import Image from 'next/image';
+import { ToastContainer, toast } from '@/src/components/ui/Toast';
 
 interface Props {
   params: { id: string };
@@ -47,21 +48,26 @@ export default function InformePage({ params }: Props) {
   useMemo(() => {
     if (analysis) {
       setReportNumber(analysis.report_number || '');
-      setPdt('');
+      setPdt(analysis.pdt || '');
       setOperator(analysis.chromatograph_operator || '');
       setOrigin(analysis.sample_point || '');
       setField(analysis.field_name || '');
       setCompany(analysis.company_name || '');
-      setDataDate('');
-      setReportDate(analysis.analysis_date || '');
+      setDataDate(formatDateForInput(analysis.data_acquisition_date) || '');
+      // Convertir fechas a formato YYYY-MM-DD para input type="date"
+      setReportDate(
+        formatDateForInput(analysis.analysis_date) || formatDateForInput(analysis.created_at) || '',
+      );
       setPressure(analysis.operating_pressure_kpa?.toString() || 'NR');
       setTemperature(analysis.operating_temperature_c?.toString() || 'NR');
       setFlowRate(analysis.flow_rate?.toString() || 'NR');
-      setZone('');
-      setFormation('');
-      setSampledBy('');
-      setSampleDate(analysis.sample_date || '');
-      setLastCalibration('');
+      setZone(analysis.zone || '');
+      setFormation(analysis.formation || '');
+      setSampledBy(analysis.sampled_by || '');
+      setSampleDate(
+        formatDateForInput(analysis.sample_date) || formatDateForInput(analysis.created_at) || '',
+      );
+      setLastCalibration(formatDateForInput(analysis.last_calibration_date) || '');
       setH2sContent(analysis.h2s_content || 'NE');
     }
   }, [analysis]);
@@ -115,7 +121,7 @@ export default function InformePage({ params }: Props) {
   // Función para guardar cambios
   const handleSaveChanges = async () => {
     try {
-      const payload = removeUndefinedFields({
+      const rawPayload = {
         h2s_content: h2sContent,
         report_number: reportNumber,
         chromatograph_operator: operator,
@@ -127,14 +133,33 @@ export default function InformePage({ params }: Props) {
         operating_pressure_kpa: cleanOptionalNumber(pressure),
         operating_temperature_c: cleanOptionalNumber(temperature),
         flow_rate: cleanOptionalNumber(flowRate),
+        pdt: cleanOptionalString(pdt),
+        data_acquisition_date: cleanOptionalDate(dataDate),
+        zone: cleanOptionalString(zone),
+        formation: cleanOptionalString(formation),
+        sampled_by: cleanOptionalString(sampledBy),
+        last_calibration_date: cleanOptionalDate(lastCalibration),
+      };
+
+      console.log('📤 FRONTEND - Datos RAW antes de limpiar:', {
+        pressure,
+        temperature,
+        flowRate,
+        pressure_parsed: cleanOptionalNumber(pressure),
+        temperature_parsed: cleanOptionalNumber(temperature),
+        flowRate_parsed: cleanOptionalNumber(flowRate),
       });
 
+      const payload = removeUndefinedFields(rawPayload);
+
+      console.log('📤 FRONTEND - Payload final a enviar:', payload);
+
       await updateMutation.mutateAsync(payload);
-      alert('Cambios guardados correctamente');
+      toast.success('Cambios guardados correctamente');
     } catch (error) {
-      console.error('Error guardando cambios:', error);
-      alert(
-        `Error al guardar los cambios: ${
+      console.error('❌ FRONTEND - Error guardando cambios:', error);
+      toast.error(
+        `Error al guardar: ${
           error instanceof Error ? error.message : 'Por favor intente nuevamente.'
         }`,
       );
@@ -149,7 +174,7 @@ export default function InformePage({ params }: Props) {
     // Abrir nueva ventana
     const printWindow = window.open('', '', 'width=800,height=600');
     if (!printWindow) {
-      alert('Por favor permite ventanas emergentes para descargar el PDF');
+      toast.error('Por favor permite ventanas emergentes para descargar el PDF');
       return;
     }
 
@@ -167,13 +192,13 @@ export default function InformePage({ params }: Props) {
       .join('\n');
 
     // Escribir el HTML completo en la nueva ventana
-    printWindow.document.write(`
+    const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <title>Informe_${analysis.report_number || params.id}</title>
-          <script src="https://cdn.tailwindcss.com"></script>
+          <script src="https://cdn.tailwindcss.com"><\/script>
           <style>
             ${styles}
 
@@ -262,11 +287,12 @@ export default function InformePage({ params }: Props) {
                 }, 100);
               }, 500);
             };
-          </script>
+          <\/script>
         </body>
       </html>
-    `);
+    `;
 
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
   };
 
@@ -308,6 +334,7 @@ export default function InformePage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-[#e9e9e9] p-6">
+      <ToastContainer />
       <style jsx global>{`
         @media screen {
           input:focus {
@@ -448,8 +475,8 @@ export default function InformePage({ params }: Props) {
             <DataRow label="Procedencia" value={origin} onChange={setOrigin} color="red" />
             <DataRow label="Yacimiento" value={field} onChange={setField} color="blue" />
             <DataRow label="Empresa" value={company} onChange={setCompany} color="blue" />
-            <DataRow label="Datos adq." value={dataDate} onChange={setDataDate} />
-            <DataRow label="Fecha Inf." value={reportDate} onChange={setReportDate} />
+            <DataRowDate label="Datos adq." value={dataDate} onChange={setDataDate} />
+            <DataRowDate label="Fecha Inf." value={reportDate} onChange={setReportDate} />
             <div className="text-right text-[11px] font-normal">Otros datos:</div>
           </div>
 
@@ -466,8 +493,8 @@ export default function InformePage({ params }: Props) {
             <DataRow label="Zona" value={zone} onChange={setZone} />
             <DataRow label="Formacion" value={formation} onChange={setFormation} />
             <DataRow label="Muestra Extraida por" value={sampledBy} onChange={setSampledBy} />
-            <DataRow label="Fecha muestreo" value={sampleDate} onChange={setSampleDate} />
-            <DataRow
+            <DataRowDate label="Fecha muestreo" value={sampleDate} onChange={setSampleDate} />
+            <DataRowDate
               label="Ultima calibracion"
               value={lastCalibration}
               onChange={setLastCalibration}
@@ -977,6 +1004,22 @@ function DataRowWithUnit({ label, value, onChange, unit }: any) {
   );
 }
 
+function DataRowDate({ label, value, onChange, color }: any) {
+  const colorClass = color === 'red' ? 'text-red-600' : color === 'blue' ? 'text-blue-600' : '';
+  return (
+    <div className="grid grid-cols-[130px_1fr_auto] gap-1.5">
+      <span className="text-right">{label}:</span>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full border-none bg-transparent font-bold outline-none ${colorClass}`}
+      />
+      <span />
+    </div>
+  );
+}
+
 function PropRow({ label, value }: any) {
   return (
     <tr>
@@ -996,9 +1039,28 @@ function cleanRequiredString(value: string) {
   return trimmed || undefined;
 }
 
-function cleanOptionalDate(value: string) {
+function cleanOptionalString(value: string) {
   const trimmed = value.trim();
   return trimmed || null;
+}
+
+function cleanOptionalDate(value: string) {
+  // El input type="date" ya retorna formato YYYY-MM-DD
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+// Convierte fechas ISO (2026-06-07T18:54:01Z) a formato YYYY-MM-DD para input type="date"
+function formatDateForInput(dateString: string | null | undefined): string {
+  if (!dateString) return '';
+  try {
+    // Extraer solo la parte de la fecha (YYYY-MM-DD)
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
 }
 
 function cleanOptionalNumber(value: string) {

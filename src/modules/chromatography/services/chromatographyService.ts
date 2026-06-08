@@ -50,6 +50,12 @@ export type ChromatographicAnalysisUpdate = Partial<
     | 'operating_pressure_kpa'
     | 'operating_temperature_c'
     | 'flow_rate'
+    | 'pdt'
+    | 'data_acquisition_date'
+    | 'zone'
+    | 'formation'
+    | 'sampled_by'
+    | 'last_calibration_date'
   >
 > & {
   analysis_date?: string | null;
@@ -57,6 +63,12 @@ export type ChromatographicAnalysisUpdate = Partial<
   operating_pressure_kpa?: number | null;
   operating_temperature_c?: number | null;
   flow_rate?: number | null;
+  pdt?: string | null;
+  data_acquisition_date?: string | null;
+  zone?: string | null;
+  formation?: string | null;
+  sampled_by?: string | null;
+  last_calibration_date?: string | null;
 };
 
 type CollectionResponse<T> =

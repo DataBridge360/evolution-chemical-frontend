@@ -23,6 +23,7 @@ import {
 import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
 import { useUpdateAnalysis } from '@/src/modules/chromatography/hooks/useUpdateAnalysis';
 import type { CustomDataField } from '@/src/modules/chromatography/types';
+import { ToastContainer, toast } from '@/src/components/ui/Toast';
 
 interface Props {
   params: {
@@ -74,10 +75,11 @@ export default function AnalysisDetailPage({ params }: Props) {
         h2s_content: h2sContent,
       });
 
-      window.location.reload();
+      toast.success('Cambios guardados correctamente');
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
       console.error('❌ Error guardando:', error);
-      alert(`Error al guardar: ${error?.message || 'Error desconocido'}`);
+      toast.error(`Error al guardar: ${error?.message || 'Error desconocido'}`);
     }
   };
 
@@ -97,10 +99,11 @@ export default function AnalysisDetailPage({ params }: Props) {
         calculated_properties: updatedProperties,
       });
 
-      window.location.reload();
+      toast.success('Cambios guardados correctamente');
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error: any) {
       console.error('❌ Error guardando:', error);
-      alert(`Error al guardar: ${error?.message || 'Error desconocido'}`);
+      toast.error(`Error al guardar: ${error?.message || 'Error desconocido'}`);
     }
   };
 
@@ -125,7 +128,7 @@ export default function AnalysisDetailPage({ params }: Props) {
 
   const handleSaveForm = () => {
     if (!formData.name.trim()) {
-      alert('El nombre es requerido');
+      toast.error('El nombre es requerido');
       return;
     }
 
@@ -197,6 +200,7 @@ export default function AnalysisDetailPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      <ToastContainer />
       <div className="mx-auto max-w-7xl px-4">
         {/* Header con botones */}
         <div className="mb-6">
