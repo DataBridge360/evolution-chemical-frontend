@@ -6,8 +6,11 @@ export type AnalysisStatus = 'draft' | 'calculated' | 'approved' | 'reported';
 
 export type ReportType = 'extended' | 'simple' | 'extended_xl';
 
+export type ComponentVisibility = Record<string, boolean>;
+
 export interface Composition {
-  [compoundCode: string]: number;
+  [compoundCode: string]: number | ComponentVisibility | undefined;
+  _component_visibility?: ComponentVisibility;
 }
 
 export interface CompoundData {

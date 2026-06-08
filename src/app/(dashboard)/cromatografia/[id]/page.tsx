@@ -24,6 +24,12 @@ import {
 import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
 import { useUpdateAnalysis } from '@/src/modules/chromatography/hooks/useUpdateAnalysis';
 import type { CustomDataField } from '@/src/modules/chromatography/types';
+import {
+  getCompoundCode,
+  isComponentVisible,
+  isTotalsRow,
+  setComponentVisibility,
+} from '@/src/modules/chromatography/utils/compositionVisibility';
 
 interface Props {
   params: { id: string };
@@ -152,6 +158,17 @@ export default function AnalysisDetailPage({ params }: Props) {
     }, 100);
   };
 
+  const handleToggleComponentVisibility = async (componentCode: string, visible: boolean) => {
+    try {
+      await updateMutation.mutateAsync({
+        composition: setComponentVisibility(analysis!.composition, componentCode, visible),
+      });
+    } catch (error: any) {
+      console.error('❌ Error guardando visibilidad:', error);
+      alert(`Error al guardar visibilidad: ${error?.message || 'Error desconocido'}`);
+    }
+  };
+
   // Convertir error de React Query a string
   const error = queryError
     ? queryError instanceof Error
@@ -191,6 +208,7 @@ export default function AnalysisDetailPage({ params }: Props) {
   }
 
   const props = analysis.calculated_properties;
+  const compositionRows = props ? props.composicion : [];
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -269,7 +287,7 @@ export default function AnalysisDetailPage({ params }: Props) {
                 <table className="min-w-full divide-y divide-gray-200 text-xs">
                   <thead className="sticky top-0 bg-gray-50">
                     <tr>
-                      <th className="sticky left-0 z-10 border-r-2 border-gray-300 bg-gray-50 px-3 py-2 text-left font-medium text-gray-700">
+                      <th className="sticky left-0 z-20 min-w-[250px] border-r-2 border-gray-300 bg-gray-50 px-3 py-2 text-left font-medium text-gray-700">
                         Componente
                       </th>
                       <th className="whitespace-nowrap px-3 py-2 text-right font-medium text-gray-600">
@@ -416,25 +434,60 @@ export default function AnalysisDetailPage({ params }: Props) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {props.composicion.map((comp, idx) => {
+                    {compositionRows.map((comp, idx) => {
                       // Detectar si es la fila de totales
-                      const isTotalesRow =
-                        comp.name?.toUpperCase() === 'TOTALES' ||
-                        comp.code?.toUpperCase() === 'TOTALES';
+                      const isTotales = isTotalsRow(comp);
+                      const componentVisible = isComponentVisible(analysis.composition, comp);
+                      const componentCellClass = isTotales
+                        ? 'bg-blue-50 text-gray-900'
+                        : componentVisible
+                          ? idx % 2 === 0
+                            ? 'bg-white text-gray-900'
+                            : 'bg-gray-50 text-gray-900'
+                          : 'bg-gray-100 text-gray-500';
 
                       return (
                         <tr
                           key={idx}
                           className={
-                            isTotalesRow
+                            isTotales
                               ? 'border-t-4 border-blue-600 bg-blue-50 font-bold'
-                              : idx % 2 === 0
-                                ? 'bg-white'
-                                : 'bg-gray-50'
+                              : !componentVisible
+                                ? 'bg-gray-100'
+                                : idx % 2 === 0
+                                  ? 'bg-white'
+                                  : 'bg-gray-50'
                           }
                         >
-                          <td className="sticky left-0 z-10 whitespace-nowrap border-r-2 border-gray-300 bg-inherit px-3 py-2 font-medium text-gray-900">
-                            {comp.name} ({comp.formula})
+                          <td
+                            className={`sticky left-0 z-20 whitespace-nowrap border-r-2 border-gray-300 px-3 py-2 font-medium ${componentCellClass}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              {!isTotales && (
+                                <input
+                                  type="checkbox"
+                                  checked={componentVisible}
+                                  disabled={updateMutation.isPending}
+                                  onChange={(event) =>
+                                    handleToggleComponentVisibility(
+                                      getCompoundCode(comp),
+                                      event.target.checked,
+                                    )
+                                  }
+                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  aria-label={`Mostrar ${comp.name}`}
+                                />
+                              )}
+                              <span
+                                className={
+                                  !isTotales && !componentVisible
+                                    ? 'line-through decoration-gray-400'
+                                    : undefined
+                                }
+                              >
+                                {comp.name} ({comp.formula})
+                              </span>
+                            </div>
                           </td>
                           <td className="px-3 py-2 text-right text-gray-700">
                             {safeFormat(comp.pct_molar, 2)}
@@ -582,32 +635,27 @@ export default function AnalysisDetailPage({ params }: Props) {
                     })}
 
                     {/* Fila de TOTALES (solo si no viene en el array composicion) */}
-                    {props.totales &&
-                      !props.composicion.some(
-                        (c) =>
-                          c.name?.toUpperCase() === 'TOTALES' ||
-                          c.code?.toUpperCase() === 'TOTALES',
-                      ) && (
-                        <tr className="border-t-4 border-blue-600 bg-blue-50 font-bold">
-                          <td className="sticky left-0 z-10 border-r-2 border-gray-300 bg-blue-50 px-3 py-2 text-gray-900">
-                            TOTALES
-                          </td>
-                          <td className="px-3 py-2 text-right text-gray-900">
-                            {safeFormat(props.totales.pct_molar, 2)}
-                          </td>
-                          <td className="px-3 py-2 text-right text-gray-900">-</td>
-                          <td className="px-3 py-2 text-right text-gray-900">
-                            {safeFormat(props.totales.pct_volumen, 3)}
-                          </td>
-                          <td className="px-3 py-2 text-right text-gray-900">
-                            {safeFormat(props.totales.pct_masa, 3)}
-                          </td>
-                          {/* Agregar más columnas de totales según sea necesario */}
-                          <td colSpan={42} className="px-3 py-2 text-center text-gray-500">
-                            Ver resumen en secciones inferiores
-                          </td>
-                        </tr>
-                      )}
+                    {props.totales && !compositionRows.some((c) => isTotalsRow(c)) && (
+                      <tr className="border-t-4 border-blue-600 bg-blue-50 font-bold">
+                        <td className="sticky left-0 z-20 border-r-2 border-gray-300 bg-blue-50 px-3 py-2 text-gray-900">
+                          TOTALES
+                        </td>
+                        <td className="px-3 py-2 text-right text-gray-900">
+                          {safeFormat(props.totales.pct_molar, 2)}
+                        </td>
+                        <td className="px-3 py-2 text-right text-gray-900">-</td>
+                        <td className="px-3 py-2 text-right text-gray-900">
+                          {safeFormat(props.totales.pct_volumen, 3)}
+                        </td>
+                        <td className="px-3 py-2 text-right text-gray-900">
+                          {safeFormat(props.totales.pct_masa, 3)}
+                        </td>
+                        {/* Agregar más columnas de totales según sea necesario */}
+                        <td colSpan={42} className="px-3 py-2 text-center text-gray-500">
+                          Ver resumen en secciones inferiores
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

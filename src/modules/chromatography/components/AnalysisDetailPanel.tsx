@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAnalysis } from '../hooks/useAnalysis';
+import { visibleCompounds } from '../utils/compositionVisibility';
 
 interface Props {
   analysisId: string;
@@ -113,6 +114,9 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
   }
 
   const props = analysis.calculated_properties;
+  const visibleComposition = props
+    ? visibleCompounds(props.composicion, analysis.composition, false)
+    : [];
 
   return (
     <>
@@ -195,93 +199,91 @@ export function AnalysisDetailPanel({ analysisId, onClose }: Props) {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {props.composicion
-                        .filter((c) => c.name?.toUpperCase() !== 'TOTALES')
-                        .map((compound, idx) => (
-                          <tr key={idx} className="transition-colors hover:bg-blue-50">
-                            <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-gray-900">
-                              {compound.name}
-                            </td>
-                            <td className="px-3 py-2 text-center text-gray-600">
-                              {compound.formula}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.pct_molar, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.fracc_molar, 6)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.pct_volumen, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.pct_masa, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.masa_molar, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.densidad_relativa, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.pcs_mezcla, 2)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.pci_mezcla, 2)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.tc_contrib, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.pc_contrib, 2)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.vc_contrib, 6)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.zc_contrib, 6)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.t_solid_contrib, 2)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.t_boil_contrib, 2)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.vol_liq_eq, 6)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.n_carbon, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.n_hydrogen, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.n_oxygen, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.n_nitrogen, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.aire_req_contrib, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.lfl_contrib, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.ufl_contrib, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.cp_mezcla, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.cv_mezcla, 4)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {safeFormat(compound.hc_ratio_contrib, 4)}
-                            </td>
-                          </tr>
-                        ))}
+                      {visibleComposition.map((compound, idx) => (
+                        <tr key={idx} className="transition-colors hover:bg-blue-50">
+                          <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-gray-900">
+                            {compound.name}
+                          </td>
+                          <td className="px-3 py-2 text-center text-gray-600">
+                            {compound.formula}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.pct_molar, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.fracc_molar, 6)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.pct_volumen, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.pct_masa, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.masa_molar, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.densidad_relativa, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.pcs_mezcla, 2)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.pci_mezcla, 2)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.tc_contrib, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.pc_contrib, 2)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.vc_contrib, 6)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.zc_contrib, 6)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.t_solid_contrib, 2)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.t_boil_contrib, 2)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.vol_liq_eq, 6)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.n_carbon, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.n_hydrogen, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.n_oxygen, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.n_nitrogen, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.aire_req_contrib, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.lfl_contrib, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.ufl_contrib, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.cp_mezcla, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.cv_mezcla, 4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {safeFormat(compound.hc_ratio_contrib, 4)}
+                          </td>
+                        </tr>
+                      ))}
 
                       {/* Fila de Totales */}
                       <tr className="border-t-2 border-gray-400 bg-gray-100 font-bold">
