@@ -19,7 +19,12 @@ class CompaniesService {
   }
 
   async createCompany(data: CreateCompanyDto): Promise<Company> {
-    const response = await apiClient.post<ApiResponse<Company>>('/companies/', data, true);
+    const payload = {
+      ...data,
+      email: cleanOptionalString(data.email),
+      phone: cleanOptionalString(data.phone),
+    };
+    const response = await apiClient.post<ApiResponse<Company>>('/companies/', payload, true);
     return response.data;
   }
 
@@ -34,3 +39,8 @@ class CompaniesService {
 }
 
 export const companiesService = new CompaniesService();
+
+function cleanOptionalString(value?: string) {
+  const trimmed = value?.trim();
+  return trimmed || undefined;
+}

@@ -195,7 +195,7 @@ class ApiClient {
 
         if (!retryResponse.ok) {
           const error = await retryResponse.json().catch(() => ({ message: 'Error desconocido' }));
-          throw new Error(error.message || `Error ${retryResponse.status}`);
+          throw new Error(formatApiError(error, retryResponse.status));
         }
 
         return retryResponse.json();
@@ -213,7 +213,7 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Error desconocido' }));
-      throw new Error(error.message || `Error ${response.status}`);
+      throw new Error(formatApiError(error, response.status));
     }
 
     return response.json();
@@ -258,6 +258,56 @@ class ApiClient {
 
   delete<T>(endpoint: string, includeAuth: boolean = false): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' }, includeAuth);
+  }
+
+  async downloadBlob(endpoint: string, includeAuth: boolean = false): Promise<Blob> {
+    if (includeAuth) {
+      await this.ensureValidToken();
+    }
+
+    const url = `${API_URL}${endpoint}`;
+    const headers: HeadersInit = {};
+
+    if (includeAuth && typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (response.status === 401 && includeAuth) {
+      await this.refreshAccessToken();
+
+      const retryHeaders: HeadersInit = {};
+      const newToken = localStorage.getItem('accessToken');
+      if (newToken) {
+        retryHeaders['Authorization'] = `Bearer ${newToken}`;
+      }
+
+      const retryResponse = await fetch(url, {
+        method: 'GET',
+        headers: retryHeaders,
+      });
+
+      if (!retryResponse.ok) {
+        const error = await retryResponse.json().catch(() => ({ message: 'Error desconocido' }));
+        throw new Error(error.message || `Error ${retryResponse.status}`);
+      }
+
+      return retryResponse.blob();
+    }
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      throw new Error(error.message || `Error ${response.status}`);
+    }
+
+    return response.blob();
   }
 
   /**
@@ -339,3 +389,40 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+
+function formatApiError(error: unknown, status: number): string {
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (!error || typeof error !== 'object') {
+    return `Error ${status}`;
+  }
+
+  const record = error as Record<string, unknown>;
+  const directMessage = record.message || record.error || record.detail;
+
+  if (typeof directMessage === 'string') {
+    return directMessage;
+  }
+
+  const fieldErrors = Object.entries(record)
+    .map(([field, value]) => {
+      if (Array.isArray(value)) {
+        return `${field}: ${value.join(', ')}`;
+      }
+
+      if (typeof value === 'string') {
+        return `${field}: ${value}`;
+      }
+
+      if (value && typeof value === 'object') {
+        return `${field}: ${JSON.stringify(value)}`;
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+
+  return fieldErrors.length > 0 ? fieldErrors.join(' | ') : `Error ${status}`;
+}

@@ -9,8 +9,9 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
 import { useUpdateAnalysis } from '@/src/modules/chromatography/hooks/useUpdateAnalysis';
-import { ChromatographicAnalysis } from '@/src/modules/chromatography/types';
+import { downloadChromatographyHistory } from '@/src/modules/chromatography/services/chromatographyService';
 import Image from 'next/image';
+import { ToastContainer, toast } from '@/src/components/ui/Toast';
 
 interface Props {
   params: { id: string };
@@ -39,26 +40,34 @@ export default function InformePage({ params }: Props) {
   const [sampleDate, setSampleDate] = useState('');
   const [lastCalibration, setLastCalibration] = useState('');
   const [h2sContent, setH2sContent] = useState('');
+  const [downloadMode, setDownloadMode] = useState<'pdf' | 'pdf-history'>('pdf');
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [isDownloadingHistory, setIsDownloadingHistory] = useState(false);
 
   // Cargar datos en los campos editables cuando el análisis cambia
   useMemo(() => {
     if (analysis) {
       setReportNumber(analysis.report_number || '');
-      setPdt('');
+      setPdt(analysis.pdt || '');
       setOperator(analysis.chromatograph_operator || '');
       setOrigin(analysis.sample_point || '');
       setField(analysis.field_name || '');
       setCompany(analysis.company_name || '');
-      setDataDate('');
-      setReportDate(analysis.analysis_date || '');
+      setDataDate(formatDateForInput(analysis.data_acquisition_date) || '');
+      // Convertir fechas a formato YYYY-MM-DD para input type="date"
+      setReportDate(
+        formatDateForInput(analysis.analysis_date) || formatDateForInput(analysis.created_at) || '',
+      );
       setPressure(analysis.operating_pressure_kpa?.toString() || 'NR');
       setTemperature(analysis.operating_temperature_c?.toString() || 'NR');
       setFlowRate(analysis.flow_rate?.toString() || 'NR');
-      setZone('');
-      setFormation('');
-      setSampledBy('');
-      setSampleDate(analysis.sample_date || '');
-      setLastCalibration('');
+      setZone(analysis.zone || '');
+      setFormation(analysis.formation || '');
+      setSampledBy(analysis.sampled_by || '');
+      setSampleDate(
+        formatDateForInput(analysis.sample_date) || formatDateForInput(analysis.created_at) || '',
+      );
+      setLastCalibration(formatDateForInput(analysis.last_calibration_date) || '');
       setH2sContent(analysis.h2s_content || 'NE');
     }
   }, [analysis]);
@@ -112,23 +121,48 @@ export default function InformePage({ params }: Props) {
   // Función para guardar cambios
   const handleSaveChanges = async () => {
     try {
-      await updateMutation.mutateAsync({
+      const rawPayload = {
         h2s_content: h2sContent,
         report_number: reportNumber,
         chromatograph_operator: operator,
         sample_point: origin,
         field_name: field,
-        company_name: company,
-        analysis_date: reportDate,
-        sample_date: sampleDate,
-        operating_pressure_kpa: pressure === 'NR' ? undefined : parseFloat(pressure),
-        operating_temperature_c: temperature === 'NR' ? undefined : parseFloat(temperature),
-        flow_rate: flowRate === 'NR' ? undefined : parseFloat(flowRate),
+        company_name: cleanRequiredString(company),
+        analysis_date: cleanOptionalDate(reportDate),
+        sample_date: cleanOptionalDate(sampleDate),
+        operating_pressure_kpa: cleanOptionalNumber(pressure),
+        operating_temperature_c: cleanOptionalNumber(temperature),
+        flow_rate: cleanOptionalNumber(flowRate),
+        pdt: cleanOptionalString(pdt),
+        data_acquisition_date: cleanOptionalDate(dataDate),
+        zone: cleanOptionalString(zone),
+        formation: cleanOptionalString(formation),
+        sampled_by: cleanOptionalString(sampledBy),
+        last_calibration_date: cleanOptionalDate(lastCalibration),
+      };
+
+      console.log('📤 FRONTEND - Datos RAW antes de limpiar:', {
+        pressure,
+        temperature,
+        flowRate,
+        pressure_parsed: cleanOptionalNumber(pressure),
+        temperature_parsed: cleanOptionalNumber(temperature),
+        flowRate_parsed: cleanOptionalNumber(flowRate),
       });
-      alert('Cambios guardados correctamente');
+
+      const payload = removeUndefinedFields(rawPayload);
+
+      console.log('📤 FRONTEND - Payload final a enviar:', payload);
+
+      await updateMutation.mutateAsync(payload);
+      toast.success('Cambios guardados correctamente');
     } catch (error) {
-      console.error('Error guardando cambios:', error);
-      alert('Error al guardar los cambios. Por favor intente nuevamente.');
+      console.error('❌ FRONTEND - Error guardando cambios:', error);
+      toast.error(
+        `Error al guardar: ${
+          error instanceof Error ? error.message : 'Por favor intente nuevamente.'
+        }`,
+      );
     }
   };
 
@@ -140,7 +174,7 @@ export default function InformePage({ params }: Props) {
     // Abrir nueva ventana
     const printWindow = window.open('', '', 'width=800,height=600');
     if (!printWindow) {
-      alert('Por favor permite ventanas emergentes para descargar el PDF');
+      toast.error('Por favor permite ventanas emergentes para descargar el PDF');
       return;
     }
 
@@ -158,13 +192,13 @@ export default function InformePage({ params }: Props) {
       .join('\n');
 
     // Escribir el HTML completo en la nueva ventana
-    printWindow.document.write(`
+    const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <title>Informe_${analysis.report_number || params.id}</title>
-          <script src="https://cdn.tailwindcss.com"></script>
+          <script src="https://cdn.tailwindcss.com"><\/script>
           <style>
             ${styles}
 
@@ -253,16 +287,54 @@ export default function InformePage({ params }: Props) {
                 }, 100);
               }, 500);
             };
-          </script>
+          <\/script>
         </body>
       </html>
-    `);
+    `;
 
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
+  };
+
+  const handleDownloadReport = async () => {
+    setDownloadError(null);
+    handleDownloadPDF();
+
+    if (downloadMode !== 'pdf-history') {
+      return;
+    }
+
+    if (!analysis.company) {
+      setDownloadError('El análisis no tiene una empresa asociada para generar historial.');
+      return;
+    }
+
+    const dateTo = getTodayInputValue();
+    const dateFrom = getDefaultDateFrom();
+    setIsDownloadingHistory(true);
+
+    try {
+      const blob = await downloadChromatographyHistory({
+        companyId: analysis.company,
+        dateFrom,
+        dateTo,
+      });
+      downloadBlob(
+        blob,
+        `historial_cromatografia_${sanitizeFilename(analysis.company_name || 'empresa')}_${dateFrom}_${dateTo}.xlsx`,
+      );
+    } catch (error) {
+      setDownloadError(
+        error instanceof Error ? error.message : 'Error descargando historial de cromatografía',
+      );
+    } finally {
+      setIsDownloadingHistory(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#e9e9e9] p-6">
+      <ToastContainer />
       <style jsx global>{`
         @media screen {
           input:focus {
@@ -325,9 +397,22 @@ export default function InformePage({ params }: Props) {
             </>
           )}
         </button>
+        <select
+          value={downloadMode}
+          onChange={(event) => {
+            setDownloadMode(event.target.value as 'pdf' | 'pdf-history');
+            setDownloadError(null);
+          }}
+          disabled={isDownloadingHistory}
+          className="rounded border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-100"
+        >
+          <option value="pdf">Informe PDF</option>
+          <option value="pdf-history">PDF + Historial Excel</option>
+        </select>
         <button
-          onClick={handleDownloadPDF}
-          className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          onClick={handleDownloadReport}
+          disabled={isDownloadingHistory}
+          className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-blue-400"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -337,9 +422,15 @@ export default function InformePage({ params }: Props) {
               d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
             />
           </svg>
-          Descargar Informe
+          {isDownloadingHistory ? 'Descargando...' : 'Descargar Informe'}
         </button>
       </div>
+
+      {downloadError && (
+        <div className="print-hidden mx-auto mb-4 max-w-[850px] rounded bg-red-50 p-3 text-sm text-red-700">
+          {downloadError}
+        </div>
+      )}
 
       {/* Página del informe */}
       <div
@@ -384,8 +475,8 @@ export default function InformePage({ params }: Props) {
             <DataRow label="Procedencia" value={origin} onChange={setOrigin} color="red" />
             <DataRow label="Yacimiento" value={field} onChange={setField} color="blue" />
             <DataRow label="Empresa" value={company} onChange={setCompany} color="blue" />
-            <DataRow label="Datos adq." value={dataDate} onChange={setDataDate} />
-            <DataRow label="Fecha Inf." value={reportDate} onChange={setReportDate} />
+            <DataRowDate label="Datos adq." value={dataDate} onChange={setDataDate} />
+            <DataRowDate label="Fecha Inf." value={reportDate} onChange={setReportDate} />
             <div className="text-right text-[11px] font-normal">Otros datos:</div>
           </div>
 
@@ -402,8 +493,8 @@ export default function InformePage({ params }: Props) {
             <DataRow label="Zona" value={zone} onChange={setZone} />
             <DataRow label="Formacion" value={formation} onChange={setFormation} />
             <DataRow label="Muestra Extraida por" value={sampledBy} onChange={setSampledBy} />
-            <DataRow label="Fecha muestreo" value={sampleDate} onChange={setSampleDate} />
-            <DataRow
+            <DataRowDate label="Fecha muestreo" value={sampleDate} onChange={setSampleDate} />
+            <DataRowDate
               label="Ultima calibracion"
               value={lastCalibration}
               onChange={setLastCalibration}
@@ -913,6 +1004,22 @@ function DataRowWithUnit({ label, value, onChange, unit }: any) {
   );
 }
 
+function DataRowDate({ label, value, onChange, color }: any) {
+  const colorClass = color === 'red' ? 'text-red-600' : color === 'blue' ? 'text-blue-600' : '';
+  return (
+    <div className="grid grid-cols-[130px_1fr_auto] gap-1.5">
+      <span className="text-right">{label}:</span>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full border-none bg-transparent font-bold outline-none ${colorClass}`}
+      />
+      <span />
+    </div>
+  );
+}
+
 function PropRow({ label, value }: any) {
   return (
     <tr>
@@ -921,4 +1028,86 @@ function PropRow({ label, value }: any) {
       <td className="w-[75px] px-1">{value.unit}</td>
     </tr>
   );
+}
+
+function getTodayInputValue() {
+  return formatDateInput(new Date());
+}
+
+function cleanRequiredString(value: string) {
+  const trimmed = value.trim();
+  return trimmed || undefined;
+}
+
+function cleanOptionalString(value: string) {
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function cleanOptionalDate(value: string) {
+  // El input type="date" ya retorna formato YYYY-MM-DD
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+// Convierte fechas ISO (2026-06-07T18:54:01Z) a formato YYYY-MM-DD para input type="date"
+function formatDateForInput(dateString: string | null | undefined): string {
+  if (!dateString) return '';
+  try {
+    // Extraer solo la parte de la fecha (YYYY-MM-DD)
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
+}
+
+function cleanOptionalNumber(value: string) {
+  const trimmed = value.trim().replace(',', '.').toUpperCase();
+
+  if (!trimmed || trimmed === 'NR' || trimmed === 'NE') {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function removeUndefinedFields<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined),
+  ) as T;
+}
+
+function getDefaultDateFrom() {
+  const date = new Date();
+  date.setMonth(date.getMonth() - 1);
+  return formatDateInput(date);
+}
+
+function formatDateInput(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function sanitizeFilename(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/gi, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
