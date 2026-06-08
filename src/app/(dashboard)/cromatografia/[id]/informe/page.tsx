@@ -5,13 +5,14 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
 import { useUpdateAnalysis } from '@/src/modules/chromatography/hooks/useUpdateAnalysis';
 import { downloadChromatographyHistory } from '@/src/modules/chromatography/services/chromatographyService';
 import Image from 'next/image';
 import { ToastContainer, toast } from '@/src/components/ui/Toast';
+import { visibleCompounds } from '@/src/modules/chromatography/utils/compositionVisibility';
 
 interface Props {
   params: { id: string };
@@ -45,7 +46,7 @@ export default function InformePage({ params }: Props) {
   const [isDownloadingHistory, setIsDownloadingHistory] = useState(false);
 
   // Cargar datos en los campos editables cuando el análisis cambia
-  useMemo(() => {
+  useEffect(() => {
     if (analysis) {
       setReportNumber(analysis.report_number || '');
       setPdt(analysis.pdt || '');
@@ -84,8 +85,10 @@ export default function InformePage({ params }: Props) {
   // Memoizar los componentes para evitar recalcular
   const components = useMemo(() => {
     if (!analysis?.calculated_properties) return [];
-    return analysis.calculated_properties.composicion.filter(
-      (c) => c.name?.toUpperCase() !== 'TOTALES',
+    return visibleCompounds(
+      analysis.calculated_properties.composicion,
+      analysis.composition,
+      false,
     );
   }, [analysis]);
 
@@ -432,7 +435,6 @@ export default function InformePage({ params }: Props) {
         </div>
       )}
 
-      {/* Página del informe */}
       <div
         id="report-content"
         className="print-page relative mx-auto min-h-[1123px] w-[794px] bg-white p-[25px_18px] text-[10px] leading-tight shadow-lg"
