@@ -32,6 +32,7 @@ export function ChromatographyHistoryModal({
   const [dateTo, setDateTo] = useState(getTodayInputValue());
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const selectedCompany = fixedCompanyId
     ? { company_id: fixedCompanyId, name: fixedCompanyName || 'empresa' }
@@ -55,6 +56,7 @@ export function ChromatographyHistoryModal({
     setDateFrom(getDefaultDateFrom());
     setDateTo(getTodayInputValue());
     setError(null);
+    setProgress(0);
   }, [fixedCompanyId, isOpen]);
 
   if (!isOpen) {
@@ -83,6 +85,16 @@ export function ChromatographyHistoryModal({
 
     setError(null);
     setIsDownloading(true);
+    setProgress(6);
+
+    // El backend genera el archivo en una sola respuesta (sin avance parcial),
+    // así que la barra avanza de forma estimada hacia ~90% mientras se espera y
+    // se completa al 100% cuando llega el archivo.
+    const interval = window.setInterval(() => {
+      setProgress((current) =>
+        current >= 90 ? current : current + Math.max(1, Math.round((90 - current) * 0.1)),
+      );
+    }, 250);
 
     try {
       const blob = await downloadChromatographyHistory({
@@ -90,20 +102,27 @@ export function ChromatographyHistoryModal({
         dateFrom: mode === 'dates' ? dateFrom : undefined,
         dateTo: mode === 'dates' ? dateTo : undefined,
       });
+      window.clearInterval(interval);
+      setProgress(100);
       const suffix = mode === 'dates' ? `${dateFrom}_${dateTo}` : 'historico';
       downloadBlob(
         blob,
         `historial_cromatografia_${sanitizeFilename(selectedCompany?.name || 'empresa')}_${suffix}.xlsx`,
       );
-      onClose();
+      // Breve pausa para que se vea la barra completa antes de cerrar.
+      window.setTimeout(() => {
+        setIsDownloading(false);
+        onClose();
+      }, 500);
     } catch (downloadError) {
+      window.clearInterval(interval);
+      setProgress(0);
+      setIsDownloading(false);
       setError(
         downloadError instanceof Error
           ? downloadError.message
           : 'Error descargando historial de cromatografía',
       );
-    } finally {
-      setIsDownloading(false);
     }
   };
 
@@ -224,6 +243,27 @@ export function ChromatographyHistoryModal({
           )}
 
           {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+
+          {(isDownloading || progress === 100) && (
+            <div className="space-y-2" role="status" aria-live="polite">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">
+                  {progress === 100 ? 'Historial generado' : 'Generando historial...'}
+                </span>
+                <span className="font-medium tabular-nums text-gray-900">{progress}%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div
+                  className="h-full rounded-full bg-blue-600 transition-[width] duration-300 ease-out"
+                  style={{ width: `${progress}%` }}
+                  role="progressbar"
+                  aria-valuenow={progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 border-t border-gray-200 bg-gray-50 px-5 py-4">
