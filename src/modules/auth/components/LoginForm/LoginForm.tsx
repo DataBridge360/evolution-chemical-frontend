@@ -91,7 +91,9 @@ export function LoginForm() {
 
     try {
       // Llamada HTTP al backend - El backend maneja TODO el auth
-      const authData = await authService.login(data.email, data.password);
+      // Convertir mode 'empresa' a 'company' para el backend
+      const loginType = mode === 'laboratorio' ? 'laboratorio' : 'company';
+      const authData = await authService.login(data.email, data.password, loginType);
       loginSucceeded = true;
       window.sessionStorage.setItem('dashboard-enter-transition', 'zoom-in');
       window.sessionStorage.removeItem('dashboard-welcome-morph-played');
