@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/src/lib/utils/cn';
 
-type IconName = 'dashboard' | 'chromatography' | 'samples' | 'results' | 'companies';
+type IconName = 'dashboard' | 'chromatography' | 'samples' | 'results' | 'companies' | 'trash';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Muestras', href: '/muestras', icon: 'samples' },
   { name: 'Análisis', href: '/analisis', icon: 'results' },
   { name: 'Empresas', href: '/empresas', icon: 'companies' },
+  { name: 'Papelera', href: '/papelera', icon: 'trash' },
 ] satisfies Array<{ name: string; href: string; icon: IconName; role?: string }>;
 
 export function Sidebar() {
@@ -119,6 +120,17 @@ function SidebarIcon({ name, className }: { name: IconName; className?: string }
             strokeLinejoin="round"
             strokeWidth={2}
             d="M4 21h16M6 21V5a2 2 0 012-2h8a2 2 0 012 2v16M9 8h1m4 0h1M9 12h1m4 0h1M9 16h1m4 0h1"
+          />
+        </svg>
+      );
+    case 'trash':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
           />
         </svg>
       );

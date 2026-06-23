@@ -25,6 +25,9 @@ export interface Sample {
   // Campos virtuales del backend
   company_name?: string;
   can_view_results?: boolean;
+  // Papelera (presentes cuando la muestra está en la papelera)
+  deleted_at?: string | null;
+  deleted_by_name?: string | null;
 }
 
 export interface CreateSampleDto {
