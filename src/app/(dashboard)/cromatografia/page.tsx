@@ -22,6 +22,7 @@ import { Company } from '@/src/types/company';
 import { useAuth } from '@/src/modules/auth/hooks/useAuth/useAuth';
 import { UserRole } from '@/src/types/user';
 import { Download } from 'lucide-react';
+import { ToastContainer } from '@/src/components/ui/Toast';
 
 type ProcessStep = 'idle' | 'uploading' | 'calculating' | 'generating-report' | 'complete';
 
@@ -141,6 +142,8 @@ export default function ChromatographyPage() {
 
   return (
     <>
+      <ToastContainer />
+
       <div className="flex justify-center py-2 sm:py-3">
         <div className="w-full max-w-4xl space-y-6">
           <FileUpload01
