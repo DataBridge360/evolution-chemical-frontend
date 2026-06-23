@@ -2,20 +2,44 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 import { Sample, SampleStatus } from '@/src/types/sample';
 import { LoadResultsModal } from '@/src/modules/samples/components/LoadResultsModal';
 import { formatDateAR } from '@/src/lib/dateUtils';
 import { useSamples, useInvalidateSamples } from '@/src/modules/samples/hooks/useSamples';
+import { samplesService } from '@/src/modules/samples/services/SamplesService';
+import ConfirmDialog from '@/src/components/ui/ConfirmDialog';
+import { ToastContainer, toast } from '@/src/components/ui/Toast';
 
 export default function MuestrasPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
+  const [trashTarget, setTrashTarget] = useState<Sample | null>(null);
+  const [trashLoading, setTrashLoading] = useState(false);
 
   // Usar React Query para obtener muestras con caché automático
   const { data, isLoading, error } = useSamples(currentPage, 50);
   const invalidateSamples = useInvalidateSamples();
+
+  const handleMoveToTrash = async () => {
+    if (!trashTarget) return;
+    setTrashLoading(true);
+    try {
+      await samplesService.deleteSample(trashTarget.sample_id);
+      toast.success('Muestra movida a la papelera');
+      invalidateSamples();
+      queryClient.invalidateQueries({ queryKey: ['trash'] });
+      setTrashTarget(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al mover a la papelera');
+    } finally {
+      setTrashLoading(false);
+    }
+  };
 
   const samples = data?.data || [];
   const pagination = {
@@ -66,6 +90,27 @@ export default function MuestrasPage() {
 
   return (
     <>
+      <ToastContainer />
+
+      <ConfirmDialog
+        isOpen={trashTarget !== null}
+        title="Mover a la papelera"
+        description={
+          trashTarget ? (
+            <>
+              ¿Mover la muestra <strong>{trashTarget.internal_code || 'sin código'}</strong> a la
+              papelera? Dejará de aparecer en listados e históricos y se eliminará automáticamente a
+              los 7 días. Podés restaurarla desde la papelera.
+            </>
+          ) : null
+        }
+        confirmLabel="Mover a la papelera"
+        variant="danger"
+        loading={trashLoading}
+        onConfirm={handleMoveToTrash}
+        onClose={() => !trashLoading && setTrashTarget(null)}
+      />
+
       {showResultsModal && selectedSample && (
         <LoadResultsModal
           sample={selectedSample}
@@ -141,16 +186,28 @@ export default function MuestrasPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <button
-                        onClick={() => handleViewSample(sample)}
-                        className={`px-3 py-1 text-xs font-medium text-white transition-colors ${
-                          sample.status === SampleStatus.LISTO
-                            ? 'bg-green-600 hover:bg-green-700'
-                            : 'bg-blue-600 hover:bg-blue-700'
-                        }`}
-                      >
-                        {sample.status === SampleStatus.LISTO ? 'Ver Análisis' : 'Cargar Análisis'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleViewSample(sample)}
+                          className={`px-3 py-1 text-xs font-medium text-white transition-colors ${
+                            sample.status === SampleStatus.LISTO
+                              ? 'bg-green-600 hover:bg-green-700'
+                              : 'bg-blue-600 hover:bg-blue-700'
+                          }`}
+                        >
+                          {sample.status === SampleStatus.LISTO
+                            ? 'Ver Análisis'
+                            : 'Cargar Análisis'}
+                        </button>
+                        <button
+                          onClick={() => setTrashTarget(sample)}
+                          title="Mover a la papelera"
+                          aria-label="Mover a la papelera"
+                          className="inline-flex items-center justify-center border border-border bg-white p-1.5 text-muted-foreground transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
