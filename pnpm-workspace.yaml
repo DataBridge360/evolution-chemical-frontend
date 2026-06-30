@@ -1,3 +1,6 @@
+packages:
+  - '.'
+
 # Decisión de build scripts de dependencias.
 # false = el script NO se ejecuta (seguro). true = se permite ejecutar.
 # Lo dejamos en false a propósito por seguridad; ninguno es necesario para correr la app.
