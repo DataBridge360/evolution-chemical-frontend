@@ -7,6 +7,8 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { AdvancedChemicalScene } from './AdvancedChemicalScene';
 import { authService } from '../../services/AuthService';
+import { RateLimitError, AuthError } from '../../errors';
+import { RateLimitAlert } from '../RateLimitAlert';
 import { Button } from '@/src/components/ui/button';
 import { CoreSpinLoader } from '@/src/components/ui/core-spin-loader';
 import { Input } from '@/src/components/ui/input';
@@ -43,6 +45,9 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [retryAfter, setRetryAfter] = useState<number | null>(null);
   const [titleReady, setTitleReady] = useState(false);
   const [showScene, setShowScene] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
@@ -87,6 +92,9 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     setError(null);
+    setAttemptsRemaining(null);
+    setLockedUntil(null);
+    setRetryAfter(null);
     let loginSucceeded = false;
 
     try {
@@ -95,6 +103,12 @@ export function LoginForm() {
       const loginType = mode === 'laboratorio' ? 'laboratorio' : 'company';
       const authData = await authService.login(data.email, data.password, loginType);
       loginSucceeded = true;
+
+      // Limpiar estados de rate limiting tras éxito
+      setAttemptsRemaining(null);
+      setLockedUntil(null);
+      setRetryAfter(null);
+
       window.sessionStorage.setItem('dashboard-enter-transition', 'zoom-in');
       window.sessionStorage.removeItem('dashboard-welcome-morph-played');
       window.sessionStorage.setItem(
@@ -109,7 +123,24 @@ export function LoginForm() {
 
       router.replace(destination);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+      // Manejar error de rate limiting (cuenta bloqueada)
+      if (err instanceof RateLimitError) {
+        setLockedUntil(err.lockedUntil);
+        setRetryAfter(err.retryAfter);
+        setAttemptsRemaining(null);
+        setError(err.message);
+      }
+      // Manejar error de credenciales (con intentos restantes)
+      else if (err instanceof AuthError) {
+        setAttemptsRemaining(err.attemptsRemaining ?? null);
+        setLockedUntil(null);
+        setRetryAfter(null);
+        setError(err.message);
+      }
+      // Otros errores
+      else {
+        setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+      }
     } finally {
       if (!loginSucceeded) {
         setIsLoading(false);
@@ -245,7 +276,15 @@ export function LoginForm() {
               )}
             </div>
 
-            {error && (
+            {/* Alerta de rate limiting */}
+            <RateLimitAlert
+              lockedUntil={lockedUntil}
+              retryAfter={retryAfter}
+              attemptsRemaining={attemptsRemaining}
+            />
+
+            {/* Error genérico (solo si no hay rate limiting activo) */}
+            {error && !lockedUntil && attemptsRemaining === null && (
               <div className="border border-destructive/50 bg-destructive/10 p-3">
                 <p className="text-sm text-destructive">{error}</p>
               </div>
@@ -266,7 +305,7 @@ export function LoginForm() {
                   ? 'shadow-blue-200 hover:shadow-cyan-200'
                   : 'shadow-orange-200 hover:shadow-amber-200',
               )}
-              disabled={isLoading || isExiting}
+              disabled={isLoading || isExiting || lockedUntil !== null}
             >
               <span className="absolute inset-0 bg-gradient-to-r from-[var(--login-from)] via-[var(--login-via)] to-[var(--login-to)] transition-opacity duration-500" />
               <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(110deg,transparent_0%,rgba(255,255,255,0.32)_45%,transparent_70%)] transition-transform duration-700 group-hover:translate-x-[120%]" />

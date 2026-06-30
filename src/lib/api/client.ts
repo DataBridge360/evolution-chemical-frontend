@@ -195,7 +195,13 @@ class ApiClient {
 
         if (!retryResponse.ok) {
           const error = await retryResponse.json().catch(() => ({ message: 'Error desconocido' }));
-          throw new Error(formatApiError(error, retryResponse.status));
+          // Crear error que preserve response y status
+          const apiError: any = new Error(formatApiError(error, retryResponse.status));
+          apiError.response = {
+            status: retryResponse.status,
+            data: error,
+          };
+          throw apiError;
         }
 
         return retryResponse.json();
@@ -213,7 +219,13 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Error desconocido' }));
-      throw new Error(formatApiError(error, response.status));
+      // Crear error que preserve response y status
+      const apiError: any = new Error(formatApiError(error, response.status));
+      apiError.response = {
+        status: response.status,
+        data: error,
+      };
+      throw apiError;
     }
 
     return response.json();

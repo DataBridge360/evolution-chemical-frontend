@@ -134,8 +134,8 @@ export function InviteUserDialog({
             {/* Info message */}
             <div className="rounded-lg border-2 border-blue-100 bg-blue-50/50 p-3">
               <p className="text-xs leading-relaxed text-gray-700">
-                Una vez enviada la solicitud, indica a tu cliente que verifique sus recibidos y
-                la casilla de spam
+                Una vez enviada la solicitud, indica a tu cliente que verifique sus recibidos y la
+                casilla de spam
               </p>
             </div>
 
