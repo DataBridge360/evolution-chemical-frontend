@@ -5,8 +5,19 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, CheckCircle2, User, Lock, Loader2, XCircle, Check } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  User,
+  Lock,
+  Loader2,
+  XCircle,
+  Check,
+} from 'lucide-react';
 import { invitationService } from '../services/InvitationService';
+import { LegalDocumentDialog } from '@/src/components/LegalDocumentDialog';
+import { LEGAL_DOCUMENTS } from '@/src/lib/legal/legal-documents';
 
 const onboardingSchema = z
   .object({
@@ -19,6 +30,9 @@ const onboardingSchema = z
       .regex(/[0-9]/, 'Debe contener al menos un número')
       .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
     confirmPassword: z.string(),
+    acceptTermsAndPrivacy: z.boolean().refine((val) => val === true, {
+      message: 'Debes aceptar los términos, condiciones y políticas de privacidad',
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden',
@@ -39,6 +53,7 @@ export function OnboardingForm({ token, email, companyId }: OnboardingFormProps)
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLegalDialog, setShowLegalDialog] = useState(false);
 
   const {
     register,
@@ -47,6 +62,9 @@ export function OnboardingForm({ token, email, companyId }: OnboardingFormProps)
     watch,
   } = useForm<OnboardingFormData>({
     resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      acceptTermsAndPrivacy: false,
+    },
   });
 
   const password = watch('password');
@@ -289,6 +307,33 @@ export function OnboardingForm({ token, email, companyId }: OnboardingFormProps)
           </div>
         )}
 
+        {/* Aceptación de términos y políticas */}
+        <div className="flex items-center justify-center">
+          <label className="flex items-start gap-2.5 text-xs leading-relaxed text-gray-700">
+            <input
+              type="checkbox"
+              {...register('acceptTermsAndPrivacy')}
+              className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+              disabled={isLoading}
+            />
+            <span>
+              Acepto los{' '}
+              <button
+                type="button"
+                onClick={() => setShowLegalDialog(true)}
+                className="text-blue-600 underline decoration-blue-300 underline-offset-2 transition-colors hover:text-blue-700 hover:decoration-blue-500"
+                disabled={isLoading}
+              >
+                Términos, Condiciones y Políticas de Privacidad
+              </button>{' '}
+              <span className="text-red-500">*</span>
+            </span>
+          </label>
+        </div>
+        {errors.acceptTermsAndPrivacy && (
+          <p className="text-center text-xs text-red-500">{errors.acceptTermsAndPrivacy.message}</p>
+        )}
+
         {/* Submit */}
         <button
           type="submit"
@@ -300,16 +345,13 @@ export function OnboardingForm({ token, email, companyId }: OnboardingFormProps)
         </button>
       </form>
 
-      {/* Footer */}
-      <p className="mt-5 text-center text-xs text-gray-500">
-        Al completar el registro, aceptas nuestros{' '}
-        <a
-          href="/terms"
-          className="font-medium text-blue-600 transition-colors hover:text-blue-700"
-        >
-          términos y condiciones
-        </a>
-      </p>
+      {/* Dialog */}
+      <LegalDocumentDialog
+        title="Términos, Condiciones y Políticas de Privacidad"
+        content={LEGAL_DOCUMENTS}
+        isOpen={showLegalDialog}
+        onClose={() => setShowLegalDialog(false)}
+      />
     </div>
   );
 }
