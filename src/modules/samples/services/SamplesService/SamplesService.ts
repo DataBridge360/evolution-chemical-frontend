@@ -56,10 +56,35 @@ class SamplesService {
   }
 
   /**
-   * Eliminar muestra (solo owner)
+   * Mover muestra a la papelera (soft delete, solo owner).
+   * Se conserva 7 días y luego se elimina automáticamente.
    */
   async deleteSample(id: string): Promise<void> {
     await apiClient.delete(`/samples/${id}`, true);
+  }
+
+  /**
+   * Listar las muestras que están en la papelera (solo owner)
+   */
+  async getTrash(): Promise<Sample[]> {
+    const response = await apiClient.get<ApiResponse<Sample[]>>('/samples/trash/', true);
+    return response.data;
+  }
+
+  /**
+   * Restaurar una muestra desde la papelera (solo owner)
+   */
+  async restore(id: string): Promise<Sample> {
+    const response = await apiClient.post<ApiResponse<Sample>>(`/samples/${id}/restore/`, {}, true);
+    return response.data;
+  }
+
+  /**
+   * Eliminar permanentemente una muestra de la papelera (solo owner).
+   * Requiere la contraseña del usuario. Lanza error si es incorrecta.
+   */
+  async permanentDelete(id: string, password: string): Promise<void> {
+    await apiClient.post(`/samples/${id}/permanent-delete/`, { password }, true);
   }
 }
 

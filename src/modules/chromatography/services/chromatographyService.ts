@@ -289,7 +289,23 @@ export async function downloadChromatographyHistory({
 }
 
 /**
- * Elimina un análisis
+ * Item de la papelera de cromatografía (payload liviano del backend)
+ */
+export interface ChromatographicAnalysisTrashItem {
+  analysis_id: string;
+  report_number: string | null;
+  company_name: string;
+  field_name: string | null;
+  well_name: string | null;
+  status: string;
+  created_at: string;
+  deleted_at: string | null;
+  deleted_by_name: string | null;
+}
+
+/**
+ * Mueve un análisis a la papelera (soft delete, solo owner).
+ * Se conserva 7 días y luego se elimina automáticamente.
  */
 export async function deleteAnalysis(analysisId: string): Promise<void> {
   try {
@@ -300,6 +316,44 @@ export async function deleteAnalysis(analysisId: string): Promise<void> {
   } catch (error: any) {
     throw new Error(error.message || 'Error eliminando análisis');
   }
+}
+
+/**
+ * Lista los análisis cromatográficos que están en la papelera (solo owner)
+ */
+export async function listTrashAnalyses(): Promise<ChromatographicAnalysisTrashItem[]> {
+  const response = await apiClient.get<CollectionResponse<ChromatographicAnalysisTrashItem>>(
+    '/chromatography/analyses/trash/',
+    true,
+  );
+  return unwrapCollectionResponse(response);
+}
+
+/**
+ * Restaura un análisis desde la papelera (solo owner)
+ */
+export async function restoreAnalysis(analysisId: string): Promise<ChromatographicAnalysis> {
+  try {
+    return await apiClient.post<ChromatographicAnalysis>(
+      `/chromatography/analyses/${analysisId}/restore/`,
+      {},
+      true,
+    );
+  } catch (error: any) {
+    throw new Error(error.message || 'Error restaurando análisis');
+  }
+}
+
+/**
+ * Elimina permanentemente un análisis de la papelera (solo owner).
+ * Requiere la contraseña del usuario. Lanza error si es incorrecta.
+ */
+export async function permanentDeleteAnalysis(analysisId: string, password: string): Promise<void> {
+  await apiClient.post<void>(
+    `/chromatography/analyses/${analysisId}/permanent-delete/`,
+    { password },
+    true,
+  );
 }
 
 /**
