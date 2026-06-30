@@ -5,16 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  User,
-  Lock,
-  Loader2,
-  XCircle,
-  Check,
-} from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, User, Lock, Loader2, XCircle, Check } from 'lucide-react';
 import { invitationService } from '../services/InvitationService';
 import { LegalDocumentDialog } from '@/src/components/LegalDocumentDialog';
 import { LEGAL_DOCUMENTS } from '@/src/lib/legal/legal-documents';
