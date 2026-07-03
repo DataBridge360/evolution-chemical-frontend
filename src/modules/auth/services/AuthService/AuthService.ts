@@ -33,10 +33,15 @@ class AuthService {
   /**
    * Login - El backend maneja TODO
    */
-  async login(email: string, password: string): Promise<LoginResponse['data']> {
+  async login(
+    email: string,
+    password: string,
+    loginType: 'laboratorio' | 'company' = 'company',
+  ): Promise<LoginResponse['data']> {
     const response = await apiClient.post<LoginResponse>('/auth/login', {
       email,
       password,
+      loginType,
     });
 
     // Guardar tokens en localStorage
