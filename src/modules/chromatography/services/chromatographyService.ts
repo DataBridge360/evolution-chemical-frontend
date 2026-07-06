@@ -266,6 +266,17 @@ export async function generateReport(
   }
 }
 
+export async function downloadChromatographyReportExcel(analysisId: string): Promise<Blob> {
+  try {
+    return await apiClient.downloadBlob(
+      `/chromatography/analyses/${analysisId}/report.xlsx/`,
+      true,
+    );
+  } catch (error: any) {
+    throw new Error(error.message || 'Error descargando el informe en Excel');
+  }
+}
+
 export async function downloadChromatographyHistory({
   companyId,
   dateFrom,

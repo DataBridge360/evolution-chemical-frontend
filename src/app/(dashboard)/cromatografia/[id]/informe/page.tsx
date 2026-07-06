@@ -5,11 +5,11 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/src/modules/chromatography/hooks/useAnalysis';
 import { useUpdateAnalysis } from '@/src/modules/chromatography/hooks/useUpdateAnalysis';
-import { downloadChromatographyHistory } from '@/src/modules/chromatography/services/chromatographyService';
+import { downloadChromatographyReportExcel } from '@/src/modules/chromatography/services/chromatographyService';
 import Image from 'next/image';
 import { ToastContainer, toast } from '@/src/components/ui/Toast';
 import { visibleCompounds } from '@/src/modules/chromatography/utils/compositionVisibility';
@@ -41,9 +41,22 @@ export default function InformePage({ params }: Props) {
   const [sampleDate, setSampleDate] = useState('');
   const [lastCalibration, setLastCalibration] = useState('');
   const [h2sContent, setH2sContent] = useState('');
-  const [downloadMode, setDownloadMode] = useState<'pdf' | 'pdf-history'>('pdf');
   const [downloadError, setDownloadError] = useState<string | null>(null);
-  const [isDownloadingHistory, setIsDownloadingHistory] = useState(false);
+  const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
+  const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
+
+  // Cerrar el menú de descarga al hacer click afuera
+  useEffect(() => {
+    if (!downloadMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(event.target as Node)) {
+        setDownloadMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [downloadMenuOpen]);
 
   // Cargar datos en los campos editables cuando el análisis cambia
   useEffect(() => {
@@ -299,39 +312,28 @@ export default function InformePage({ params }: Props) {
     printWindow.document.close();
   };
 
-  const handleDownloadReport = async () => {
+  const handleSelectPDF = () => {
     setDownloadError(null);
+    setDownloadMenuOpen(false);
     handleDownloadPDF();
+  };
 
-    if (downloadMode !== 'pdf-history') {
-      return;
-    }
-
-    if (!analysis.company) {
-      setDownloadError('El análisis no tiene una empresa asociada para generar historial.');
-      return;
-    }
-
-    const dateTo = getTodayInputValue();
-    const dateFrom = getDefaultDateFrom();
-    setIsDownloadingHistory(true);
-
+  const handleSelectExcel = async () => {
+    setDownloadError(null);
+    setDownloadMenuOpen(false);
+    setIsDownloadingExcel(true);
     try {
-      const blob = await downloadChromatographyHistory({
-        companyId: analysis.company,
-        dateFrom,
-        dateTo,
-      });
+      const blob = await downloadChromatographyReportExcel(params.id);
       downloadBlob(
         blob,
-        `historial_cromatografia_${sanitizeFilename(analysis.company_name || 'empresa')}_${dateFrom}_${dateTo}.xlsx`,
+        `informe_cromatografia_${sanitizeFilename(analysis.report_number || params.id)}.xlsx`,
       );
     } catch (error) {
       setDownloadError(
-        error instanceof Error ? error.message : 'Error descargando historial de cromatografía',
+        error instanceof Error ? error.message : 'Error descargando el informe en Excel',
       );
     } finally {
-      setIsDownloadingHistory(false);
+      setIsDownloadingExcel(false);
     }
   };
 
@@ -400,33 +402,118 @@ export default function InformePage({ params }: Props) {
             </>
           )}
         </button>
-        <select
-          value={downloadMode}
-          onChange={(event) => {
-            setDownloadMode(event.target.value as 'pdf' | 'pdf-history');
-            setDownloadError(null);
-          }}
-          disabled={isDownloadingHistory}
-          className="rounded border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-100"
-        >
-          <option value="pdf">Informe PDF</option>
-          <option value="pdf-history">PDF + Historial Excel</option>
-        </select>
-        <button
-          onClick={handleDownloadReport}
-          disabled={isDownloadingHistory}
-          className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-blue-400"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-            />
-          </svg>
-          {isDownloadingHistory ? 'Descargando...' : 'Descargar Informe'}
-        </button>
+        <div className="relative" ref={downloadMenuRef}>
+          <button
+            onClick={() => setDownloadMenuOpen((open) => !open)}
+            disabled={isDownloadingExcel}
+            aria-haspopup="menu"
+            aria-expanded={downloadMenuOpen}
+            className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-blue-400"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            {isDownloadingExcel ? 'Descargando...' : 'Descargar Informe'}
+            <svg
+              className={`h-4 w-4 transition-transform ${downloadMenuOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {downloadMenuOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg"
+            >
+              <button
+                role="menuitem"
+                onClick={handleSelectPDF}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                {/* Icono PDF */}
+                <svg
+                  className="h-5 w-5 flex-shrink-0 text-red-600"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M6 2a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6H6z"
+                    opacity="0.15"
+                  />
+                  <path
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                    d="M13 2.5V8h5.5M6 2h7l6 6v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"
+                  />
+                  <text
+                    x="12"
+                    y="18"
+                    textAnchor="middle"
+                    fontSize="6"
+                    fontWeight="bold"
+                    fill="currentColor"
+                    stroke="none"
+                  >
+                    PDF
+                  </text>
+                </svg>
+                PDF
+              </button>
+              <button
+                role="menuitem"
+                onClick={handleSelectExcel}
+                className="flex w-full items-center gap-3 border-t border-gray-100 px-4 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                {/* Icono Excel */}
+                <svg
+                  className="h-5 w-5 flex-shrink-0 text-green-600"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M6 2a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6H6z"
+                    opacity="0.15"
+                  />
+                  <path
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                    d="M13 2.5V8h5.5M6 2h7l6 6v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"
+                  />
+                  <text
+                    x="12"
+                    y="18"
+                    textAnchor="middle"
+                    fontSize="6"
+                    fontWeight="bold"
+                    fill="currentColor"
+                    stroke="none"
+                  >
+                    XLS
+                  </text>
+                </svg>
+                Excel
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {downloadError && (
@@ -1032,10 +1119,6 @@ function PropRow({ label, value }: any) {
   );
 }
 
-function getTodayInputValue() {
-  return formatDateInput(new Date());
-}
-
 function cleanRequiredString(value: string) {
   const trimmed = value.trim();
   return trimmed || undefined;
@@ -1080,19 +1163,6 @@ function removeUndefinedFields<T extends Record<string, unknown>>(value: T) {
   return Object.fromEntries(
     Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined),
   ) as T;
-}
-
-function getDefaultDateFrom() {
-  const date = new Date();
-  date.setMonth(date.getMonth() - 1);
-  return formatDateInput(date);
-}
-
-function formatDateInput(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 function sanitizeFilename(value: string) {
