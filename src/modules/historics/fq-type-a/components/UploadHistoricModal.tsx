@@ -27,7 +27,7 @@ interface UploadHistoricModalProps {
 
 type Step = 'config' | 'upload' | 'success';
 
-const ACCEPTED_FILE_TYPES = '.xlsx,.xls,.pdf';
+const ACCEPTED_FILE_TYPES = '.xlsx,.xls';
 
 export function UploadHistoricModal({ isOpen, onClose }: UploadHistoricModalProps) {
   const router = useRouter();
@@ -396,8 +396,7 @@ export function UploadHistoricModal({ isOpen, onClose }: UploadHistoricModalProp
                     </p>
                     <p className="mt-1 text-xs text-[#5c7086]">
                       Se aceptan archivos en formato{' '}
-                      <span className="font-medium text-[#21466b]">.xlsx</span> y{' '}
-                      <span className="font-medium text-[#21466b]">.pdf</span>
+                      <span className="font-medium text-[#21466b]">.xlsx</span>
                     </p>
                   </>
                 )}
