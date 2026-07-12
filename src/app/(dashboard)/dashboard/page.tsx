@@ -7,6 +7,7 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Building2,
+  FilePlus,
   FileSpreadsheet,
   FileText,
   FlaskConical,
@@ -17,11 +18,13 @@ import { formatDateAR, formatDateTimeAR } from '@/src/lib/dateUtils';
 import { authService } from '@/src/modules/auth/services/AuthService';
 import { useAnalysesList } from '@/src/modules/chromatography/hooks/useAnalysesList';
 import { type ChromatographicAnalysis } from '@/src/modules/chromatography/types';
+import { UploadHistoricModal } from '@/src/modules/historics/fq-type-a/components/UploadHistoricModal';
 
 export default function DashboardPage() {
   // Usar hook con cache para análisis
   const { data: recentAnalyses = [], isLoading: isLoadingRecentAnalyses } = useAnalysesList();
 
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
   const [isWelcomeExiting, setIsWelcomeExiting] = useState(false);
   const [welcomeLabel, setWelcomeLabel] = useState('');
@@ -144,7 +147,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-5 md:grid-cols-3">
+      <section className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         <ActionCard
           href="/cromatografia"
           title="Importar"
@@ -165,6 +168,13 @@ export default function DashboardPage() {
           description="Consultá las compañías disponibles para asociar nuevas cargas."
           icon={<Building2 className="h-7 w-7" />}
           accent="slate"
+        />
+        <ActionCard
+          title="Agregar Historico"
+          description="Subí un informe y generalo automaticamente en el historico."
+          icon={<FilePlus className="h-7 w-7" />}
+          accent="amber"
+          onClick={() => setShowUploadModal(true)}
         />
       </section>
 
@@ -246,6 +256,8 @@ export default function DashboardPage() {
           )}
         </InfoCard>
       </section>
+
+      <UploadHistoricModal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} />
     </div>
   );
 }
@@ -256,12 +268,14 @@ function ActionCard({
   description,
   icon,
   accent,
+  onClick,
 }: {
-  href: string;
+  href?: string;
   title: string;
   description: string;
   icon: ReactNode;
-  accent: 'blue' | 'teal' | 'slate';
+  accent: 'blue' | 'teal' | 'slate' | 'amber';
+  onClick?: () => void;
 }) {
   const accentStyles = {
     blue: {
@@ -279,13 +293,18 @@ function ActionCard({
       button: 'bg-[#6b7f94] hover:bg-[#596c80] text-white',
       title: 'text-[#45596f]',
     },
+    amber: {
+      iconWrap: 'bg-[#fef3c7] text-[#b45309]',
+      button: 'bg-[#d97706] hover:bg-[#b45309] text-white',
+      title: 'text-[#78350f]',
+    },
   }[accent];
 
-  return (
-    <Link
-      href={href}
-      className="group rounded-[28px] border border-[#e5edf6] bg-white p-7 text-center shadow-[0_18px_45px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_55px_rgba(15,23,42,0.09)]"
-    >
+  const className =
+    'group rounded-[28px] border border-[#e5edf6] bg-white p-7 text-center shadow-[0_18px_45px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_55px_rgba(15,23,42,0.09)]';
+
+  const content = (
+    <>
       <div
         className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${accentStyles.iconWrap}`}
       >
@@ -301,6 +320,20 @@ function ActionCard({
         Abrir
         <ArrowRight className="h-4 w-4" />
       </span>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={className}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={href!} className={className}>
+      {content}
     </Link>
   );
 }
