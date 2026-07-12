@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { companiesService } from '@/src/modules/companies/services/CompaniesService';
 import { Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
 
-export default function CompanyFoldersPage() {
+export default function HistoricoPage() {
   const router = useRouter();
   const params = useParams();
   const localidad = params.localidad as Localidad;
@@ -24,22 +24,17 @@ export default function CompanyFoldersPage() {
       const company = await companiesService.getCompanyById(companyId);
       setCompanyName(company.name);
     } catch (error) {
-      console.error('Error al cargar empresa:', error);
+      console.error('Error loading company:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const folders = [
+  const historicTypes = [
     {
-      id: 'croma',
-      name: 'Cromatografia',
-      description: 'Analisis cromatograficos',
-    },
-    {
-      id: 'historico',
-      name: 'Historico',
-      description: 'Historicos de analisis fisicoquimicos',
+      id: 'fq-tipo-a',
+      name: 'FQ Tipo A',
+      description: 'Fisicoquimico de agua Tipo A',
     },
   ];
 
@@ -56,12 +51,11 @@ export default function CompanyFoldersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header con navegación */}
       <div className="flex items-center gap-4 border-b border-border pb-4">
         <button
-          onClick={() => router.push(`/analisis/${localidad}`)}
+          onClick={() => router.push(`/analisis/${localidad}/${companyId}`)}
           className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-          title="Volver a empresas"
+          title="Volver"
         >
           <svg
             className="h-6 w-6 text-gray-600"
@@ -80,7 +74,7 @@ export default function CompanyFoldersPage() {
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <button onClick={() => router.push('/analisis')} className="hover:text-blue-600">
-              Análisis
+              Analisis
             </button>
             <span>/</span>
             <button
@@ -89,18 +83,24 @@ export default function CompanyFoldersPage() {
             >
               {LOCALIDAD_LABELS[localidad]}
             </button>
+            <span>/</span>
+            <button
+              onClick={() => router.push(`/analisis/${localidad}/${companyId}`)}
+              className="hover:text-blue-600"
+            >
+              {companyName}
+            </button>
           </div>
-          <h1 className="text-2xl font-semibold text-foreground">{companyName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Selecciona un tipo de análisis</p>
+          <h1 className="text-2xl font-semibold text-foreground">Historico</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Selecciona un tipo de historico</p>
         </div>
       </div>
 
-      {/* Carpetas por tipo de análisis */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {folders.map((folder) => (
+        {historicTypes.map((type) => (
           <button
-            key={folder.id}
-            onClick={() => router.push(`/analisis/${localidad}/${companyId}/${folder.id}`)}
+            key={type.id}
+            onClick={() => router.push(`/analisis/${localidad}/${companyId}/historico/${type.id}`)}
             className="group border-2 border-border bg-white p-6 text-left transition-all hover:border-green-600 hover:shadow-lg"
           >
             <div className="flex items-start gap-4">
@@ -112,10 +112,8 @@ export default function CompanyFoldersPage() {
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
               <div className="min-w-0 flex-1">
-                <h3 className="mb-1 truncate text-lg font-semibold text-foreground">
-                  {folder.name}
-                </h3>
-                <p className="text-sm text-muted-foreground">{folder.description}</p>
+                <h3 className="mb-1 truncate text-lg font-semibold text-foreground">{type.name}</h3>
+                <p className="text-sm text-muted-foreground">{type.description}</p>
               </div>
               <svg
                 className="h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-green-600"
