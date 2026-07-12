@@ -93,3 +93,11 @@ export interface HistoricFQTypeAFilters {
   oilfield?: string;
   localidad?: string;
 }
+
+export interface PaginatedHistoricResponse {
+  data: HistoricFQTypeARecord[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

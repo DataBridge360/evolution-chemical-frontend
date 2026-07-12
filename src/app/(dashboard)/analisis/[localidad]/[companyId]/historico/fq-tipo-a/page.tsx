@@ -18,7 +18,6 @@ import {
 } from '@/src/modules/historics/fq-type-a/constants';
 import type { HistoricFQTypeARecord } from '@/src/modules/historics/fq-type-a/types';
 
-/** Index where the "Otros" section starts (only incrustation_residual) */
 const OTROS_START_INDEX = HISTORICO_COLUMN_ORDER.indexOf('incrustation_residual');
 const FQ_PARAM_COUNT = OTROS_START_INDEX;
 const OTROS_PARAM_COUNT = HISTORICO_COLUMN_ORDER.length - OTROS_START_INDEX;
@@ -52,14 +51,30 @@ export default function HistoricoFQTipoAPage() {
   const [editValue, setEditValue] = useState('');
   const [pendingEdit, setPendingEdit] = useState<PendingEdit | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const editContextRef = useRef<{ recordId: string; field: string; originalValue: string } | null>(
-    null,
-  );
+  const editContextRef = useRef<{
+    recordId: string;
+    field: string;
+    originalValue: string;
+  } | null>(null);
 
-  const { data: records = [], isLoading: loadingRecords } = useHistoricFQTypeAList({
+  // Infinite scroll observer
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const {
+    data: pagesData,
+    isLoading: loadingRecords,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useHistoricFQTypeAList({
     company_id: companyId,
     localidad,
+    ordering: sortAsc ? 'sample_date' : '-sample_date',
   });
+
+  const records = useMemo(() => pagesData?.pages.flatMap((page) => page.data) ?? [], [pagesData]);
+
+  const totalRecords = pagesData?.pages[0]?.total ?? 0;
 
   const patchMutation = usePatchHistoric();
 
@@ -73,6 +88,24 @@ export default function HistoricoFQTipoAPage() {
       inputRef.current.select();
     }
   }, [editingCell]);
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const loadCompany = async () => {
     try {
@@ -135,7 +168,11 @@ export default function HistoricoFQTipoAPage() {
     (recordId: string, field: string, currentValue: string | null) => {
       setEditingCell({ recordId, field });
       setEditValue(currentValue ?? '');
-      editContextRef.current = { recordId, field, originalValue: currentValue ?? '' };
+      editContextRef.current = {
+        recordId,
+        field,
+        originalValue: currentValue ?? '',
+      };
     },
     [],
   );
@@ -184,24 +221,13 @@ export default function HistoricoFQTipoAPage() {
         id: pendingEdit.recordId,
         data: { [pendingEdit.field]: valueToSend } as Partial<HistoricFQTypeARecord>,
       },
-      {
-        onSettled: () => setPendingEdit(null),
-      },
+      { onSettled: () => setPendingEdit(null) },
     );
   }, [pendingEdit, patchMutation]);
 
   const handleCancelSave = useCallback(() => {
     setPendingEdit(null);
   }, []);
-
-  const sortedRecords = useMemo(() => {
-    const sorted = [...records].sort((a, b) => {
-      const dateA = a.sample_date ?? '';
-      const dateB = b.sample_date ?? '';
-      return dateA.localeCompare(dateB);
-    });
-    return sortAsc ? sorted : sorted.reverse();
-  }, [records, sortAsc]);
 
   const loading = loadingCompany || loadingRecords;
 
@@ -270,7 +296,8 @@ export default function HistoricoFQTipoAPage() {
           </div>
           <h1 className="text-xl font-semibold text-foreground">Historico FQ Tipo A</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {companyName} &middot; {records.length} registro{records.length !== 1 ? 's' : ''}
+            {companyName} &middot; {totalRecords} registro
+            {totalRecords !== 1 ? 's' : ''}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -288,7 +315,7 @@ export default function HistoricoFQTipoAPage() {
           </button>
           <button
             onClick={handleDownload}
-            disabled={downloading || records.length === 0}
+            disabled={downloading || totalRecords === 0}
             className="inline-flex items-center gap-2 rounded-xl border border-[#d7e5f4] bg-[#f8fbff] px-4 py-2 text-sm font-medium text-[#1768a7] transition-colors hover:bg-white disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
@@ -298,7 +325,7 @@ export default function HistoricoFQTipoAPage() {
       </div>
 
       {/* Table */}
-      {records.length === 0 ? (
+      {totalRecords === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#d7e4f2] bg-[#fbfdff] px-5 py-12 text-center">
           <p className="text-sm font-semibold text-[#10243e]">No hay registros en este historico</p>
           <p className="mt-2 text-sm text-[#66788c]">
@@ -310,7 +337,6 @@ export default function HistoricoFQTipoAPage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm" style={{ minWidth: totalWidth }}>
               <thead>
-                {/* Row group: Vertical metadata headers + AGUA/section labels */}
                 <tr>
                   {METADATA_COLUMNS.map((col, i) => (
                     <th
@@ -384,16 +410,14 @@ export default function HistoricoFQTipoAPage() {
                 </tr>
               </thead>
 
-              {/* ── DATA ROWS ── */}
               <tbody>
-                {sortedRecords.map((record, rowIdx) => {
+                {records.map((record, rowIdx) => {
                   const stripeBg = rowIdx % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]';
                   return (
                     <tr
                       key={record.id}
                       className={`transition-colors hover:bg-[#eef5ff] ${stripeBg}`}
                     >
-                      {/* Metadata cells */}
                       {METADATA_COLUMNS.map((col, i) => {
                         const cellBg = rowIdx % 2 === 0 ? '#ffffff' : '#f9fafb';
                         return (
@@ -426,7 +450,6 @@ export default function HistoricoFQTipoAPage() {
                           </td>
                         );
                       })}
-                      {/* Parameter cells - editable on double click */}
                       {HISTORICO_COLUMN_ORDER.map((field, idx) => {
                         const rawValue = record[field];
                         const display =
@@ -469,10 +492,19 @@ export default function HistoricoFQTipoAPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Infinite scroll trigger */}
+          <div ref={loadMoreRef} className="h-1" />
+          {isFetchingNextPage && (
+            <div className="flex items-center justify-center py-4">
+              <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-[#1768a7] border-r-transparent" />
+              <span className="ml-2 text-xs text-muted-foreground">Cargando mas registros...</span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── Confirm save modal ── */}
+      {/* Confirm save modal */}
       {pendingEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="w-80 rounded-xl border border-[#d7e5f4] bg-white p-5 shadow-lg">

@@ -8,6 +8,7 @@ import type {
   HistoricFQTypeARecord,
   UploadHistoricMetadata,
   HistoricFQTypeAFilters,
+  PaginatedHistoricResponse,
 } from '../types';
 
 interface ApiResponse<T> {
@@ -82,7 +83,7 @@ export async function uploadHistoricFile(
 }
 
 /**
- * List historic FQ Type A records with optional filters.
+ * List historic FQ Type A records with optional filters (unpaginated).
  */
 export async function listHistoricRecords(
   filters?: HistoricFQTypeAFilters,
@@ -97,6 +98,38 @@ export async function listHistoricRecords(
 
   const response = await apiClient.get<unknown>(endpoint, true);
   return unwrapArrayResponse<HistoricFQTypeARecord>(response);
+}
+
+/**
+ * List historic FQ Type A records with pagination.
+ */
+export async function listHistoricRecordsPaginated(
+  filters: HistoricFQTypeAFilters & { page?: number; ordering?: string },
+): Promise<PaginatedHistoricResponse> {
+  const params = new URLSearchParams();
+  if (filters.company_id) params.set('company_id', filters.company_id);
+  if (filters.oilfield) params.set('oilfield', filters.oilfield);
+  if (filters.localidad) params.set('localidad', filters.localidad);
+  if (filters.page) params.set('page', String(filters.page));
+  if (filters.ordering) params.set('ordering', filters.ordering);
+
+  const response = await apiClient.get<unknown>(`/historics/fq-type-a/?${params.toString()}`, true);
+
+  // Response: { data: [...], total, page, limit, totalPages }
+  // or wrapped: { success, data: { data: [...], total, ... } }
+  const obj = response as Record<string, unknown>;
+  const paginated =
+    typeof obj.data === 'object' && obj.data !== null && 'totalPages' in (obj.data as object)
+      ? (obj.data as PaginatedHistoricResponse)
+      : (obj as unknown as PaginatedHistoricResponse);
+
+  return {
+    data: Array.isArray(paginated.data) ? paginated.data : [],
+    total: paginated.total ?? 0,
+    page: paginated.page ?? 1,
+    limit: paginated.limit ?? 10,
+    totalPages: paginated.totalPages ?? 1,
+  };
 }
 
 /**

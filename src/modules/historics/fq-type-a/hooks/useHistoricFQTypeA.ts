@@ -2,26 +2,34 @@
  * React Query hooks for Historic FQ Type A records.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   HistoricFQTypeARecord,
   HistoricFQTypeAFilters,
   UploadHistoricMetadata,
+  PaginatedHistoricResponse,
 } from '../types';
 import {
-  listHistoricRecords,
+  listHistoricRecordsPaginated,
   uploadHistoricFile,
   deleteHistoricRecord,
   patchHistoricRecord,
 } from '../services/historicFQTypeAService';
 
 /**
- * Hook to list historic FQ Type A records with optional filters.
+ * Hook to list historic FQ Type A records with infinite scroll pagination.
  */
-export function useHistoricFQTypeAList(filters?: HistoricFQTypeAFilters) {
-  return useQuery<HistoricFQTypeARecord[]>({
+export function useHistoricFQTypeAList(filters?: HistoricFQTypeAFilters & { ordering?: string }) {
+  return useInfiniteQuery<PaginatedHistoricResponse>({
     queryKey: ['historic-fq-type-a', filters],
-    queryFn: () => listHistoricRecords(filters),
+    queryFn: ({ pageParam }) =>
+      listHistoricRecordsPaginated({
+        ...filters,
+        page: pageParam as number,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     staleTime: 3 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: !!filters?.company_id,
