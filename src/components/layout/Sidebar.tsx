@@ -8,6 +8,7 @@ import {
   TestTubes,
   BarChart3,
   Building2,
+  Users,
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -36,6 +37,7 @@ const navigation: NavItem[] = [
   { name: 'Muestras', href: '/muestras', icon: TestTubes, section: 'Gestión' },
   { name: 'Análisis', href: '/analisis', icon: BarChart3, section: 'Gestión' },
   { name: 'Empresas', href: '/empresas', icon: Building2, section: 'Gestión' },
+  { name: 'Mi equipo', href: '/equipo', icon: Users, section: 'Gestión' },
   { name: 'Papelera', href: '/papelera', icon: Trash2, section: 'Sistema' },
 ];
 

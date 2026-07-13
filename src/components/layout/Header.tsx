@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronDown,
   Search,
+  Bell,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils/cn';
@@ -74,6 +75,10 @@ export function Header() {
   // User menu
   const [showMenu, setShowMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Notifications
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   // Search
   const [searchFocused, setSearchFocused] = useState(false);
@@ -351,8 +356,48 @@ export function Header() {
           )}
         </div>
 
+        {/* Notifications */}
+        <div ref={notifRef} className="relative ml-auto shrink-0">
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#f5f5f5]"
+            aria-label="Notificaciones"
+          >
+            <Bell className="h-4 w-4 text-[#525252]" />
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#006096] ring-2 ring-white" />
+          </button>
+
+          {showNotifications && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+              <div className="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-[#e5e7eb] bg-white shadow-lg">
+                <div className="border-b border-[#e5e7eb] px-4 py-2.5">
+                  <p className="text-sm font-semibold text-[#0b1c30]">Notificaciones</p>
+                </div>
+                <div className="p-4">
+                  <div className="flex gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#006096]/10">
+                      <Bell className="h-3.5 w-3.5 text-[#006096]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#0a0a0a]">Novedades</p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-[#737373]">
+                        Próximamente vas a poder enterarte de actualizaciones del sistema o
+                        solicitudes de tus clientes acá.
+                      </p>
+                      <p className="mt-2 text-[10px] font-medium text-[#006096]">
+                        — Equipo de Desarrollo, Evolution Chemical
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
         {/* User button */}
-        <div className="relative ml-auto shrink-0">
+        <div className="relative shrink-0">
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-[#f5f5f5]"
