@@ -2,137 +2,151 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import {
+  LayoutDashboard,
+  FlaskConical,
+  TestTubes,
+  BarChart3,
+  Building2,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/src/lib/utils/cn';
+import { useSidebar } from './SidebarContext';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/src/components/ui/tooltip';
 
-type IconName = 'dashboard' | 'chromatography' | 'samples' | 'results' | 'companies' | 'trash';
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  section: string;
+  role?: string;
+}
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
-  { name: 'Cromatografía', href: '/cromatografia', icon: 'chromatography', role: 'owner' },
-  { name: 'Muestras', href: '/muestras', icon: 'samples' },
-  { name: 'Análisis', href: '/analisis', icon: 'results' },
-  { name: 'Empresas', href: '/empresas', icon: 'companies' },
-  { name: 'Papelera', href: '/papelera', icon: 'trash' },
-] satisfies Array<{ name: string; href: string; icon: IconName; role?: string }>;
+const navigation: NavItem[] = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, section: 'Principal' },
+  { name: 'Cromatografía', href: '/cromatografia', icon: FlaskConical, section: 'Principal', role: 'owner' },
+  { name: 'Muestras', href: '/muestras', icon: TestTubes, section: 'Gestión' },
+  { name: 'Análisis', href: '/analisis', icon: BarChart3, section: 'Gestión' },
+  { name: 'Empresas', href: '/empresas', icon: Building2, section: 'Gestión' },
+  { name: 'Papelera', href: '/papelera', icon: Trash2, section: 'Sistema' },
+];
+
+const sections = ['Principal', 'Gestión', 'Sistema'];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { isCollapsed, toggleSidebar } = useSidebar();
 
   return (
-    <aside className="flex h-full w-[260px] shrink-0 flex-col border-r border-[#bfc7d3] bg-white text-[#0b1c30] [font-family:Manrope,ui-sans-serif,system-ui,sans-serif]">
-      <div className="flex h-[65px] items-center px-6">
-        <div className="flex flex-col">
-          <span className="text-[1.5rem] font-extrabold leading-none tracking-[-0.08em] text-[#0f2850]">
-            EVOLUTION
-          </span>
-          <span className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.28em] text-[#4d6075]">
-            CHEMICAL S.R.L.
-          </span>
-          <div className="mt-1 flex items-center gap-1.5 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#8b9bad]">
-            <span>Análisis</span>
-            <span>•</span>
-            <span>Calidad</span>
-            <span>•</span>
-            <span>Precisión</span>
-          </div>
+    <TooltipProvider delayDuration={0}>
+      <aside
+        className={cn(
+          'fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-[#e5e7eb] bg-[#f9fafb] transition-all duration-300',
+          isCollapsed ? 'w-16' : 'w-56',
+        )}
+      >
+        {/* Logo + toggle */}
+        <div className="flex h-14 items-center justify-between border-b border-[#e5e7eb] px-4">
+          {isCollapsed ? (
+            <span className="mx-auto text-lg font-extrabold tracking-tight text-[#0f2850]">E</span>
+          ) : (
+            <div className="flex flex-col">
+              <span className="text-base font-extrabold leading-none tracking-tight text-[#0f2850]">
+                EVOLUTION
+              </span>
+              <span className="text-[8px] font-semibold uppercase tracking-[0.2em] text-[#8b9bad]">
+                Chemical S.R.L.
+              </span>
+            </div>
+          )}
+          <button
+            onClick={toggleSidebar}
+            className={cn(
+              'flex h-7 w-7 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-[#525252] shadow-sm transition-colors hover:bg-[#f0f0f0] hover:text-[#0b1c30]',
+              isCollapsed && 'mx-auto',
+            )}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </button>
         </div>
-      </div>
 
-      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto py-6">
-        {navigation.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== '/dashboard' && pathname?.startsWith(item.href));
+        {/* Navigation */}
+        <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3">
+          {sections.map((section) => {
+            const items = navigation.filter((item) => item.section === section);
+            if (items.length === 0) return null;
 
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                'mx-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm leading-5 transition-all duration-200',
-                isActive
-                  ? 'scale-[0.98] bg-[#006096] font-semibold text-white shadow-[0_4px_12px_rgba(0,96,150,0.2)]'
-                  : 'font-normal text-[#3f4851] hover:bg-[#eff4ff] hover:text-[#006096]',
-              )}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              <SidebarIcon name={item.icon} className="h-6 w-6 shrink-0" />
-              <span className="leading-5 tracking-[0.01em]">{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+            return (
+              <div key={section} className={cn(section !== 'Principal' ? 'mt-6' : '')}>
+                {!isCollapsed && (
+                  <span className="mb-2 block px-3 text-[10px] font-medium uppercase tracking-wider text-[#a3a3a3]">
+                    {section}
+                  </span>
+                )}
+                {isCollapsed && section !== 'Principal' && (
+                  <div className="mx-3 mb-2 border-t border-[#e5e7eb]" />
+                )}
+                <div className="space-y-0.5">
+                  {items.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== '/dashboard' && pathname?.startsWith(item.href));
+
+                    const linkContent = (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={cn(
+                          'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-all duration-150',
+                          isCollapsed && 'justify-center px-0',
+                          isActive
+                            ? 'border border-[#e5e7eb] bg-white font-medium text-[#0b1c30] shadow-sm'
+                            : 'text-[#525252] hover:bg-[#f0f0f0] hover:text-[#0b1c30]',
+                        )}
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        <item.icon
+                          className={cn(
+                            'h-4 w-4 shrink-0',
+                            isActive ? 'text-[#006096]' : 'text-[#737373]',
+                          )}
+                        />
+                        {!isCollapsed && <span>{item.name}</span>}
+                      </Link>
+                    );
+
+                    if (isCollapsed) {
+                      return (
+                        <Tooltip key={item.name}>
+                          <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                          <TooltipContent side="right" sideOffset={8}>
+                            {item.name}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
+                    return linkContent;
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </nav>
+
+      </aside>
+    </TooltipProvider>
   );
-}
-
-function SidebarIcon({ name, className }: { name: IconName; className?: string }) {
-  switch (name) {
-    case 'dashboard':
-      return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 13h7V4H4v9zm9 7h7V4h-7v16zM4 20h7v-5H4v5z"
-          />
-        </svg>
-      );
-    case 'chromatography':
-      return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 3v5.3a4 4 0 01-.72 2.29l-3.05 4.35A4 4 0 008.5 21h7a4 4 0 003.27-6.06l-3.05-4.35A4 4 0 0115 8.3V3M8 3h8M7.6 15h8.8"
-          />
-        </svg>
-      );
-    case 'samples':
-      return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M10 4h4m-2 0v5m-4 4h8m-9.5 7h11a2 2 0 001.82-2.83L15 9H9l-4.32 8.17A2 2 0 006.5 20z"
-          />
-        </svg>
-      );
-    case 'results':
-      return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 19V5m4 14v-6m4 6V8m4 11v-9m4 9V4M4 19h16"
-          />
-        </svg>
-      );
-    case 'companies':
-      return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 21h16M6 21V5a2 2 0 012-2h8a2 2 0 012 2v16M9 8h1m4 0h1M9 12h1m4 0h1M9 16h1m4 0h1"
-          />
-        </svg>
-      );
-    case 'trash':
-      return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-          />
-        </svg>
-      );
-  }
 }
