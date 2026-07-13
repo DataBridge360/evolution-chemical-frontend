@@ -162,7 +162,10 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[#0a0a0a]">
-            Bienvenido, {name} 👋
+            Bienvenido, {name}{' '}
+            <span className="inline-block origin-[70%_80%] animate-[wave_1.8s_ease-in-out_0.3s_2] text-[1.15em]">
+              👋
+            </span>
           </h1>
           <p className="mt-1 text-sm text-[#737373]">
             Gestioná tus análisis cromatográficos y accedé a resultados desde un tablero claro y
