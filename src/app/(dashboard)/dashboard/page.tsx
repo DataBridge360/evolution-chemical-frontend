@@ -30,7 +30,10 @@ import {
 import { authService } from '@/src/modules/auth/services/AuthService';
 import { useDashboardStats } from '@/src/modules/chromatography/hooks/useDashboardStats';
 import { useCompanyDistribution } from '@/src/modules/chromatography/hooks/useCompanyDistribution';
-import type { DashboardRange, CompanyPeriod } from '@/src/modules/chromatography/services/chromatographyService';
+import type {
+  DashboardRange,
+  CompanyPeriod,
+} from '@/src/modules/chromatography/services/chromatographyService';
 import { useCompanies } from '@/src/modules/companies/hooks/useCompanies';
 import { Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
 import { UploadHistoricModal } from '@/src/modules/historics/fq-type-a/components/UploadHistoricModal';
@@ -38,7 +41,20 @@ import { UploadHistoricModal } from '@/src/modules/historics/fq-type-a/component
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const MONTH_LABELS = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
+];
 
 const RANGE_OPTIONS: { value: DashboardRange; label: string }[] = [
   { value: '7d', label: 'Últimos 7 días' },
@@ -47,7 +63,9 @@ const RANGE_OPTIONS: { value: DashboardRange; label: string }[] = [
 ];
 
 function getCurrentMonthName() {
-  return new Date().toLocaleString('es-AR', { month: 'long' }).replace(/^\w/, (c) => c.toUpperCase());
+  return new Date()
+    .toLocaleString('es-AR', { month: 'long' })
+    .replace(/^\w/, (c) => c.toUpperCase());
 }
 
 function getPrevMonthName() {
@@ -100,7 +118,8 @@ export default function DashboardPage() {
   const [range, setRange] = useState<DashboardRange>('6m');
   const [companyPeriod, setCompanyPeriod] = useState<CompanyPeriod>('current_month');
   const { data: stats, isLoading: isLoadingStats } = useDashboardStats(range);
-  const { data: companyDist = [], isLoading: isLoadingDist } = useCompanyDistribution(companyPeriod);
+  const { data: companyDist = [], isLoading: isLoadingDist } =
+    useCompanyDistribution(companyPeriod);
   const { data: companies = [], isLoading: isLoadingCompanies } = useCompanies();
 
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -115,7 +134,11 @@ export default function DashboardPage() {
       if (rangeOpen && rangeRef.current && !rangeRef.current.contains(e.target as Node)) {
         setRangeOpen(false);
       }
-      if (companyPeriodOpen && companyPeriodRef.current && !companyPeriodRef.current.contains(e.target as Node)) {
+      if (
+        companyPeriodOpen &&
+        companyPeriodRef.current &&
+        !companyPeriodRef.current.contains(e.target as Node)
+      ) {
         setCompanyPeriodOpen(false);
       }
     }
@@ -131,10 +154,7 @@ export default function DashboardPage() {
 
   const chartData = useMemo(() => buildChartData(stats?.series ?? [], range), [stats, range]);
 
-  const periodTotal = useMemo(
-    () => chartData.reduce((sum, d) => sum + d.count, 0),
-    [chartData],
-  );
+  const periodTotal = useMemo(() => chartData.reduce((sum, d) => sum + d.count, 0), [chartData]);
 
   const percentChange = useMemo(() => {
     if (!stats) return 0;
@@ -198,15 +218,15 @@ export default function DashboardPage() {
           <div className="mb-4 flex items-start justify-between">
             <div>
               <h2 className="text-base font-bold text-[#0a0a0a]">Cromatografías</h2>
-              <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-[#a3a3a3]">Total realizadas</p>
+              <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-[#a3a3a3]">
+                Total realizadas
+              </p>
               <div className="flex items-baseline gap-3">
                 <span className="text-2xl font-semibold text-[#0a0a0a]">
                   {isLoadingStats ? '—' : periodTotal}
                 </span>
                 {!isLoadingStats && stats && (
-                  <span
-                    className="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-600"
-                  >
+                  <span className="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-600">
                     {percentChange >= 0 ? (
                       <ArrowUpRight className="h-3 w-3" />
                     ) : (
@@ -226,7 +246,9 @@ export default function DashboardPage() {
               >
                 <Calendar className="h-3.5 w-3.5 text-[#a3a3a3]" />
                 {RANGE_OPTIONS.find((o) => o.value === range)?.label}
-                <ChevronDown className={`h-3 w-3 text-[#a3a3a3] transition-transform ${rangeOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`h-3 w-3 text-[#a3a3a3] transition-transform ${rangeOpen ? 'rotate-180' : ''}`}
+                />
               </button>
               {rangeOpen && (
                 <div className="absolute right-0 top-full z-10 mt-1 min-w-[160px] rounded-lg border border-[#e5e5e5] bg-white py-1 shadow-lg shadow-black/5">
@@ -234,7 +256,10 @@ export default function DashboardPage() {
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => { setRange(opt.value); setRangeOpen(false); }}
+                      onClick={() => {
+                        setRange(opt.value);
+                        setRangeOpen(false);
+                      }}
                       className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-[#f5f5f5] ${
                         opt.value === range ? 'font-medium text-[#006096]' : 'text-[#525252]'
                       }`}
@@ -365,7 +390,9 @@ export default function DashboardPage() {
               >
                 <Calendar className="h-3.5 w-3.5 text-[#a3a3a3]" />
                 {COMPANY_PERIOD_OPTIONS.find((o) => o.value === companyPeriod)?.label}
-                <ChevronDown className={`h-3 w-3 text-[#a3a3a3] transition-transform ${companyPeriodOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`h-3 w-3 text-[#a3a3a3] transition-transform ${companyPeriodOpen ? 'rotate-180' : ''}`}
+                />
               </button>
               {companyPeriodOpen && (
                 <div className="absolute right-0 top-full z-10 mt-1 min-w-[170px] rounded-lg border border-[#e5e5e5] bg-white py-1 shadow-lg shadow-black/5">
@@ -373,15 +400,22 @@ export default function DashboardPage() {
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => { setCompanyPeriod(opt.value); setCompanyPeriodOpen(false); }}
+                      onClick={() => {
+                        setCompanyPeriod(opt.value);
+                        setCompanyPeriodOpen(false);
+                      }}
                       className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-[#f5f5f5] ${
-                        opt.value === companyPeriod ? 'font-medium text-[#006096]' : 'text-[#525252]'
+                        opt.value === companyPeriod
+                          ? 'font-medium text-[#006096]'
+                          : 'text-[#525252]'
                       }`}
                     >
                       {opt.value === companyPeriod && (
                         <span className="h-1.5 w-1.5 rounded-full bg-[#006096]" />
                       )}
-                      <span className={opt.value === companyPeriod ? '' : 'pl-[14px]'}>{opt.label}</span>
+                      <span className={opt.value === companyPeriod ? '' : 'pl-[14px]'}>
+                        {opt.label}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -400,12 +434,35 @@ export default function DashboardPage() {
           ) : (
             <div style={{ height: Math.max(160, companyDist.length * 36) }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={companyDist} layout="vertical" margin={{ top: 0, right: 12, bottom: 0, left: 0 }}>
+                <BarChart
+                  data={companyDist}
+                  layout="vertical"
+                  margin={{ top: 0, right: 12, bottom: 0, left: 0 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#a3a3a3' }} allowDecimals={false} />
-                  <YAxis type="category" dataKey="company_name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#525252' }} width={120} />
+                  <XAxis
+                    type="number"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#a3a3a3' }}
+                    allowDecimals={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="company_name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#525252' }}
+                    width={120}
+                  />
                   <RechartsTooltip
-                    contentStyle={{ background: '#fff', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+                    contentStyle={{
+                      background: '#fff',
+                      border: '1px solid #e5e5e5',
+                      borderRadius: 8,
+                      fontSize: 12,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}
                     formatter={(value) => [`${value}`, 'Cromatografías']}
                   />
                   <Bar dataKey="count" fill="#006096" radius={[0, 4, 4, 0]} barSize={20} />
@@ -512,4 +569,3 @@ function MiniListSkeleton() {
     </div>
   );
 }
-

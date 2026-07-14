@@ -16,12 +16,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="dashboard-shell relative min-h-screen bg-white">
       <Sidebar />
       <Header />
-      <main
-        className={cn(
-          'pt-14 transition-all duration-300',
-          isCollapsed ? 'pl-16' : 'pl-56',
-        )}
-      >
+      <main className={cn('pt-14 transition-all duration-300', isCollapsed ? 'pl-16' : 'pl-56')}>
         <div className="mx-auto w-full max-w-[1440px] px-6 py-6 xl:px-8">{children}</div>
       </main>
       <div className="dashboard-logout-fade" aria-hidden="true" />

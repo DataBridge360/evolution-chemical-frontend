@@ -25,8 +25,8 @@ export default function EquipoPage() {
 
         <h2 className="mt-5 text-lg font-semibold text-[#0a0a0a]">Próximamente</h2>
         <p className="mt-2 text-sm leading-relaxed text-[#737373]">
-          Vas a poder invitar a miembros de tu laboratorio y asignarles permisos limitados a
-          módulos específicos del sistema.
+          Vas a poder invitar a miembros de tu laboratorio y asignarles permisos limitados a módulos
+          específicos del sistema.
         </p>
 
         <div className="mt-8 space-y-2">
@@ -42,9 +42,7 @@ export default function EquipoPage() {
           ))}
         </div>
 
-        <p className="mt-8 text-xs text-[#a3a3a3]">
-          — Equipo de Desarrollo, Evolution Chemical
-        </p>
+        <p className="mt-8 text-xs text-[#a3a3a3]">— Equipo de Desarrollo, Evolution Chemical</p>
       </div>
     </div>
   );

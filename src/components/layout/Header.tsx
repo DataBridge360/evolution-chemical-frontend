@@ -57,8 +57,20 @@ interface SearchItem {
 }
 
 const QUICK_ROUTES: SearchItem[] = [
-  { id: 'r-dash', label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, section: 'Páginas' },
-  { id: 'r-croma', label: 'Cromatografía', href: '/cromatografia', icon: FlaskConical, section: 'Páginas' },
+  {
+    id: 'r-dash',
+    label: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard,
+    section: 'Páginas',
+  },
+  {
+    id: 'r-croma',
+    label: 'Cromatografía',
+    href: '/cromatografia',
+    icon: FlaskConical,
+    section: 'Páginas',
+  },
   { id: 'r-analisis', label: 'Análisis', href: '/analisis', icon: BarChart3, section: 'Páginas' },
   { id: 'r-empresas', label: 'Empresas', href: '/empresas', icon: Building2, section: 'Páginas' },
   { id: 'r-muestras', label: 'Muestras', href: '/muestras', icon: TestTubes, section: 'Páginas' },
@@ -245,7 +257,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 z-40 flex h-14 items-center border-b border-[#e5e7eb] bg-white transition-all duration-300',
+        'fixed right-0 top-0 z-40 flex h-14 items-center border-b border-[#e5e7eb] bg-white transition-all duration-300',
         isCollapsed ? 'left-16' : 'left-56',
       )}
     >

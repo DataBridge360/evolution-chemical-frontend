@@ -1,8 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import {
-  getRecentHistory,
-  type RecentHistoryResponse,
-} from '../services/chromatographyService';
+import { getRecentHistory, type RecentHistoryResponse } from '../services/chromatographyService';
 
 export function useRecentHistory(page: number = 1, pageSize: number = 5) {
   return useQuery<RecentHistoryResponse>({

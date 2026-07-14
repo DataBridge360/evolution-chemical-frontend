@@ -33,7 +33,13 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, section: 'Principal' },
-  { name: 'Cromatografía', href: '/cromatografia', icon: FlaskConical, section: 'Principal', role: 'owner' },
+  {
+    name: 'Cromatografía',
+    href: '/cromatografia',
+    icon: FlaskConical,
+    section: 'Principal',
+    role: 'owner',
+  },
   { name: 'Muestras', href: '/muestras', icon: TestTubes, section: 'Gestión' },
   { name: 'Análisis', href: '/analisis', icon: BarChart3, section: 'Gestión' },
   { name: 'Empresas', href: '/empresas', icon: Building2, section: 'Gestión' },
@@ -51,7 +57,7 @@ export function Sidebar() {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-[#e5e7eb] bg-[#f9fafb] transition-all duration-300',
+          'fixed bottom-0 left-0 top-0 z-30 flex flex-col border-r border-[#e5e7eb] bg-[#f9fafb] transition-all duration-300',
           isCollapsed ? 'w-16' : 'w-56',
         )}
       >
@@ -147,7 +153,6 @@ export function Sidebar() {
             );
           })}
         </nav>
-
       </aside>
     </TooltipProvider>
   );

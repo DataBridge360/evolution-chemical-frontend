@@ -114,7 +114,9 @@ export function UploadHistoricModal({ isOpen, onClose }: UploadHistoricModalProp
   const handleViewHistoric = () => {
     if (!selectedCompany) return;
     onClose();
-    router.push(`/analisis/${selectedCompany.localidad}/${selectedCompany.company_id}/historico/fq-tipo-a`);
+    router.push(
+      `/analisis/${selectedCompany.localidad}/${selectedCompany.company_id}/historico/fq-tipo-a`,
+    );
   };
 
   if (!isOpen) return null;
@@ -126,7 +128,7 @@ export function UploadHistoricModal({ isOpen, onClose }: UploadHistoricModalProp
       onClick={handleOverlayClick}
     >
       {/* Panel slide-in from right */}
-      <div className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-[#e5e5e5] bg-white shadow-xl shadow-black/5 animate-in slide-in-from-right duration-200">
+      <div className="animate-in slide-in-from-right absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-[#e5e5e5] bg-white shadow-xl shadow-black/5 duration-200">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-[#f0f0f0] px-6 py-4">
           <div>
@@ -365,7 +367,8 @@ export function UploadHistoricModal({ isOpen, onClose }: UploadHistoricModalProp
                         Arrastra o hace clic para cargar
                       </p>
                       <p className="mt-0.5 text-xs text-[#a3a3a3]">
-                        Formato <span className="font-medium text-[#525252]">.xlsx</span> — max 10 MB
+                        Formato <span className="font-medium text-[#525252]">.xlsx</span> — max 10
+                        MB
                       </p>
                     </>
                   )}

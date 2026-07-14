@@ -388,9 +388,7 @@ export default function ChromatographyPage() {
               }
               className={cn(
                 'relative flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors',
-                file
-                  ? 'border-[#e5e5e5] bg-white'
-                  : 'border-[#c7d8ea] hover:border-[#99b5d4]',
+                file ? 'border-[#e5e5e5] bg-white' : 'border-[#c7d8ea] hover:border-[#99b5d4]',
                 isDragging && 'border-[#006096]',
                 isProcessing && 'cursor-not-allowed opacity-60',
                 error && !file && 'border-red-300 bg-red-50/50',
@@ -525,9 +523,7 @@ export default function ChromatographyPage() {
         <div className="rounded-xl border border-[#e5e5e5] bg-white">
           <div className="border-b border-[#f0f0f0] px-5 py-4">
             <h2 className="text-base font-semibold text-[#0a0a0a]">Historial mensual</h2>
-            <p className="mt-0.5 text-xs text-[#a3a3a3]">
-              Cromatografías del último mes
-            </p>
+            <p className="mt-0.5 text-xs text-[#a3a3a3]">Cromatografías del último mes</p>
           </div>
 
           {loadingHistory ? (
@@ -574,11 +570,14 @@ export default function ChromatographyPage() {
                           <td className="px-5 py-3 font-medium text-[#0a0a0a]">
                             {analysis.company_name || 'Sin empresa'}
                           </td>
-                          <td className="px-5 py-3 text-[#737373]">
-                            {analysis.field_name || '—'}
-                          </td>
+                          <td className="px-5 py-3 text-[#737373]">{analysis.field_name || '—'}</td>
                           <td className="px-5 py-3">
-                            <span className={cn('inline-flex items-center gap-1.5 text-xs font-medium', s.text)}>
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 text-xs font-medium',
+                                s.text,
+                              )}
+                            >
                               <span className={cn('h-1.5 w-1.5 rounded-full', s.dot)} />
                               {s.label}
                             </span>
