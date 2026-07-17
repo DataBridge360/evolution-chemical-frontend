@@ -17,6 +17,10 @@ import {
   FROZEN_WIDTH,
 } from '@/src/modules/historics/fq-type-a/constants';
 import type { HistoricFQTypeARecord } from '@/src/modules/historics/fq-type-a/types';
+import {
+  yacimientoSlugToApi,
+  getYacimientoBySlug,
+} from '@/src/modules/historics/yacimientoConstants';
 
 const OTROS_START_INDEX = HISTORICO_COLUMN_ORDER.indexOf('incrustation_residual');
 const FQ_PARAM_COUNT = OTROS_START_INDEX;
@@ -40,6 +44,9 @@ export default function HistoricoFQTipoAPage() {
   const params = useParams();
   const localidad = params.localidad as Localidad;
   const companyId = params.companyId as string;
+  const yacimiento = params.yacimiento as string;
+  const oilfieldApi = yacimientoSlugToApi(yacimiento);
+  const yacimientoInfo = getYacimientoBySlug(yacimiento);
 
   const [companyName, setCompanyName] = useState('');
   const [loadingCompany, setLoadingCompany] = useState(true);
@@ -69,6 +76,7 @@ export default function HistoricoFQTipoAPage() {
   } = useHistoricFQTypeAList({
     company_id: companyId,
     localidad,
+    oilfield: oilfieldApi,
     ordering: sortAsc ? 'sample_date' : '-sample_date',
   });
 
@@ -125,11 +133,12 @@ export default function HistoricoFQTipoAPage() {
       const blob = await downloadHistoricExcel({
         company_id: companyId,
         localidad,
+        oilfield: oilfieldApi,
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `historico_fq_tipo_a_${companyName || 'export'}.xlsx`;
+      a.download = `historico_fq_tipo_a_${oilfieldApi}_${companyName || 'export'}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -249,7 +258,7 @@ export default function HistoricoFQTipoAPage() {
       {/* Header */}
       <div className="flex items-center gap-4 border-b border-border pb-4">
         <button
-          onClick={() => router.push(`/analisis/${localidad}/${companyId}/historico`)}
+          onClick={() => router.push(`/analisis/${localidad}/${companyId}/historico/${yacimiento}`)}
           className="rounded-lg p-2 transition-colors hover:bg-gray-100"
           title="Volver"
         >
@@ -293,8 +302,19 @@ export default function HistoricoFQTipoAPage() {
             >
               Historico
             </button>
+            <span>/</span>
+            <button
+              onClick={() =>
+                router.push(`/analisis/${localidad}/${companyId}/historico/${yacimiento}`)
+              }
+              className="hover:text-blue-600"
+            >
+              {yacimientoInfo?.label ?? yacimiento.toUpperCase()}
+            </button>
           </div>
-          <h1 className="text-xl font-semibold text-foreground">Historico FQ Tipo A</h1>
+          <h1 className="text-xl font-semibold text-foreground">
+            Historico FQ Tipo A - {yacimientoInfo?.label ?? yacimiento.toUpperCase()}
+          </h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {companyName} &middot; {totalRecords} registro
             {totalRecords !== 1 ? 's' : ''}

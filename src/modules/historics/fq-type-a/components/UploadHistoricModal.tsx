@@ -115,7 +115,7 @@ export function UploadHistoricModal({ isOpen, onClose }: UploadHistoricModalProp
     if (!selectedCompany) return;
     onClose();
     router.push(
-      `/analisis/${selectedCompany.localidad}/${selectedCompany.company_id}/historico/fq-tipo-a`,
+      `/analisis/${selectedCompany.localidad}/${selectedCompany.company_id}/historico/${oilfield.toLowerCase()}/fq-tipo-a`,
     );
   };
 
