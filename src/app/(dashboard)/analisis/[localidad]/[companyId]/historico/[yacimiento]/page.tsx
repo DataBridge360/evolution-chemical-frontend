@@ -4,13 +4,16 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { companiesService } from '@/src/modules/companies/services/CompaniesService';
 import { Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
-import { YACIMIENTOS } from '@/src/modules/historics/yacimientoConstants';
+import { getYacimientoBySlug } from '@/src/modules/historics/yacimientoConstants';
 
-export default function HistoricoPage() {
+export default function HistoricoYacimientoPage() {
   const router = useRouter();
   const params = useParams();
   const localidad = params.localidad as Localidad;
   const companyId = params.companyId as string;
+  const yacimiento = params.yacimiento as string;
+
+  const yacimientoInfo = getYacimientoBySlug(yacimiento);
 
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(true);
@@ -31,7 +34,22 @@ export default function HistoricoPage() {
     }
   };
 
-  if (loading) {
+  // Guard: redirect if yacimiento is invalid
+  useEffect(() => {
+    if (!loading && !yacimientoInfo) {
+      router.replace(`/analisis/${localidad}/${companyId}/historico`);
+    }
+  }, [loading, yacimientoInfo, router, localidad, companyId]);
+
+  const historicTypes = [
+    {
+      id: 'fq-tipo-a',
+      name: 'FQ Tipo A',
+      description: 'Fisicoquimico de agua Tipo A',
+    },
+  ];
+
+  if (loading || !yacimientoInfo) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
@@ -46,7 +64,7 @@ export default function HistoricoPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4 border-b border-border pb-4">
         <button
-          onClick={() => router.push(`/analisis/${localidad}/${companyId}`)}
+          onClick={() => router.push(`/analisis/${localidad}/${companyId}/historico`)}
           className="rounded-lg p-2 transition-colors hover:bg-gray-100"
           title="Volver"
         >
@@ -83,17 +101,28 @@ export default function HistoricoPage() {
             >
               {companyName}
             </button>
+            <span>/</span>
+            <button
+              onClick={() => router.push(`/analisis/${localidad}/${companyId}/historico`)}
+              className="hover:text-blue-600"
+            >
+              Historico
+            </button>
           </div>
-          <h1 className="text-2xl font-semibold text-foreground">Historico</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Selecciona un yacimiento</p>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Historico - {yacimientoInfo.label}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">Selecciona un tipo de historico</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {YACIMIENTOS.map((y) => (
+        {historicTypes.map((type) => (
           <button
-            key={y.slug}
-            onClick={() => router.push(`/analisis/${localidad}/${companyId}/historico/${y.slug}`)}
+            key={type.id}
+            onClick={() =>
+              router.push(`/analisis/${localidad}/${companyId}/historico/${yacimiento}/${type.id}`)
+            }
             className="group border-2 border-border bg-white p-6 text-left transition-all hover:border-green-600 hover:shadow-lg"
           >
             <div className="flex items-start gap-4">
@@ -105,8 +134,8 @@ export default function HistoricoPage() {
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
               <div className="min-w-0 flex-1">
-                <h3 className="mb-1 truncate text-lg font-semibold text-foreground">{y.label}</h3>
-                <p className="text-sm text-muted-foreground">{y.description}</p>
+                <h3 className="mb-1 truncate text-lg font-semibold text-foreground">{type.name}</h3>
+                <p className="text-sm text-muted-foreground">{type.description}</p>
               </div>
               <svg
                 className="h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-green-600"
