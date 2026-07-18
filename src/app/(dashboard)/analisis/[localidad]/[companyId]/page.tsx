@@ -9,6 +9,7 @@ import { Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
 const folders = [
   { id: 'croma', name: 'Cromatografía', color: '#4caf50' },
   { id: 'historico', name: 'Histórico', color: '#4caf50' },
+  { id: 'informes-medio-ambiente', name: 'Informe Medio Ambiente', color: '#2196f3' },
 ];
 
 export default function CompanyFoldersPage() {

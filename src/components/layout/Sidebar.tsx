@@ -12,6 +12,7 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils/cn';
@@ -40,6 +41,7 @@ const navigation: NavItem[] = [
     section: 'Principal',
     role: 'owner',
   },
+  { name: 'Informes', href: '/informes', icon: FileText, section: 'Principal' },
   { name: 'Muestras', href: '/muestras', icon: TestTubes, section: 'Gestión' },
   { name: 'Análisis', href: '/analisis', icon: BarChart3, section: 'Gestión' },
   { name: 'Empresas', href: '/empresas', icon: Building2, section: 'Gestión' },
