@@ -1,511 +1,571 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
-  Building2,
+  ArrowUpRight,
+  ArrowDownRight,
+  Calendar,
+  ChevronDown,
   FileSpreadsheet,
-  FileText,
+  FilePlus,
   FlaskConical,
-  Upload,
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 
-import { formatDateAR, formatDateTimeAR } from '@/src/lib/dateUtils';
 import { authService } from '@/src/modules/auth/services/AuthService';
-import { useAnalysesList } from '@/src/modules/chromatography/hooks/useAnalysesList';
-import { type ChromatographicAnalysis } from '@/src/modules/chromatography/types';
+import { useDashboardStats } from '@/src/modules/chromatography/hooks/useDashboardStats';
+import { useCompanyDistribution } from '@/src/modules/chromatography/hooks/useCompanyDistribution';
+import type {
+  DashboardRange,
+  CompanyPeriod,
+} from '@/src/modules/chromatography/services/chromatographyService';
+import { useCompanies } from '@/src/modules/companies/hooks/useCompanies';
+import { Localidad, LOCALIDAD_LABELS } from '@/src/types/company';
+import { UploadHistoricModal } from '@/src/modules/historics/fq-type-a/components/UploadHistoricModal';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const MONTH_LABELS = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
+];
+
+const RANGE_OPTIONS: { value: DashboardRange; label: string }[] = [
+  { value: '7d', label: 'Últimos 7 días' },
+  { value: '6m', label: 'Últimos 6 meses' },
+  { value: '1y', label: 'Último año' },
+];
+
+function getCurrentMonthName() {
+  return new Date()
+    .toLocaleString('es-AR', { month: 'long' })
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
+
+function getPrevMonthName() {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return d.toLocaleString('es-AR', { month: 'long' }).replace(/^\w/, (c) => c.toUpperCase());
+}
+
+const COMPANY_PERIOD_OPTIONS: { value: CompanyPeriod; label: string }[] = [
+  { value: 'current_month', label: getCurrentMonthName() },
+  { value: 'prev_month', label: getPrevMonthName() },
+  { value: '3m', label: 'Últimos 3 meses' },
+  { value: '6m', label: 'Últimos 6 meses' },
+];
+
+function getDisplayName(name?: string, email?: string) {
+  if (name?.trim()) return name.trim();
+  return email?.split('@')[0]?.trim() || 'Usuario';
+}
+
+/** Build chart data from the backend series, zero-filling gaps. */
+function buildChartData(series: { date: string; count: number }[], range: DashboardRange) {
+  const map = new Map(series.map((d) => [d.date, d.count]));
+  const result: { label: string; date: string; count: number }[] = [];
+  const now = new Date();
+
+  if (range === '7d') {
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const label = i === 0 ? 'Hoy' : DAY_LABELS[d.getDay()];
+      result.push({ label, date: key, count: map.get(key) ?? 0 });
+    }
+  } else {
+    const months = range === '6m' ? 6 : 12;
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = i === 0 ? 'Este mes' : MONTH_LABELS[d.getMonth()];
+      result.push({ label, date: key, count: map.get(key) ?? 0 });
+    }
+  }
+
+  return result;
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  // Usar hook con cache para análisis
-  const { data: recentAnalyses = [], isLoading: isLoadingRecentAnalyses } = useAnalysesList();
+  const [range, setRange] = useState<DashboardRange>('6m');
+  const [companyPeriod, setCompanyPeriod] = useState<CompanyPeriod>('current_month');
+  const { data: stats, isLoading: isLoadingStats } = useDashboardStats(range);
+  const { data: companyDist = [], isLoading: isLoadingDist } =
+    useCompanyDistribution(companyPeriod);
+  const { data: companies = [], isLoading: isLoadingCompanies } = useCompanies();
 
-  const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
-  const [isWelcomeExiting, setIsWelcomeExiting] = useState(false);
-  const [welcomeLabel, setWelcomeLabel] = useState('');
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const [companyPeriodOpen, setCompanyPeriodOpen] = useState(false);
+  const rangeRef = useRef<HTMLDivElement>(null);
+  const companyPeriodRef = useRef<HTMLDivElement>(null);
 
+  // Close dropdowns on click outside
+  useEffect(() => {
+    if (!rangeOpen && !companyPeriodOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (rangeOpen && rangeRef.current && !rangeRef.current.contains(e.target as Node)) {
+        setRangeOpen(false);
+      }
+      if (
+        companyPeriodOpen &&
+        companyPeriodRef.current &&
+        !companyPeriodRef.current.contains(e.target as Node)
+      ) {
+        setCompanyPeriodOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [rangeOpen, companyPeriodOpen]);
+
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const user = authService.getCurrentUser();
   const name = getDisplayName(user?.name, user?.email);
 
-  useEffect(() => {
-    const storedName = window.sessionStorage.getItem('login-welcome-name');
-    const alreadySeen = window.sessionStorage.getItem('dashboard-welcome-seen') === 'true';
+  // ── Derived data ─────────────────────────────────────────────────────────
 
-    if (!storedName && alreadySeen) return;
+  const chartData = useMemo(() => buildChartData(stats?.series ?? [], range), [stats, range]);
 
-    setWelcomeLabel(`Bienvenido ${storedName || name}!`);
-    setShowWelcomeOverlay(true);
-    setIsWelcomeExiting(false);
+  const periodTotal = useMemo(() => chartData.reduce((sum, d) => sum + d.count, 0), [chartData]);
 
-    const timeout = window.setTimeout(() => {
-      setIsWelcomeExiting(true);
-    }, 2350);
+  const percentChange = useMemo(() => {
+    if (!stats) return 0;
+    const { current_month, previous_month } = stats;
+    if (previous_month === 0) return current_month > 0 ? 100 : 0;
+    return Math.round(((current_month - previous_month) / previous_month) * 100);
+  }, [stats]);
 
-    return () => window.clearTimeout(timeout);
-  }, [name]);
+  const localityDistribution = useMemo(() => {
+    const cutral = companies.filter((c) => c.localidad === Localidad.CUTRAL_CO).length;
+    const rincon = companies.filter((c) => c.localidad === Localidad.RINCON).length;
+    return [
+      { name: LOCALIDAD_LABELS[Localidad.CUTRAL_CO], value: cutral, color: '#006096' },
+      { name: LOCALIDAD_LABELS[Localidad.RINCON], value: rincon, color: '#d97706' },
+    ];
+  }, [companies]);
 
-  useEffect(() => {
-    if (!showWelcomeOverlay || !isWelcomeExiting) return;
+  const recentChromatography = stats?.recent ?? [];
 
-    const timeout = window.setTimeout(() => {
-      setShowWelcomeOverlay(false);
-      setIsWelcomeExiting(false);
-      window.sessionStorage.removeItem('login-welcome-name');
-      window.sessionStorage.setItem('dashboard-welcome-seen', 'true');
-    }, 260);
-
-    return () => window.clearTimeout(timeout);
-  }, [showWelcomeOverlay, isWelcomeExiting]);
-
-  // Ordenar análisis por fecha
-  const sortedAnalyses = useMemo(
-    () => [...recentAnalyses].sort((a, b) => getAnalysisSortDate(b) - getAnalysisSortDate(a)),
-    [recentAnalyses],
-  );
-
-  const recentChromatography = useMemo(
-    () =>
-      sortedAnalyses.slice(0, 4).map((analysis) => ({
-        id: analysis.analysis_id,
-        title:
-          analysis.report_number ||
-          analysis.chromatograph_sample_name ||
-          analysis.sample ||
-          'Corrida cromatográfica',
-        subtitle: `${analysis.company_name}${analysis.field_name ? ` • ${analysis.field_name}` : ''}`,
-        dateLabel: getAnalysisDateTimeLabel(analysis),
-        href: `/cromatografia/${analysis.analysis_id}`,
-      })),
-    [sortedAnalyses],
-  );
-
-  const recentCompanies = useMemo(() => {
-    const map = new Map<
-      string,
-      { name: string; fieldName?: string; dateLabel: string; analysisId: string; count: number }
-    >();
-
-    for (const analysis of sortedAnalyses) {
-      const key = analysis.company_name;
-      const current = map.get(key);
-
-      if (!current) {
-        map.set(key, {
-          name: analysis.company_name,
-          fieldName: analysis.field_name || undefined,
-          dateLabel: getAnalysisDateLabel(analysis),
-          analysisId: analysis.analysis_id,
-          count: 1,
-        });
-        continue;
-      }
-
-      map.set(key, { ...current, count: current.count + 1 });
-    }
-
-    return Array.from(map.values()).slice(0, 4);
-  }, [sortedAnalyses]);
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-7 pb-10 [font-family:Manrope,ui-sans-serif,system-ui,sans-serif]">
-      {showWelcomeOverlay && (
-        <DashboardWelcomeOverlay
-          label={welcomeLabel || `Bienvenido ${name}!`}
-          exiting={isWelcomeExiting}
-        />
-      )}
-
-      <section className="relative overflow-hidden rounded-[32px] border border-[#dce8f3] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-        <div className="absolute inset-0">
-          <Image
-            src="/assets/licensed-image.jpeg"
-            alt="Laboratorio Evolution"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-top"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,28,53,0.9)_0%,rgba(10,49,88,0.82)_34%,rgba(10,49,88,0.42)_62%,rgba(255,255,255,0.12)_100%)]" />
+    <div className="space-y-6 pb-10">
+      {/* Heading + Quick action buttons */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-[#0a0a0a]">
+            Bienvenido, {name}{' '}
+            <span className="inline-block origin-[70%_80%] animate-[wave_1.8s_ease-in-out_0.3s_2] text-[1.15em]">
+              👋
+            </span>
+          </h1>
+          <p className="mt-1 text-sm text-[#737373]">
+            Gestioná tus análisis cromatográficos y accedé a resultados desde un tablero claro y
+            ordenado.
+          </p>
         </div>
-
-        <div className="relative min-h-[320px] px-8 py-12 sm:px-10 lg:px-12 lg:py-16">
-          <div className="max-w-xl">
-            <HeroBrand />
-            <h1 className="mt-8 text-4xl font-semibold tracking-[-0.04em] text-white sm:text-5xl">
-              Bienvenido, {name}
-            </h1>
-            <p className="mt-4 max-w-md text-lg leading-8 text-white">
-              Gestioná tus análisis cromatográficos y accedé a resultados reales desde un tablero
-              claro y ordenado.
-            </p>
-          </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowUploadModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e5e5] bg-white px-5 py-2 text-sm font-semibold text-[#0a0a0a] transition-colors hover:border-[#d4d4d4] hover:bg-[#fafafa]"
+          >
+            <FilePlus className="h-3.5 w-3.5" />
+            Agregar histórico
+          </button>
+          <Link
+            href="/cromatografia"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#006096] px-5 py-2 text-sm font-light text-white transition-colors hover:bg-[#004d7a]"
+          >
+            <FlaskConical className="h-3.5 w-3.5" />
+            Cromatografía
+          </Link>
         </div>
-      </section>
+      </div>
 
-      <section className="grid gap-5 md:grid-cols-3">
-        <ActionCard
-          href="/cromatografia"
-          title="Importar"
-          description="Subí un nuevo archivo Excel cromatográfico y procesá el análisis."
-          icon={<Upload className="h-7 w-7" />}
-          accent="blue"
-        />
-        <ActionCard
-          href="/analisis"
-          title="Historial"
-          description="Entrá al seguimiento de corridas, detalle técnico e informes existentes."
-          icon={<FileText className="h-7 w-7" />}
-          accent="teal"
-        />
-        <ActionCard
-          href="/empresas"
-          title="Empresas"
-          description="Consultá las compañías disponibles para asociar nuevas cargas."
-          icon={<Building2 className="h-7 w-7" />}
-          accent="slate"
-        />
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_420px]">
-        <InfoCard
-          title="Empresas recientes"
-          description="Últimas compañías involucradas en corridas cromatográficas."
-          actionHref="/empresas"
-          actionLabel="Ver empresas"
-        >
-          {isLoadingRecentAnalyses ? (
-            <MiniListSkeleton />
-          ) : recentCompanies.length > 0 ? (
-            <div className="space-y-3">
-              {recentCompanies.map((company) => (
-                <Link
-                  key={company.name}
-                  href={`/cromatografia/${company.analysisId}`}
-                  className="flex items-center justify-between gap-4 rounded-2xl border border-[#e7eef6] bg-[#fbfdff] px-4 py-3 transition-colors hover:border-[#d4e3f2] hover:bg-white"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-[#10243e]">{company.name}</p>
-                    <p className="mt-1 text-sm text-[#66788c]">
-                      {company.fieldName || 'Sin yacimiento'} • {company.count} análisis
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-xs font-medium text-[#7d90a5]">
-                    {company.dateLabel}
+      {/* Row 1: Area chart + Recent chromatography */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
+        {/* Area chart */}
+        <section className="rounded-xl border border-[#e5e5e5] bg-white p-5">
+          <div className="mb-4 flex items-start justify-between">
+            <div>
+              <h2 className="text-base font-bold text-[#0a0a0a]">Cromatografías</h2>
+              <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-[#a3a3a3]">
+                Total realizadas
+              </p>
+              <div className="flex items-baseline gap-3">
+                <span className="text-2xl font-semibold text-[#0a0a0a]">
+                  {isLoadingStats ? '—' : periodTotal}
+                </span>
+                {!isLoadingStats && stats && (
+                  <span className="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-600">
+                    {percentChange >= 0 ? (
+                      <ArrowUpRight className="h-3 w-3" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3" />
+                    )}
+                    {percentChange >= 0 ? '+' : ''}
+                    {percentChange}% vs mes anterior
                   </span>
-                </Link>
-              ))}
+                )}
+              </div>
             </div>
-          ) : (
-            <EmptyMiniState
-              title="Todavía no hay empresas recientes"
-              description="Las compañías aparecerán acá cuando existan análisis cargados."
-            />
-          )}
-        </InfoCard>
+            <div ref={rangeRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setRangeOpen((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#e5e5e5] bg-white px-2.5 py-1.5 text-xs font-medium text-[#525252] transition-colors hover:border-[#d4d4d4] hover:bg-[#fafafa]"
+              >
+                <Calendar className="h-3.5 w-3.5 text-[#a3a3a3]" />
+                {RANGE_OPTIONS.find((o) => o.value === range)?.label}
+                <ChevronDown
+                  className={`h-3 w-3 text-[#a3a3a3] transition-transform ${rangeOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {rangeOpen && (
+                <div className="absolute right-0 top-full z-10 mt-1 min-w-[160px] rounded-lg border border-[#e5e5e5] bg-white py-1 shadow-lg shadow-black/5">
+                  {RANGE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setRange(opt.value);
+                        setRangeOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-[#f5f5f5] ${
+                        opt.value === range ? 'font-medium text-[#006096]' : 'text-[#525252]'
+                      }`}
+                    >
+                      {opt.value === range && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#006096]" />
+                      )}
+                      <span className={opt.value === range ? '' : 'pl-[14px]'}>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
-        <InfoCard
-          title="Cromatografía reciente"
-          description="Últimas corridas cargadas con fecha y hora de ingreso."
-          actionHref="/analisis"
-          actionLabel="Ver historial"
-        >
-          {isLoadingRecentAnalyses ? (
+          <div className="h-[200px]">
+            {isLoadingStats ? (
+              <div className="flex h-full items-center justify-center">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#e5e5e5] border-t-[#006096]" />
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                  <defs>
+                    <linearGradient id="areaBlue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#006096" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#006096" stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#a3a3a3' }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#a3a3a3' }}
+                    allowDecimals={false}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      background: '#fff',
+                      border: '1px solid #e5e5e5',
+                      borderRadius: 8,
+                      fontSize: 12,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}
+                    formatter={(value) => [`${value}`, 'Análisis']}
+                    labelFormatter={(label) => `${label}`}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#006096"
+                    strokeWidth={1.5}
+                    fill="url(#areaBlue)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </section>
+
+        {/* Recent chromatography */}
+        <section className="rounded-xl border border-[#e5e5e5] bg-white p-5">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-[#0a0a0a]">Cromatografía reciente</p>
+              <p className="mt-0.5 text-xs text-[#a3a3a3]">
+                Últimas corridas cargadas con fecha y hora de ingreso.
+              </p>
+            </div>
+            <Link
+              href="/analisis"
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#525252] transition-colors hover:text-[#0a0a0a]"
+            >
+              Ver historial
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          {isLoadingStats ? (
             <MiniListSkeleton />
           ) : recentChromatography.length > 0 ? (
-            <div className="space-y-3">
-              {recentChromatography.map((report) => (
+            <div className="divide-y divide-[#f0f0f0]">
+              {recentChromatography.map((item) => (
                 <Link
-                  key={report.id}
-                  href={report.href}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-[#e7eef6] bg-white px-4 py-3 transition-colors hover:border-[#d4e3f2] hover:bg-[#fbfdff]"
+                  key={item.analysis_id}
+                  href={`/cromatografia/${item.analysis_id}`}
+                  className="flex items-center justify-between gap-3 py-2.5 transition-colors first:pt-0 hover:bg-[#fafafa]"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef6ff] text-[#1768a7]">
-                      <FileSpreadsheet className="h-5 w-5" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#525252]">
+                      <FileSpreadsheet className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[#10243e]">
-                        {report.title}
-                      </p>
-                      <p className="mt-1 truncate text-sm text-[#66788c]">{report.subtitle}</p>
+                      <p className="truncate text-sm font-medium text-[#0a0a0a]">{item.title}</p>
+                      <p className="mt-0.5 truncate text-xs text-[#a3a3a3]">{item.subtitle}</p>
                     </div>
                   </div>
-                  <span className="shrink-0 text-xs font-medium text-[#7d90a5]">
-                    {report.dateLabel}
-                  </span>
+                  <span className="shrink-0 text-xs text-[#a3a3a3]">{item.date_label}</span>
                 </Link>
               ))}
             </div>
           ) : (
-            <EmptyMiniState
-              title="No hay cromatografía reciente"
-              description="Las corridas cargadas se van a listar acá automáticamente."
-            />
+            <EmptyMiniState />
           )}
-        </InfoCard>
-      </section>
+        </section>
+      </div>
+
+      {/* Row 2: Company bar chart + Donut chart */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+        {/* Horizontal bar chart — cromas by company */}
+        <section className="rounded-xl border border-[#e5e5e5] bg-white p-5">
+          <div className="mb-4 flex items-start justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-[#0a0a0a]">Cromatografías por empresa</h2>
+              <p className="mt-0.5 text-xs text-[#a3a3a3]">Distribución de corridas cargadas</p>
+            </div>
+            <div ref={companyPeriodRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setCompanyPeriodOpen((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#e5e5e5] bg-white px-2.5 py-1.5 text-xs font-medium text-[#525252] transition-colors hover:border-[#d4d4d4] hover:bg-[#fafafa]"
+              >
+                <Calendar className="h-3.5 w-3.5 text-[#a3a3a3]" />
+                {COMPANY_PERIOD_OPTIONS.find((o) => o.value === companyPeriod)?.label}
+                <ChevronDown
+                  className={`h-3 w-3 text-[#a3a3a3] transition-transform ${companyPeriodOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {companyPeriodOpen && (
+                <div className="absolute right-0 top-full z-10 mt-1 min-w-[170px] rounded-lg border border-[#e5e5e5] bg-white py-1 shadow-lg shadow-black/5">
+                  {COMPANY_PERIOD_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setCompanyPeriod(opt.value);
+                        setCompanyPeriodOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-[#f5f5f5] ${
+                        opt.value === companyPeriod
+                          ? 'font-medium text-[#006096]'
+                          : 'text-[#525252]'
+                      }`}
+                    >
+                      {opt.value === companyPeriod && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#006096]" />
+                      )}
+                      <span className={opt.value === companyPeriod ? '' : 'pl-[14px]'}>
+                        {opt.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {isLoadingDist ? (
+            <div className="flex h-[200px] items-center justify-center">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#e5e5e5] border-t-[#006096]" />
+            </div>
+          ) : companyDist.length === 0 ? (
+            <div className="flex h-[200px] items-center justify-center">
+              <p className="text-xs text-[#a3a3a3]">Sin datos para este período</p>
+            </div>
+          ) : (
+            <div style={{ height: Math.max(160, companyDist.length * 36) }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={companyDist}
+                  layout="vertical"
+                  margin={{ top: 0, right: 12, bottom: 0, left: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                  <XAxis
+                    type="number"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#a3a3a3' }}
+                    allowDecimals={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="company_name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#525252' }}
+                    width={120}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      background: '#fff',
+                      border: '1px solid #e5e5e5',
+                      borderRadius: 8,
+                      fontSize: 12,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}
+                    formatter={(value) => [`${value}`, 'Cromatografías']}
+                  />
+                  <Bar dataKey="count" fill="#006096" radius={[0, 4, 4, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </section>
+
+        {/* Donut chart — companies by locality */}
+        <section className="rounded-xl border border-[#e5e5e5] bg-white p-5">
+          <p className="text-sm font-semibold text-[#0a0a0a]">Empresas por localidad</p>
+          <div className="relative mt-4 flex items-center justify-center">
+            {isLoadingCompanies ? (
+              <div className="flex h-[180px] items-center justify-center">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#e5e5e5] border-t-[#006096]" />
+              </div>
+            ) : (
+              <>
+                <div className="h-[180px] w-[180px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={localityDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={80}
+                        dataKey="value"
+                        strokeWidth={0}
+                      >
+                        {localityDistribution.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <span className="text-2xl font-semibold text-[#0a0a0a]">
+                      {companies.length}
+                    </span>
+                    <p className="text-[10px] text-[#a3a3a3]">Total</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          {!isLoadingCompanies && (
+            <div className="mt-3 flex items-center justify-center gap-5">
+              {localityDistribution.map((entry) => (
+                <div key={entry.name} className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <span className="text-xs text-[#737373]">
+                    {entry.name} ({entry.value})
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+
+      <UploadHistoricModal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} />
     </div>
   );
 }
 
-function ActionCard({
-  href,
-  title,
-  description,
-  icon,
-  accent,
-}: {
-  href: string;
-  title: string;
-  description: string;
-  icon: ReactNode;
-  accent: 'blue' | 'teal' | 'slate';
-}) {
-  const accentStyles = {
-    blue: {
-      iconWrap: 'bg-[#e8f2ff] text-[#1565a6]',
-      button: 'bg-[#1565a6] hover:bg-[#0f588f] text-white',
-      title: 'text-[#0f2850]',
-    },
-    teal: {
-      iconWrap: 'bg-[#e7f8f5] text-[#0f8a78]',
-      button: 'bg-[#0f8a78] hover:bg-[#0c7465] text-white',
-      title: 'text-[#0f6c5f]',
-    },
-    slate: {
-      iconWrap: 'bg-[#eef2f6] text-[#576b81]',
-      button: 'bg-[#6b7f94] hover:bg-[#596c80] text-white',
-      title: 'text-[#45596f]',
-    },
-  }[accent];
+// ── Subcomponents ────────────────────────────────────────────────────────────
 
+function EmptyMiniState() {
   return (
-    <Link
-      href={href}
-      className="group rounded-[28px] border border-[#e5edf6] bg-white p-7 text-center shadow-[0_18px_45px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_55px_rgba(15,23,42,0.09)]"
-    >
-      <div
-        className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${accentStyles.iconWrap}`}
-      >
-        {icon}
+    <div className="rounded-lg border border-dashed border-[#e5e5e5] px-5 py-6 text-center">
+      <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#a3a3a3]">
+        <FlaskConical className="h-4 w-4" />
       </div>
-      <h3 className={`mt-6 text-2xl font-semibold tracking-[-0.03em] ${accentStyles.title}`}>
-        {title}
-      </h3>
-      <p className="mt-3 min-h-[72px] text-sm leading-6 text-[#66788c]">{description}</p>
-      <span
-        className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${accentStyles.button}`}
-      >
-        Abrir
-        <ArrowRight className="h-4 w-4" />
-      </span>
-    </Link>
-  );
-}
-
-function InfoCard({
-  title,
-  description,
-  actionHref,
-  actionLabel,
-  children,
-}: {
-  title: string;
-  description: string;
-  actionHref: string;
-  actionLabel: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="rounded-[30px] border border-[#e5edf6] bg-white p-7 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold tracking-[-0.03em] text-[#10243e]">{title}</h2>
-          <p className="mt-2 text-sm leading-6 text-[#66788c]">{description}</p>
-        </div>
-        <Link
-          href={actionHref}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[#d7e5f4] bg-[#f8fbff] px-4 py-2 text-sm font-medium text-[#1768a7] transition-colors hover:bg-white"
-        >
-          {actionLabel}
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-
-      {children}
-    </section>
-  );
-}
-
-function EmptyMiniState({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-[#d7e4f2] bg-[#fbfdff] px-5 py-8 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef6ff] text-[#1768a7]">
-        <FlaskConical className="h-5 w-5" />
-      </div>
-      <p className="mt-4 text-sm font-semibold text-[#10243e]">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-[#66788c]">{description}</p>
-    </div>
-  );
-}
-
-function HeroBrand() {
-  return (
-    <div className="flex flex-col">
-      <span className="text-[2.3rem] font-extrabold leading-none tracking-[-0.1em] text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.18)] sm:text-[2.7rem]">
-        EVOLUTION
-      </span>
-      <span className="mt-1 text-[12px] font-bold uppercase tracking-[0.3em] text-white">
-        CHEMICAL S.R.L.
-      </span>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-        <span>Análisis</span>
-        <span>•</span>
-        <span>Calidad</span>
-        <span>•</span>
-        <span>Precisión</span>
-        <span>•</span>
-        <span>Innovación</span>
-      </div>
+      <p className="mt-3 text-sm font-medium text-[#525252]">No hay cromatografía reciente</p>
+      <p className="mt-1 text-xs text-[#a3a3a3]">
+        Las corridas cargadas se van a listar acá automáticamente.
+      </p>
     </div>
   );
 }
 
 function MiniListSkeleton() {
   return (
-    <div className="space-y-3">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div
-          key={index}
-          className="flex items-center justify-between gap-4 rounded-2xl border border-[#e7eef6] bg-[#fbfdff] px-4 py-3"
-        >
+    <div className="divide-y divide-[#f0f0f0]">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="flex items-center justify-between gap-4 py-2.5">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="h-11 w-11 animate-pulse rounded-2xl bg-[#e7eef6]" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-4 w-40 animate-pulse rounded bg-[#e7eef6]" />
-              <div className="h-3 w-28 animate-pulse rounded bg-[#eef3f8]" />
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-[#f5f5f5]" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="h-3.5 w-36 animate-pulse rounded bg-[#f5f5f5]" />
+              <div className="h-3 w-24 animate-pulse rounded bg-[#fafafa]" />
             </div>
           </div>
-          <div className="h-3 w-20 animate-pulse rounded bg-[#eef3f8]" />
+          <div className="h-3 w-16 animate-pulse rounded bg-[#fafafa]" />
         </div>
       ))}
     </div>
   );
-}
-
-function DashboardWelcomeOverlay({ label, exiting }: { label: string; exiting: boolean }) {
-  const characters = Array.from(label);
-
-  return (
-    <>
-      <div
-        className={`pointer-events-none fixed inset-0 z-[360] overflow-hidden bg-white ${
-          exiting ? 'dashboard-welcome-shell-exit' : ''
-        }`}
-      >
-        <div className="absolute inset-0 flex items-center justify-center px-6">
-          <span
-            className="text-center text-[clamp(2.6rem,6vw,4.75rem)] font-bold leading-none text-[#171717]"
-            style={{
-              letterSpacing: '-0.03em',
-              fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif',
-            }}
-          >
-            {characters.map((character, index) =>
-              character === ' ' ? (
-                <span
-                  key={`space-${index}`}
-                  aria-hidden="true"
-                  style={{
-                    display: 'inline-block',
-                    width: '0.32em',
-                  }}
-                />
-              ) : (
-                <span
-                  key={`${character}-${index}`}
-                  style={{
-                    display: 'inline-block',
-                    overflow: 'hidden',
-                    verticalAlign: 'bottom',
-                    lineHeight: 1,
-                  }}
-                >
-                  <span
-                    className="dashboard-welcome-word"
-                    style={{
-                      display: 'inline-block',
-                      transform: 'translateY(100%)',
-                      animationDelay: `${index * 52}ms`,
-                    }}
-                  >
-                    {character}
-                  </span>
-                </span>
-              ),
-            )}
-          </span>
-        </div>
-      </div>
-
-      <style jsx>{`
-        .dashboard-welcome-word {
-          animation: dashboard-welcome-slide 760ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-          will-change: transform;
-        }
-
-        .dashboard-welcome-shell-exit {
-          animation: dashboard-welcome-exit 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          will-change: opacity, filter;
-        }
-
-        @keyframes dashboard-welcome-slide {
-          from {
-            transform: translateY(100%);
-          }
-          to {
-            transform: translateY(0%);
-          }
-        }
-
-        @keyframes dashboard-welcome-exit {
-          from {
-            opacity: 1;
-            filter: blur(0px);
-          }
-          to {
-            opacity: 0;
-            filter: blur(18px);
-          }
-        }
-      `}</style>
-    </>
-  );
-}
-
-function getDisplayName(name?: string, email?: string) {
-  if (name?.trim()) return name.trim();
-
-  const emailName = email?.split('@')[0]?.trim();
-  return emailName || 'Usuario';
-}
-
-function getAnalysisSortDate(analysis: ChromatographicAnalysis) {
-  const candidate = analysis.analysis_date || analysis.updated_at || analysis.created_at;
-  const parsed = candidate ? new Date(candidate).getTime() : 0;
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function getAnalysisDateLabel(analysis: ChromatographicAnalysis) {
-  if (analysis.analysis_date) return formatDateAR(analysis.analysis_date);
-  if (analysis.created_at) return formatDateAR(analysis.created_at);
-  return '-';
-}
-
-function getAnalysisDateTimeLabel(analysis: ChromatographicAnalysis) {
-  if (analysis.analysis_date) return formatDateTimeAR(analysis.analysis_date);
-  if (analysis.created_at) return formatDateTimeAR(analysis.created_at);
-  return '-';
 }

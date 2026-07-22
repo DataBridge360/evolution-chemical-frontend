@@ -368,6 +368,82 @@ export async function permanentDeleteAnalysis(analysisId: string, password: stri
 }
 
 /**
+ * Estadísticas del dashboard (total, conteos diarios, comparación mensual)
+ */
+export interface DashboardRecentItem {
+  analysis_id: string;
+  title: string;
+  subtitle: string;
+  date_label: string;
+}
+
+export type DashboardRange = '7d' | '6m' | '1y';
+
+export interface DashboardStats {
+  total: number;
+  series: { date: string; count: number }[];
+  current_month: number;
+  previous_month: number;
+  drafts: number;
+  recent: DashboardRecentItem[];
+}
+
+export async function getDashboardStats(range: DashboardRange = '7d'): Promise<DashboardStats> {
+  return apiClient.get<DashboardStats>(
+    `/chromatography/analyses/dashboard-stats/?range=${range}`,
+    true,
+  );
+}
+
+/**
+ * Distribución de cromatografías por empresa
+ */
+export type CompanyPeriod = 'current_month' | 'prev_month' | '3m' | '6m';
+
+export interface CompanyDistributionItem {
+  company_name: string;
+  count: number;
+}
+
+export async function getCompanyDistribution(
+  period: CompanyPeriod = 'current_month',
+): Promise<CompanyDistributionItem[]> {
+  return apiClient.get<CompanyDistributionItem[]>(
+    `/chromatography/analyses/company-distribution/?period=${period}`,
+    true,
+  );
+}
+
+/**
+ * Historial reciente paginado (último mes)
+ */
+export interface RecentHistoryItem {
+  analysis_id: string;
+  company_name: string;
+  field_name: string;
+  status: string;
+  created_at: string;
+}
+
+export interface RecentHistoryResponse {
+  results: RecentHistoryItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export async function getRecentHistory(
+  page: number = 1,
+  pageSize: number = 5,
+): Promise<RecentHistoryResponse> {
+  return apiClient.get<RecentHistoryResponse>(
+    `/chromatography/analyses/recent-history/?page=${page}&page_size=${pageSize}`,
+    true,
+  );
+}
+
+/**
  * Lista los reportes de un análisis
  */
 export async function listReports(analysisId?: string): Promise<AnalysisReport[]> {

@@ -19,7 +19,7 @@ const nextConfig = {
     ];
   },
   images: {
-    domains: ['bodtyqelvsrexbdfiglk.supabase.co'],
+    domains: ['bodtyqelvsrexbdfiglk.supabase.co', 'res.cloudinary.com'],
   },
   experimental: {
     serverActions: {

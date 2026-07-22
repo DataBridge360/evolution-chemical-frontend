@@ -1,4 +1,5 @@
 import { API_URL, apiClient } from '@/src/lib/api/client';
+import { RateLimitError, AuthError } from '../../errors';
 
 interface LoginResponse {
   success: boolean;
@@ -32,24 +33,49 @@ interface RegisterResponse {
 class AuthService {
   /**
    * Login - El backend maneja TODO
+   * Lanza RateLimitError o AuthError según el tipo de error
    */
   async login(
     email: string,
     password: string,
     loginType: 'laboratorio' | 'company' = 'company',
   ): Promise<LoginResponse['data']> {
-    const response = await apiClient.post<LoginResponse>('/auth/login', {
-      email,
-      password,
-      loginType,
-    });
+    try {
+      const response = await apiClient.post<LoginResponse>('/auth/login', {
+        email,
+        password,
+        loginType,
+      });
 
-    // Guardar tokens en localStorage
-    localStorage.setItem('accessToken', response.data.accessToken);
-    localStorage.setItem('refreshToken', response.data.refreshToken);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
+      // Guardar tokens en localStorage
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
 
-    return response.data;
+      return response.data;
+    } catch (error: any) {
+      // Manejar error de rate limiting (403 - cuenta bloqueada)
+      if (error.response?.status === 403) {
+        const errorData = error.response.data;
+        throw new RateLimitError(
+          errorData.error || 'Cuenta temporalmente bloqueada',
+          errorData.data?.locked_until || 0,
+          errorData.data?.retry_after || 900,
+        );
+      }
+
+      // Manejar error de credenciales inválidas (401 - con intentos restantes)
+      if (error.response?.status === 401) {
+        const errorData = error.response.data;
+        throw new AuthError(
+          errorData.error || 'Credenciales inválidas',
+          errorData.data?.attempts_remaining,
+        );
+      }
+
+      // Re-lanzar otros errores
+      throw error;
+    }
   }
 
   /**
