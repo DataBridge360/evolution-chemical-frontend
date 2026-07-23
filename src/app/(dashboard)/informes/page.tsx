@@ -41,18 +41,22 @@ const REPORT_CARDS: ReportCard[] = [
     href: '/informes/medio-ambiente',
   },
   {
-    id: 'fco-qco',
+    id: 'tss-hct',
     number: '02',
-    title: 'Fco Qco',
-    subtitle: '',
-    available: false,
+    title: 'TSS + HcT',
+    subtitle:
+      'Genera informes de TSS e Hidrocarburos Totales con puntos de muestreo dinámicos.',
+    available: true,
+    href: '/informes/tss-hct',
   },
   {
-    id: 'glicoles-aminas',
+    id: 'gases-disueltos',
     number: '03',
-    title: 'Glicoles y Aminas',
-    subtitle: '',
-    available: false,
+    title: 'Gases Disueltos',
+    subtitle:
+      'Genera informes de CO2, H2S y O2 disueltos con puntos agrupados por planta.',
+    available: true,
+    href: '/informes/gases-disueltos',
   },
   {
     id: 'potabilidad-bacteriologico',
