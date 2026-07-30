@@ -21,6 +21,7 @@ import {
   yacimientoSlugToApi,
   getYacimientoBySlug,
 } from '@/src/modules/historics/yacimientoConstants';
+import { formatDateAR } from '@/src/lib/dateUtils';
 
 const OTROS_START_INDEX = HISTORICO_COLUMN_ORDER.indexOf('incrustation_residual');
 const FQ_PARAM_COUNT = OTROS_START_INDEX;
@@ -150,24 +151,12 @@ export default function HistoricoFQTipoAPage() {
     }
   };
 
-  const formatDate = (value: string | null) => {
-    if (!value) return 'NR';
-    try {
-      const d = new Date(value);
-      return d.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      });
-    } catch {
-      return value;
-    }
-  };
-
   const formatCell = (record: HistoricFQTypeARecord, key: keyof HistoricFQTypeARecord) => {
     const value = record[key];
     if (value === null || value === undefined || value === '') return 'NR';
-    if (key === 'sample_date' || key === 'report_date') return formatDate(value as string);
+    if (key === 'sample_date' || key === 'report_date') {
+      return value ? formatDateAR(value as string) : 'NR';
+    }
     return String(value);
   };
 
