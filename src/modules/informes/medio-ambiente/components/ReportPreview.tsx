@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { type EnvironmentReportFormData } from '../types';
-import { IN_SITU_PARAMETERS, CHEMICAL_PARAMETERS, type ReportParameter } from '../constants';
+import { ALL_PARAMETERS, type ReportParameter } from '../constants';
 
 interface ReportPreviewProps {
   data: EnvironmentReportFormData;
@@ -25,23 +25,29 @@ function EditableCell({
   editable,
   onCommit,
   align,
+  colSpan,
 }: {
   value: string;
   style: React.CSSProperties;
   editable?: boolean;
   onCommit?: (newValue: string) => void;
   align?: 'center' | 'left';
+  colSpan?: number;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
   if (!editable || !onCommit) {
-    return <td style={{ ...style, textAlign: align }}>{value}</td>;
+    return (
+      <td colSpan={colSpan} style={{ ...style, textAlign: align }}>
+        {value}
+      </td>
+    );
   }
 
   if (editing) {
     return (
-      <td style={{ ...style, textAlign: align, padding: 0 }}>
+      <td colSpan={colSpan} style={{ ...style, textAlign: align, padding: 0 }}>
         <input
           autoFocus
           value={draft}
@@ -79,6 +85,7 @@ function EditableCell({
 
   return (
     <td
+      colSpan={colSpan}
       style={{
         ...style,
         textAlign: align,
@@ -91,7 +98,7 @@ function EditableCell({
       title="Click para editar"
       className="hover:!bg-[#eef6ff]"
     >
-      {value || <span style={{ opacity: 0.3 }}>—</span>}
+      {value || <span style={{ opacity: 0.3 }}>&mdash;</span>}
     </td>
   );
 }
@@ -113,14 +120,10 @@ function ParameterRow({
 }) {
   return (
     <tr>
-      <td style={dataCellStyle}>{param.label}</td>
-      <EditableCell
-        value={unit}
-        style={dataCellStyle}
-        align="center"
-        editable={editable}
-        onCommit={onFieldChange ? (v) => onFieldChange(param.fieldName, v, 'unit') : undefined}
-      />
+      <td style={{ border: 'none' }} />
+      <td colSpan={2} style={{ ...dataCellStyle, fontWeight: 'bold', textAlign: 'center' }}>
+        {param.label}
+      </td>
       <EditableCell
         value={value || ''}
         style={dataCellStyle}
@@ -129,12 +132,21 @@ function ParameterRow({
         onCommit={onFieldChange ? (v) => onFieldChange(param.fieldName, v, 'value') : undefined}
       />
       <EditableCell
+        value={unit}
+        style={dataCellStyle}
+        align="center"
+        editable={editable}
+        onCommit={onFieldChange ? (v) => onFieldChange(param.fieldName, v, 'unit') : undefined}
+        colSpan={2}
+      />
+      <EditableCell
         value={method}
         style={dataCellStyle}
-        align="left"
+        align="center"
         editable={editable}
         onCommit={onFieldChange ? (v) => onFieldChange(param.fieldName, v, 'method') : undefined}
       />
+      <td style={{ border: 'none' }} />
     </tr>
   );
 }
@@ -148,162 +160,229 @@ export function ReportPreview({ data, editable, onFieldChange, onMetaChange }: R
         minWidth: '595px',
         margin: '0 auto',
         background: '#fff',
-        padding: '20px 30px',
-        fontFamily: "'Century Gothic', sans-serif",
+        padding: '20px 24px',
+        fontFamily: 'Arial, sans-serif',
         fontSize: '10px',
         color: '#000',
       }}
     >
-      {/* ── Logo (rows 1-4) ─────────────────────────────────────────── */}
-      <div style={{ marginBottom: '8px' }}>
-        <Image
-          src="/informes/image.png"
-          alt="Evolution Chemical S.R.L."
-          width={380}
-          height={100}
-          style={{ display: 'block' }}
-          unoptimized
-        />
-      </div>
-
-      {/* ── ISO certification text (rows 5-7) ───────────────────────── */}
-      <div
-        style={{
-          fontSize: '8.5px',
-          fontFamily: "'Century Gothic', sans-serif",
-          color: '#000',
-          marginBottom: '12px',
-          lineHeight: 1.4,
-        }}
-      >
-        <em>Laboratorio certificado en normas de calidad ISO 9001 / 2015</em>
-        <br />
-        <em>Evaluado por interlaboratoiro del COFILAB</em>
-        <br />
-        <em>Inscripto en el RePPSA bajo la matrícula N° 1042/25</em>
-      </div>
-
-      {/* ── Metadata section (rows 9-15) ─────────────────────────────── */}
       <table
         style={{
           width: '100%',
-          tableLayout: 'fixed',
           borderCollapse: 'collapse',
-          marginBottom: '12px',
+          tableLayout: 'fixed',
         }}
       >
+        <colgroup>
+          <col style={{ width: '13%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '19%' }} />
+          <col style={{ width: '15%' }} />
+        </colgroup>
         <tbody>
+          {/* ── Header: Logo + Side Labels (rows 1-5) ─────────────── */}
           <tr>
-            <td style={metaLabelStyle}>MUESTRA DE:</td>
-            <EditableCell
-              value={data.sample_description || 'Agua'}
-              style={metaValueStyle}
-              editable={editable}
-              onCommit={onMetaChange ? (v) => onMetaChange('sample_description', v) : undefined}
-            />
-            <td style={metaLabelStyle}>PDT</td>
+            <td
+              colSpan={6}
+              rowSpan={5}
+              style={{ border: 'none', padding: 0, verticalAlign: 'top', position: 'relative' }}
+            >
+              <Image
+                src="/informes/logo_banner_kompass.jpg"
+                alt="KOMPASS S.A."
+                width={380}
+                height={85}
+                style={{
+                  display: 'block',
+                  maxWidth: '100%',
+                  maxHeight: '95px',
+                  objectFit: 'contain',
+                  objectPosition: 'left',
+                }}
+                unoptimized
+              />
+              <Image
+                src="/informes/logo_reppsa_chico.jpg"
+                alt="RePPSA"
+                width={50}
+                height={50}
+                style={{ position: 'absolute', top: '4px', right: '8px' }}
+                unoptimized
+              />
+            </td>
+            <td style={{ border: 'none', height: '13px' }} />
+            <td style={{ border: 'none', height: '13px' }} />
+          </tr>
+          <tr>
+            <td style={sideLabelStyle}>PDT</td>
             <EditableCell
               value={data.pdt || ''}
-              style={metaValueStyle}
+              style={sideValueStyle}
+              align="center"
               editable={editable}
               onCommit={onMetaChange ? (v) => onMetaChange('pdt', v) : undefined}
             />
           </tr>
           <tr>
-            <td style={metaLabelStyle}>PROCEDENCIA:</td>
-            <EditableCell
-              value={data.origin || ''}
-              style={metaValueStyle}
-              editable={editable}
-              onCommit={onMetaChange ? (v) => onMetaChange('origin', v) : undefined}
-            />
-            <td style={metaLabelStyle}>F.INFORME</td>
-            <td style={metaValueStyle}>{formatDate(data.report_date ?? '')}</td>
+            <td style={sideLabelStyle}>Fecha de informe</td>
+            <td style={sideValueStyle}>{formatDate(data.report_date ?? '')}</td>
           </tr>
           <tr>
-            <td style={metaLabelStyle}>FECHA MUESTREO:</td>
-            <td style={metaValueStyle}>{formatDate(data.sample_date ?? '')}</td>
-            <td style={metaLabelStyle}>N° INFORME</td>
+            <td style={sideLabelStyle}>N&#176;Informe</td>
             <EditableCell
               value={data.report_number || ''}
-              style={metaValueStyle}
+              style={sideValueStyle}
+              align="center"
               editable={editable}
               onCommit={onMetaChange ? (v) => onMetaChange('report_number', v) : undefined}
             />
           </tr>
           <tr>
-            <td style={metaLabelStyle}>HORA:</td>
-            <td style={metaValueStyle}>{data.sample_time}</td>
-            <td style={metaLabelStyle} />
-            <td style={metaValueStyle} />
+            <td style={sideLabelStyle}>Matricula RePPSA</td>
+            <td style={sideValueStyle}>1042/25</td>
           </tr>
-          <tr>
-            <td style={metaLabelStyle}>EXTRAIDA POR:</td>
-            <EditableCell
-              value={data.extracted_by || ''}
-              style={metaValueStyle}
-              editable={editable}
-              onCommit={onMetaChange ? (v) => onMetaChange('extracted_by', v) : undefined}
-            />
-          </tr>
-          <tr>
-            <td style={metaLabelStyle}>SOLICITADO POR:</td>
+
+          {/* ── Row 6: Solicitado por ─────────────────────────────── */}
+          <tr style={{ height: '24px' }}>
+            <td style={{ ...metaLabelStyle, textAlign: 'center', verticalAlign: 'center' }}>
+              Solicitado por:
+            </td>
             <EditableCell
               value={data.requested_by || ''}
               style={metaValueStyle}
               editable={editable}
               onCommit={onMetaChange ? (v) => onMetaChange('requested_by', v) : undefined}
+              colSpan={7}
             />
           </tr>
+
+          {/* ── Row 7: Direccion ──────────────────────────────────── */}
+          <tr style={{ height: '22px' }}>
+            <td style={{ ...metaLabelStyle, textAlign: 'center', verticalAlign: 'center' }}>
+              Direccion:
+            </td>
+            <td colSpan={7} style={metaValueStyle} />
+          </tr>
+
+          {/* ── Row 8: Muestra de / Fecha de Ingreso ──────────────── */}
           <tr>
-            <td style={metaLabelStyle}>ANALISIS REQUERIDO:</td>
+            <td style={metaLabelStyle}>Muestra de:</td>
             <EditableCell
-              value={data.requested_analysis || ''}
+              value={data.sample_description || 'Agua'}
+              style={{ ...metaValueStyle, textAlign: 'center' }}
+              align="center"
+              editable={editable}
+              onCommit={onMetaChange ? (v) => onMetaChange('sample_description', v) : undefined}
+              colSpan={3}
+            />
+            <td colSpan={2} style={{ ...metaLabelStyle, textAlign: 'left' }}>
+              Fecha de Ingreso:
+            </td>
+            <td colSpan={2} style={{ ...metaValueStyle, textAlign: 'center' }}>
+              {formatDate(data.report_date ?? '')}
+            </td>
+          </tr>
+
+          {/* ── Row 9: Procedencia / Fecha de muestreo ────────────── */}
+          <tr>
+            <td style={metaLabelStyle}>Procedencia:</td>
+            <EditableCell
+              value={data.origin || ''}
               style={metaValueStyle}
               editable={editable}
+              onCommit={onMetaChange ? (v) => onMetaChange('origin', v) : undefined}
+              colSpan={3}
+            />
+            <td colSpan={2} style={{ ...metaLabelStyle, textAlign: 'left' }}>
+              Fecha de muestreo
+            </td>
+            <td colSpan={2} style={{ ...metaValueStyle, textAlign: 'center' }}>
+              {formatDate(data.sample_date ?? '')}
+            </td>
+          </tr>
+
+          {/* ── Row 10: Extraida por / Hora de muestreo ───────────── */}
+          <tr>
+            <td style={metaLabelStyle}>Extraida por:</td>
+            <EditableCell
+              value={data.extracted_by || ''}
+              style={{ ...metaValueStyle, textAlign: 'center' }}
+              align="center"
+              editable={editable}
+              onCommit={onMetaChange ? (v) => onMetaChange('extracted_by', v) : undefined}
+              colSpan={3}
+            />
+            <td colSpan={2} style={{ ...metaLabelStyle, textAlign: 'left' }}>
+              Hora de muestreo:
+            </td>
+            <td colSpan={2} style={{ ...metaValueStyle, textAlign: 'center' }}>
+              {data.sample_time || ''}
+            </td>
+          </tr>
+
+          {/* ── Row 11: Analisis Requerido ─────────────────────────── */}
+          <tr>
+            <td
+              colSpan={3}
+              style={{
+                ...metaLabelStyle,
+                textAlign: 'center',
+                verticalAlign: 'middle',
+                height: '50px',
+                whiteSpace: 'normal',
+              }}
+            >
+              Analisis Requerido
+              <br />
+              <span style={{ fontWeight: 'normal' }}>(Metodo Analitico/instrumental)</span>
+            </td>
+            <EditableCell
+              value={data.requested_analysis || ''}
+              style={{ ...metaValueStyle, verticalAlign: 'middle' }}
+              editable={editable}
               onCommit={onMetaChange ? (v) => onMetaChange('requested_analysis', v) : undefined}
+              colSpan={5}
             />
           </tr>
-        </tbody>
-      </table>
 
-      {/* ── RESULTADOS title (row 17) ────────────────────────────────── */}
-      <div
-        style={{
-          fontFamily: 'Impact, sans-serif',
-          fontSize: '14px',
-          fontStyle: 'italic',
-          textDecoration: 'underline',
-          marginBottom: '8px',
-          marginTop: '4px',
-          textAlign: 'center',
-        }}
-      >
-        RESULTADOS
-      </div>
-
-      {/* ── Determinaciones In-Situ ──────────────────────────────────── */}
-      <table
-        style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '12px',
-        }}
-      >
-        <thead>
+          {/* ── Row 12: Resultados ─────────────────────────────────── */}
           <tr>
-            <th style={sectionHeaderStyle}>
-              Muestra sin conservante
-              <br />
-              Determinaciones InSitu
-            </th>
-            <th style={{ ...columnHeaderStyle, width: '70px' }}>Unidad</th>
-            <th style={{ ...columnHeaderStyle, width: '90px' }}>Valor Obtenido</th>
-            <th style={columnHeaderStyle}>Método</th>
+            <td
+              colSpan={8}
+              style={{
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '16px',
+                textAlign: 'center',
+                border: '1px solid #000',
+                padding: '6px',
+                background: PEACH_FILL,
+                height: '25px',
+              }}
+            >
+              Resultados
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {IN_SITU_PARAMETERS.map((param) => (
+
+          {/* ── Row 13: Table headers ──────────────────────────────── */}
+          <tr style={{ height: '50px' }}>
+            <td style={{ border: 'none' }} />
+            <td colSpan={2} style={tableHeaderStyle}>
+              Analisis
+            </td>
+            <td style={tableHeaderStyle}>Resultado</td>
+            <td colSpan={2} style={tableHeaderStyle}>
+              Unidad
+            </td>
+            <td style={tableHeaderStyle}>M&#233;todo</td>
+            <td style={{ border: 'none' }} />
+          </tr>
+
+          {/* ── Data rows: all parameters unified ──────────────────── */}
+          {ALL_PARAMETERS.map((param) => (
             <ParameterRow
               key={param.fieldName}
               param={param}
@@ -314,102 +393,157 @@ export function ReportPreview({ data, editable, onFieldChange, onMetaChange }: R
               onFieldChange={onFieldChange}
             />
           ))}
-        </tbody>
-      </table>
 
-      {/* ── Caracteres Físicos Químicos ──────────────────────────────── */}
-      <table
-        style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          marginBottom: '16px',
-        }}
-      >
-        <thead>
+          {/* ── Notes ──────────────────────────────────────────────── */}
           <tr>
-            <th style={sectionHeaderStyle}>
-              Caracteres
-              <br />
-              Físicos Químicos
-            </th>
-            <th style={{ ...columnHeaderStyle, width: '70px' }}>Unidad</th>
-            <th style={{ ...columnHeaderStyle, width: '90px' }}>Valor Obtenido</th>
-            <th style={columnHeaderStyle}>Método</th>
+            <td
+              colSpan={8}
+              style={{
+                padding: '4px 6px',
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '10px',
+                border: 'none',
+                textAlign: 'left',
+              }}
+            >
+              NS: No se detecta
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {CHEMICAL_PARAMETERS.map((param) => (
-            <ParameterRow
-              key={param.fieldName}
-              param={param}
-              value={(data[param.fieldName as keyof EnvironmentReportFormData] as string) ?? ''}
-              unit={data._units?.[param.fieldName] ?? param.unit}
-              method={data._methods?.[param.fieldName] ?? param.method}
-              editable={editable}
-              onFieldChange={onFieldChange}
-            />
-          ))}
+          <tr>
+            <td
+              colSpan={8}
+              style={{
+                padding: '2px 6px',
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '10px',
+                border: 'none',
+                textAlign: 'left',
+              }}
+            >
+              NOTA: Temperatura/Oxigeno disuelto insitu medido por Kompass SA
+            </td>
+          </tr>
+
+          {/* ── Spacer ─────────────────────────────────────────────── */}
+          <tr>
+            <td colSpan={8} style={{ height: '20px', border: 'none' }} />
+          </tr>
+
+          {/* ── Signature blocks ───────────────────────────────────── */}
+          <tr>
+            <td
+              colSpan={4}
+              style={{
+                border: '1px solid #000',
+                height: '130px',
+                textAlign: 'center',
+                verticalAlign: 'bottom',
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '10px',
+                whiteSpace: 'pre-line',
+                padding: '8px',
+              }}
+            >
+              {'KOMPASS SA\nEncargado del Muestreo'}
+            </td>
+            <td
+              colSpan={4}
+              style={{
+                border: '1px solid #000',
+                borderLeft: 'none',
+                height: '130px',
+                textAlign: 'center',
+                verticalAlign: 'top',
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '10px',
+                padding: '8px',
+                position: 'relative',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  height: '100%',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Image
+                  src="/informes/firma_sello.jpeg"
+                  alt="Firma y Sello"
+                  width={120}
+                  height={100}
+                  style={{ display: 'block' }}
+                  unoptimized
+                />
+                <span>Responsable Tecnico/ encargado del Analisis</span>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
-
-      {/* ── Firma y Sello ────────────────────────────────────────────── */}
-      <div style={{ textAlign: 'right', marginTop: '24px' }}>
-        <Image
-          src="/informes/firma_sello.jpeg"
-          alt="Firma y Sello"
-          width={165}
-          height={130}
-          style={{ display: 'inline-block' }}
-          unoptimized
-        />
-      </div>
     </div>
   );
 }
 
 // ── Inline styles ─────────────────────────────────────────────────────────
 
+const PEACH_FILL = '#FDE9D9';
+
+const sideLabelStyle: React.CSSProperties = {
+  border: '1px solid #000',
+  padding: '2px 4px',
+  fontFamily: 'Arial, sans-serif',
+  fontSize: '11px',
+  fontWeight: 'bold',
+  textAlign: 'center',
+  verticalAlign: 'middle',
+  background: PEACH_FILL,
+  height: '16px',
+};
+
+const sideValueStyle: React.CSSProperties = {
+  border: '1px solid #000',
+  padding: '2px 4px',
+  fontFamily: 'Arial, sans-serif',
+  fontSize: '12px',
+  textAlign: 'center',
+  verticalAlign: 'middle',
+  background: '#fff',
+  height: '16px',
+};
+
 const metaLabelStyle: React.CSSProperties = {
   border: '1px solid #000',
   padding: '3px 6px',
-  fontFamily: "'Century Gothic', sans-serif",
-  fontSize: '9px',
+  fontFamily: 'Arial, sans-serif',
+  fontSize: '10px',
   fontWeight: 'bold',
-  width: '120px',
-  verticalAlign: 'top',
-  background: '#FFFFCC',
+  verticalAlign: 'middle',
+  background: PEACH_FILL,
 };
 
 const metaValueStyle: React.CSSProperties = {
   border: '1px solid #000',
   padding: '3px 6px',
-  fontFamily: "'Times New Roman', serif",
-  fontSize: '11px',
-  fontWeight: 'bold',
-  verticalAlign: 'top',
+  fontFamily: 'Arial, sans-serif',
+  fontSize: '10px',
+  verticalAlign: 'middle',
   overflowWrap: 'break-word',
   wordBreak: 'break-word',
   background: '#fff',
 };
 
-const sectionHeaderStyle: React.CSSProperties = {
+const tableHeaderStyle: React.CSSProperties = {
   border: '1px solid #000',
   padding: '4px 6px',
-  fontFamily: "'Century Gothic', sans-serif",
-  fontSize: '10px',
-  fontWeight: 'bold',
-  textAlign: 'left',
-  background: '#FFFFCC',
-};
-
-const columnHeaderStyle: React.CSSProperties = {
-  border: '1px solid #000',
-  padding: '4px 6px',
-  fontFamily: "'Century Gothic', sans-serif",
-  fontSize: '10px',
+  fontFamily: 'Calibri, sans-serif',
+  fontSize: '11px',
   fontWeight: 'bold',
   textAlign: 'center',
-  background: '#FFFFCC',
+  verticalAlign: 'middle',
+  background: PEACH_FILL,
 };
 
 const dataCellStyle: React.CSSProperties = {
@@ -417,4 +551,6 @@ const dataCellStyle: React.CSSProperties = {
   padding: '2px 4px',
   fontFamily: 'Arial, sans-serif',
   fontSize: '10px',
+  height: '20px',
+  verticalAlign: 'middle',
 };
