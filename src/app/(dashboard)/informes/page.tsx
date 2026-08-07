@@ -44,8 +44,7 @@ const REPORT_CARDS: ReportCard[] = [
     id: 'tss-hct',
     number: '02',
     title: 'TSS + HcT',
-    subtitle:
-      'Genera informes de TSS e Hidrocarburos Totales con puntos de muestreo dinámicos.',
+    subtitle: 'Genera informes de TSS e Hidrocarburos Totales con puntos de muestreo dinámicos.',
     available: true,
     href: '/informes/tss-hct',
   },
@@ -53,8 +52,7 @@ const REPORT_CARDS: ReportCard[] = [
     id: 'gases-disueltos',
     number: '03',
     title: 'Gases Disueltos',
-    subtitle:
-      'Genera informes de CO2, H2S y O2 disueltos con puntos agrupados por planta.',
+    subtitle: 'Genera informes de CO2, H2S y O2 disueltos con puntos agrupados por planta.',
     available: true,
     href: '/informes/gases-disueltos',
   },

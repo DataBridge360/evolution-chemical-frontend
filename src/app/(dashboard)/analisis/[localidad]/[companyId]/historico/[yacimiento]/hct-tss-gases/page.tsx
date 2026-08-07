@@ -299,7 +299,8 @@ export default function HistoricoHctTssGasesPage() {
             </button>
           </div>
           <h1 className="text-xl font-semibold text-foreground">
-            Historico HcT + TSS, Gases y Residual - {yacimientoInfo?.label ?? yacimiento.toUpperCase()}
+            Historico HcT + TSS, Gases y Residual -{' '}
+            {yacimientoInfo?.label ?? yacimiento.toUpperCase()}
           </h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {companyName} &middot; {totalRecords} registro
@@ -387,10 +388,7 @@ export default function HistoricoHctTssGasesPage() {
                   >
                     Gases Disueltos
                   </th>
-                  <th
-                    colSpan={OTROS_COUNT}
-                    className="border border-[#bcc9d8] bg-[#e6e6e6]"
-                  />
+                  <th colSpan={OTROS_COUNT} className="border border-[#bcc9d8] bg-[#e6e6e6]" />
                 </tr>
 
                 <tr>
@@ -421,9 +419,7 @@ export default function HistoricoHctTssGasesPage() {
                       className={`border border-[#bcc9d8] bg-white px-2 py-2 text-center text-xs font-normal leading-snug text-[#333] ${
                         idx === TSS_HCT_COUNT - 1 ? 'border-r-2 border-r-[#999]' : ''
                       } ${
-                        idx === TSS_HCT_COUNT + GASES_COUNT - 1
-                          ? 'border-r-2 border-r-[#999]'
-                          : ''
+                        idx === TSS_HCT_COUNT + GASES_COUNT - 1 ? 'border-r-2 border-r-[#999]' : ''
                       }`}
                       style={{ minWidth: PARAM_COL_W, height: 60 }}
                     >
@@ -488,9 +484,7 @@ export default function HistoricoHctTssGasesPage() {
                             key={field}
                             className={`border border-[#d5dde7] px-2 py-3 text-sm tabular-nums ${
                               isObservations ? 'text-left' : 'text-center'
-                            } ${
-                              idx === TSS_HCT_COUNT - 1 ? 'border-r-2 border-r-[#999]' : ''
-                            } ${
+                            } ${idx === TSS_HCT_COUNT - 1 ? 'border-r-2 border-r-[#999]' : ''} ${
                               idx === TSS_HCT_COUNT + GASES_COUNT - 1
                                 ? 'border-r-2 border-r-[#999]'
                                 : ''
