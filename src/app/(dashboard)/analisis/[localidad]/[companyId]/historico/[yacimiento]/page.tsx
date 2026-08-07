@@ -47,6 +47,11 @@ export default function HistoricoYacimientoPage() {
       name: 'FQ Tipo A',
       description: 'Fisicoquimico de agua Tipo A',
     },
+    {
+      id: 'hct-tss-gases',
+      name: 'HcT + TSS + Gases',
+      description: 'Historico de HcT, TSS, Gases Disueltos y Residual',
+    },
   ];
 
   if (loading || !yacimientoInfo) {
