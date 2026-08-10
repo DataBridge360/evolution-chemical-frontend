@@ -10,6 +10,8 @@ const folders = [
   { id: 'croma', name: 'Cromatografía', color: '#4caf50' },
   { id: 'historico', name: 'Histórico', color: '#4caf50' },
   { id: 'informes-medio-ambiente', name: 'Informe Medio Ambiente', color: '#2196f3' },
+  { id: 'informes-tss-hct', name: 'Informe TSS + HcT', color: '#2196f3' },
+  { id: 'informes-gases-disueltos', name: 'Informe Gases Disueltos', color: '#2196f3' },
 ];
 
 export default function CompanyFoldersPage() {
